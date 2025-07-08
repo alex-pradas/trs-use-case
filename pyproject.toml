@@ -7,3 +7,33 @@ dependencies = [
     "fastmcp>=2.0.0",
     "pytest>=8.4.1",
 ]
+
+[tool.pytest.ini_options]
+# Test discovery
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Output configuration
+addopts = [
+    "-v",                    # Verbose output
+    "--tb=short",           # Shorter traceback format
+    "--strict-markers",     # Strict marker usage
+    "--strict-config",      # Strict config file usage
+    "--color=yes",          # Colored output
+]
+
+# Markers for test categorization
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests", 
+    "slow: Slow running tests",
+]
+
+# Minimum version
+minversion = "6.0"
+
+# Test session configuration
+console_output_style = "progress"
+junit_family = "xunit2"
