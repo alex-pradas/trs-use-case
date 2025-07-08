@@ -131,12 +131,17 @@ The project includes VS Code configuration (`.vscode/settings.json`) for seamles
 
 #### Troubleshooting VS Code Test Discovery
 
-If tests aren't showing up in VS Code:
+If you get "ModuleNotFoundError: No module named 'pytest'" or tests aren't showing up:
 
-1. **Check Python Interpreter**: 
+1. **CRITICAL: Set Correct Python Interpreter**: 
    - Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
    - Type "Python: Select Interpreter"
-   - Choose the `.venv/bin/python` interpreter
+   - Choose the interpreter that shows: `./venv/bin/python` or the full path ending with `/trs-use-case/.venv/bin/python`
+   - **NOT** the system Python or other virtual environments
+
+2. **Alternative: Use Workspace File**:
+   - Open the `trs-use-case.code-workspace` file in VS Code
+   - This will automatically configure the correct interpreter
 
 2. **Refresh Test Discovery**:
    - Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
@@ -152,11 +157,19 @@ If tests aren't showing up in VS Code:
    - Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
    - Type "Python: Restart Language Server"
 
-5. **Test Simple Discovery First**:
+5. **Verify Environment Setup**:
    ```bash
+   # Run verification script to check everything is working
+   uv run python verify_setup.py
+   
    # Run the simple test file to verify basic functionality
    uv run pytest tests/test_simple.py -v
    ```
+
+6. **If VS Code Still Shows "No module named 'pytest'"**:
+   - Close VS Code completely
+   - Reopen VS Code using the workspace file: `code trs-use-case.code-workspace`
+   - Or reopen the folder and manually select the Python interpreter again
 
 ## Test Structure
 
