@@ -1,0 +1,101 @@
+# Product Description
+
+The component is a non-rotating structural part. It is exposed to the primary or core airflow of the jet engine. It is a critical structural component and has an impact on the performance of the engine.
+
+## Positioning and orientation
+
+The TRS sits between the Low Pressure Turbine (LPT) and the rear cone of the engine. The "rear" in the TRS refers to the relative rear position of the components with respect to the engine.
+
+The positions of the TRS are measured with respect the engine reference system: are measured with respect to the engine centerline, which is defined as the axis of the engine running from the front to the rear. This is the X axis of the engine. 
+
+The Y axis is considered going upwards (against gravity) and the Z axis complete the right-handed coordinate system. 
+
+The TRS is partially axilsymmetric around the engine centerline, meaning that it has a rotational symmetry around the X axis, but it is not fully symmetric due to the presence of various systems and components that are mounted on it.
+
+Two views of the TRS are usual: Front Looking Aft (FLA) and Rear Looking Forward (RLF). The FLA view is the one looking from the front of the engine towards the rear, while the RLF view is looking from the rear of the engine towards the front. In both cases, the X axis is pointing towards the viewer, the Y axis is pointing upwards.
+
+It is usual to define clocking positions on the TRS, which are defined as the 12 hour positions on a clock face, with 12 o'clock being the top of the TRS when viewed from the FLA perspective. The clocking positions are used to define the position of various components and systems mounted on the TRS.
+
+The numbering of periodical elements (e.g. vanes, struts, etc.) is done in a clockwise direction when viewed from the FLA perspective. The first element is usually defined as the one at the 12 o'clock position.
+
+Port and Starboard sides of the TRS are defined in a similar way to the aircraft as the engine would be installed, regardless of the engine sitting of the Port or Starboard side of the aircraft wing. The component port side is at 3 o'clock position when viewed from the FLA perspective, while the Starboard side is at 9 o'clock position. In occasions, the Port and Starboard sides are also referred to as Left and Right sides, respectively, but this is not the preferred terminology.
+
+Forward the forward side of the TRS (and their components) refer to the side that is closer to the Low Pressure Turbine (LPT), while the Aft side refers to the side that is closer to the rear cone of the engine. This terminology is equivalent to aircraft forward and aft. The flow coming from the LPT is therefore traveling from the forward side to the aft side of the TRS. Therefore, Leading Edge (LE) and Trailing Edge (TE) are defined with respect to the flow direction, with the LE being the side that is closer to the LPT and the TE being the side that is closer to the rear cone of the engine.
+
+## Functional Requirements
+
+The two top level primary requirements of the TRS are:
+
+- To distribute and withstand the loads coming from the interfacing components.
+- To minimize the pressure losses in the flow path while decreasing the radial velocity component of the primary airflow.
+
+Additionally, other secondary requirements are:
+
+- To provide a mounting interface for measuring gauges, pipes and other systems.
+- To shield aerodynamically mechanical links, pipes, monitoring and other systems that need to connect from the external environment to the shaft region of the engine (area surrounded by the primary airflow).
+
+## Product Breakdown and Interfaces
+
+The TRS main product breakdown is defined with respect to the primary airflow. The airflow is guided by two aerodynamic walls, the inner and outer walls of the TRS. The inner wall is the one that is closer to the engine centerline, while the outer wall is the one that is further away from the engine centerline. The part of the TRS inside the inner wall is called the hub, while the part of the TRS outside the outer wall is called the shroud. The hub and shroud are connected by a series of aerodynamic vanes, called also struts. The name strut is used mainly by structural engineers and refer to its function of transfering loading between the hub and shroud. The name vane is used mainly by aerodynamic engineers and refer to its function of guiding the airflow through the TRS.
+
+The Hub is also called the inner casing, while the Shroud is also called the outer casing.
+
+The shroud and hub include flange interfaces to connect to the neighboring components. They are also called outer and inner flanges respectively for their position with respect to the primary flow. Physically, outer flanges grow in the YZ plane away from the primary flow. 
+Therefore, the outer forward flange connects the shroud to the LPT case. The Outer aft flange connects the shroud to the nacelle. Correspondingly, the inner aft flange connects the hub to the rear cone or plug. There is no inner forward flange, as the hub is in close contact the the low pressure turbine rotating disc. The part of the wall hub that is responsible to main a good aerodynamic flow with the rotating disc is called snub. The snub is a smooth transition between the hub and the rotating disc, which is designed to minimize pressure losses in the flow path.
+
+In addition to the flanges and wall, the hub also contains the bearing cone. The bearing cone is a conical structure inside the hub that connects it to the bearing house, a bearing system for the engine shaft. At the end of the bearing shaft, there is also a flange.
+
+Therefore,  The outer forward flange connects the shroud to the engine.
+
+Both hub and shroud have a series of bosses, raised areas that are used to mount various components and systems.
+
+In addition, the shroud includes the engine mounting lugs, which are the structural elements that connect the TRS to the mount link, which in turn connects to the engine pylon structure in the wing of the aircraft.
+
+In summary:
+
+- TRS
+  - Hub:
+    - Hub_Wall
+    - Snub
+    - Inner_Aft_Flange
+    - Bearing_Cone:
+        - Bearing_Cone_Flange
+    - Hub_Bosses
+  
+  - Shroud:
+    - Shroud_Wall
+    - Outer_Forward_Flange
+    - Outer_Aft_Flange
+    - Engine_Mounting_Lugs
+    - Shroud_Bosses
+  
+  - Vanes_Struts:
+    - Vanes
+    - Struts
+
+{
+  "TRS": {
+    "Hub": [
+      "Hub_Wall",
+      "Snub",
+      "Inner_Aft_Flange",
+      {
+        "Bearing_Cone": [
+          "Bearing_Cone_Flange"
+        ]
+      },
+      "Hub_Bosses"
+    ],
+    "Shroud": [
+      "Shroud_Wall",
+      "Outer_Forward_Flange",
+      "Outer_Aft_Flange",
+      "Engine_Mounting_Lugs",
+      "Shroud_Bosses"
+    ],
+    "Vanes_Struts": [
+      "Vanes",
+      "Struts"
+    ]
+  }
+}

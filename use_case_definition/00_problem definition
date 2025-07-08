@@ -1,0 +1,37 @@
+# Problem Definition
+
+## Introduction
+
+This activity involves the design definition and evaluation of a Turbine Rear Structure (TRS) for a turbofan engine. The TRS is a critical component that connects the engine to the aircraft structure and houses various systems. 
+
+The design activity is performed from the perspective of the team responsible of the design of the component, that interacts with the Engine Original Equipment Manufacturer (OEM) who is responsible for the overall engine design and integration.
+
+The maturity of the design is at the detailed design phase. The design space has been explored and the design is well defined, but there are still opportunities for optimization and refinement. 
+
+## Scope
+
+A a new loadset from the flight testing campaign has been received, and the team needs to evaluate the impact of this new load set on the TRS design. The team will perform a detailed analysis of the TRS structure to ensure it can withstand the new loads and identify any necessary design changes.
+
+No changes in geometry have been made to the TRS, previous mesh data can be reused.
+The testing lab has provided new insights into the material properties of the TRS, which need to be incorporated into the analysis.
+The new load set needs to be compared against the previous load set to identify any significant differences that may impact the design. If any exceedances are found, the team will need to assess the impact on the TRS design.
+
+The scope of the evaluation is limited to the static ultimate analysis of the TRS structure.
+
+## Objectives
+
+1. Evaluate the impact of the new load set on the TRS design.
+
+## Documents and Tools
+
+The engineer is expected to follow the following documents to guide the analysis.
+
+- Engineering Practice: Static Ultimate Analysis
+- Material Properties Document
+- Engineering Practice: Running FEM Simulations
+- Design Definition Document
+
+The following tools are available for the analysis:
+
+- FEA Software: ANSYS
+- Load processing tool:

@@ -1,0 +1,47 @@
+# Static Analysis
+
+This document details the procedure for performing a static analyses of aerospace components. Includes TRS, Cases, IMC and other structural components. This document does not cover dynamic analysis, fatigue or crack propagation evaluations.
+
+Path locations are provided with respect to the analysis root folder, which is the folder where the analysis is performed. The analysis root folder is defined as `...`
+
+The main steps to follow are:
+
+1. Prepare inputs to FEM analysis.
+   1. Prepare geometry and generate mesh.
+   2. Process loads and compare with previous applicable loads.
+   3. Define material properties to be used
+2. Generate run files for FEM analysis.
+   1. Import meshes
+   2. Define boundary conditions and constraints.
+   3. Define loads.
+   4. Define material properties.
+   5. Define analysis type and settings.
+3. Run FEM analysis.
+4. Post-process results.
+   1. Extract results from FEM analysis.
+   2. Evaluate results against criteria.
+5. Generate reports and documentation.
+
+## Loads Processing
+
+Loads are provided by the customer in a specific tabular format. They shall be found in the `.../01_loads/input/loads.json` file.
+The columns of the table contain the directional component of each location, e.g. A_Fx represents the Fx coordinate of the load point A and D_Mz represent the Mz coordinate at the point Z. Each row in the table represent a different load case condition. 
+
+If no information about the loads exist, they should be assumed that they are limit loads and multiplied by a safety factor of 1.5 to obtain the ultimate loads.
+
+Loads must always be converted to N and Nm for forces and moments respectively, regardless of the units provided by the customer. The conversion factor is 1 klb = 4448.22 N and 1 klb-ft = 1.35582 Nm.
+
+We need to process the loads and compare it with a pre-existing set of previous applicable loads delivered by the customer. If they exceed, we need to perform a new analysis. But if none of the loads exceed and the geometry and all other inputs are the same, a complete analysis is not needed, simply the loads comparison results and an statement instead. The output loads table should be stored in `.../01_loads/output/loads_comparison.json`.
+
+If the new loads exceed in any direction, then the envelope of old and new files need to be performed and that will be the collection of load cases that will be evaluated in the FEM analysis. If no loads exceed, no new analysis is needed and the final report shall contain the load comparison results and a statement indicating that no further analysis is needed.
+
+The loads needs to be translated from the customer format to an ANSYS format readable by ANSYS. Each load case is stored in an individual file and then read directly, one by one, into ANSYS in a load-solve-release loop iteration.
+
+All files need to be stored in the `.../01_loads/processed_loads` folder.
+
+You have the newton tool available to process the loads, with all processing functions to help you along the way. Use them.
+
+So, to summarize, you need to:
+1. Process the loads and create a comparison table.
+2. Decide if a detailed analysis is needed.
+3. If analysis is needed, create a new set of load input files.
