@@ -3,3 +3,6 @@
 
 .env
 uv.lock
+
+*.pyc
+__pycache__/
