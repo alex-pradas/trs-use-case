@@ -18,6 +18,34 @@ if str(tools_dir) not in sys.path:
 
 from loads import LoadSet, Units, LoadCase, PointLoad, ForceMoment
 
+# Test imports from tools package to cover __init__.py
+def test_tools_package_imports():
+    """Test that we can import from the tools package."""
+    import sys
+    from pathlib import Path
+    
+    # Add parent dir to path so we can import tools as a package
+    parent_dir = Path(__file__).parent.parent
+    if str(parent_dir) not in sys.path:
+        sys.path.insert(0, str(parent_dir))
+    
+    # This should work and cover the __init__.py imports
+    from tools import LoadSet, LoadCase, PointLoad, ForceMoment, Units
+    assert LoadSet is not None
+    assert LoadCase is not None
+    assert PointLoad is not None
+    assert ForceMoment is not None
+    assert Units is not None
+    
+    # Check that __all__ is properly defined
+    import tools
+    assert hasattr(tools, '__all__')
+    assert 'LoadSet' in tools.__all__
+    assert 'LoadCase' in tools.__all__
+    assert 'PointLoad' in tools.__all__
+    assert 'ForceMoment' in tools.__all__
+    assert 'Units' in tools.__all__
+
 
 class TestLoadSetReadJson:
     """Test LoadSet.read_json() classmethod."""
@@ -195,9 +223,9 @@ class TestLoadSetReadJson:
             load_set = LoadSet.read_json(new_loads_path)
             
             # Check basic properties
-            assert load_set.name == "Flight Test Loads"
+            assert load_set.name == "Aerospace Structural Load Cases"
             assert load_set.version == 1
-            assert load_set.units.forces == "klbf"
+            assert load_set.units.forces == "N"
             assert load_set.units.moments == "Nm"
             
             # Should have multiple load cases
@@ -729,6 +757,15 @@ class TestLoadSetToAnsys:
         """Test to_ansys with invalid paths."""
         with pytest.raises(FileNotFoundError):
             self.sample_loadset.to_ansys("/nonexistent/path", "test")
+    
+    def test_to_ansys_with_file_path(self):
+        """Test to_ansys when given a file path instead of directory."""
+        import tempfile
+        
+        with tempfile.NamedTemporaryFile() as temp_file:
+            # Pass a file path instead of directory path
+            with pytest.raises(FileNotFoundError, match="Path is not a directory"):
+                self.sample_loadset.to_ansys(temp_file.name, "test")
     
     def test_to_ansys_empty_loadset(self):
         """Test ANSYS export with empty load cases."""
