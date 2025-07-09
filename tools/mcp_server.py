@@ -10,7 +10,7 @@ from typing import Optional
 import json
 
 # Import LoadSet and related classes
-from loads import LoadSet, ForceUnit
+from .loads import LoadSet, ForceUnit
 
 
 # Global state for current LoadSet

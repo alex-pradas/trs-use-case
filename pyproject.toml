@@ -6,6 +6,7 @@ dependencies = [
     "pydantic-ai>=0.3.6",
     "fastmcp>=2.0.0",
     "pytest>=8.4.1",
+    "python-dotenv>=1.1.1",
 ]
 
 [tool.pytest.ini_options]
@@ -40,5 +41,6 @@ junit_family = "xunit2"
 
 [dependency-groups]
 dev = [
+    "pytest-asyncio>=1.0.0",
     "pytest-cov>=6.2.1",
 ]
