@@ -7,6 +7,7 @@ This module provides MCP tools for load data processing operations.
 from fastmcp import FastMCP
 from pathlib import Path
 from typing import Optional
+from os import PathLike
 import json
 
 # Import LoadSet and related classes
@@ -33,7 +34,7 @@ def create_mcp_server() -> FastMCP:
     mcp = FastMCP("LoadSet MCP Server")
     
     @mcp.tool
-    def load_from_json(file_path: str) -> dict:
+    def load_from_json(file_path: PathLike) -> dict:
         """
         Load a LoadSet from a JSON file.
         
@@ -137,7 +138,7 @@ def create_mcp_server() -> FastMCP:
             }
     
     @mcp.tool
-    def export_to_ansys(folder_path: str, name_stem: str) -> dict:
+    def export_to_ansys(folder_path: PathLike, name_stem: str) -> dict:
         """
         Export the current LoadSet to ANSYS format files.
         
