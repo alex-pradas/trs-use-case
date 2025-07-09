@@ -14,12 +14,11 @@ import shutil
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
 from tests.test_ai_agent_integration import AnthropicMCPTestAgent
 from tools.mcp_server import create_mcp_server, reset_global_state
 
+# Load environment variables
+load_dotenv()
 
 async def main():
     """Run the AI agent demo with the exact user prompt."""
