@@ -249,7 +249,7 @@ class LoadSet(BaseModel):
         for load_case in self.load_cases:
             # Sanitize load case name for filename
             sanitized_name = self._sanitize_filename(load_case.name or "unnamed")
-            filename = f"{name_stem}_{sanitized_name}.txt"
+            filename = f"{name_stem}_{sanitized_name}.inp"
             file_path = folder / filename
 
             # Generate ANSYS commands

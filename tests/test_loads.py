@@ -201,7 +201,7 @@ class TestRealLoadFiles:
     
     def test_read_new_loads_file(self):
         """Test reading the new_loads file."""
-        new_loads_path = Path(__file__).parent.parent / "solution" / "loads" / "new_loads"
+        new_loads_path = Path(__file__).parent.parent / "solution" / "loads" / "new_loads.json"
         
         if new_loads_path.exists():
             data = read_load_file(new_loads_path)
@@ -229,7 +229,7 @@ class TestRealLoadFiles:
     
     def test_read_old_loads_file(self):
         """Test reading the old_loads file."""
-        old_loads_path = Path(__file__).parent.parent / "solution" / "loads" / "old_loads"
+        old_loads_path = Path(__file__).parent.parent / "solution" / "loads" / "old_loads.json"
         
         if old_loads_path.exists():
             data = read_load_file(old_loads_path)

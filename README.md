@@ -23,7 +23,7 @@ uv sync
 from tools.loads import LoadSet
 
 # Load from JSON
-loadset = LoadSet.read_json('solution/loads/new_loads')
+loadset = LoadSet.read_json('solution/loads/new_loads.json')
 
 # Transform data
 converted = loadset.convert_to('kN')  # Convert to kN units
@@ -233,8 +233,8 @@ Debug configurations for:
 │   └── test_loadset_enhanced.py  # Enhanced LoadSet tests
 ├── solution/
 │   └── loads/
-│       ├── new_loads         # Updated JSON load data
-│       └── old_loads         # Original load data
+│       ├── new_loads.json   # Updated JSON load data
+│       └── old_loads.json   # Original load data
 ├── .vscode/
 │   ├── settings.json         # VS Code workspace settings
 │   └── launch.json           # Debug configurations

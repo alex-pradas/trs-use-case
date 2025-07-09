@@ -47,8 +47,8 @@ Tests are organized into focused classes in `tests/test_loadset_enhanced.py`:
 - `TestLoadSetToAnsys`: ANSYS export validation
 
 ### Data Sources
-- **`solution/loads/new_loads`**: Updated JSON load data files
-- **`solution/loads/old_loads`**: Original load data files
+- **`solution/loads/new_loads.json`**: Updated JSON load data files
+- **`solution/loads/old_loads.json`**: Original load data files
 
 ## MCP Server Integration
 

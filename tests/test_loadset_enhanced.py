@@ -217,7 +217,7 @@ class TestLoadSetReadJson:
     
     def test_read_json_actual_new_loads_file(self):
         """Test reading the actual new_loads file."""
-        new_loads_path = Path(__file__).parent.parent / "solution" / "loads" / "new_loads"
+        new_loads_path = Path(__file__).parent.parent / "solution" / "loads" / "new_loads.json"
         
         if new_loads_path.exists():
             load_set = LoadSet.read_json(new_loads_path)
@@ -688,8 +688,8 @@ class TestLoadSetToAnsys:
             
             # Check that files were created
             expected_files = [
-                "test_loads_Load_Case_1.txt",
-                "test_loads_Load_Case_2.txt"
+                "test_loads_Load_Case_1.inp",
+                "test_loads_Load_Case_2.inp"
             ]
             
             for expected_file in expected_files:
@@ -706,29 +706,31 @@ class TestLoadSetToAnsys:
             self.sample_loadset.to_ansys(temp_dir, "test_loads")
             
             # Read the first load case file
-            file_path = os.path.join(temp_dir, "test_loads_Load_Case_1.txt")
+            file_path = os.path.join(temp_dir, "test_loads_Load_Case_1.inp")
             with open(file_path, 'r') as f:
                 content = f.read()
             
             # Check that content contains expected ANSYS commands
-            assert "! Load Case: Load_Case_1" in content
-            assert "! Description: First load case" in content
-            assert "! Units: Forces=N, Moments=Nm" in content
+            assert "/TITLE,Load_Case_1" in content
+            assert "nsel,u,,,all" in content
+            assert "alls" in content
             
-            # Check for force/moment commands
-            assert "F,Node_1001,FX,1000.0" in content
-            assert "F,Node_1001,FY,2000.0" in content
-            assert "F,Node_1001,FZ,3000.0" in content
-            assert "F,Node_1001,MX,100.0" in content
-            assert "F,Node_1001,MY,200.0" in content
-            assert "F,Node_1001,MZ,300.0" in content
+            # Check for force/moment commands with pilot_ prefix
+            assert "cmsel,s,pilot_Node_1001" in content
+            assert "f,all,fx,1.000e+03" in content
+            assert "f,all,fy,2.000e+03" in content
+            assert "f,all,fz,3.000e+03" in content
+            assert "f,all,mx,1.000e+02" in content
+            assert "f,all,my,2.000e+02" in content
+            assert "f,all,mz,3.000e+02" in content
             
-            assert "F,Node_1002,FX,500.0" in content
-            assert "F,Node_1002,FY,1000.0" in content
+            assert "cmsel,s,pilot_Node_1002" in content
+            assert "f,all,fx,5.000e+02" in content
+            assert "f,all,fy,1.000e+03" in content
             # Zero values should not be written
-            assert "F,Node_1002,FZ,0.0" not in content
-            assert "F,Node_1002,MY,0.0" not in content
-            assert "F,Node_1002,MZ,0.0" not in content
+            assert "f,all,fz,0.000e+00" not in content
+            assert "f,all,my,0.000e+00" not in content
+            assert "f,all,mz,0.000e+00" not in content
     
     def test_to_ansys_with_different_units(self):
         """Test ANSYS export with different units."""
@@ -741,17 +743,17 @@ class TestLoadSetToAnsys:
         with tempfile.TemporaryDirectory() as temp_dir:
             kn_loadset.to_ansys(temp_dir, "kn_loads")
             
-            file_path = os.path.join(temp_dir, "kn_loads_Load_Case_1.txt")
+            file_path = os.path.join(temp_dir, "kn_loads_Load_Case_1.inp")
             with open(file_path, 'r') as f:
                 content = f.read()
             
-            # Check units in header
-            assert "! Units: Forces=kN, Moments=kNm" in content
+            # Check title command
+            assert "/TITLE,Load_Case_1" in content
             
             # Check converted values (1000 N = 1 kN)
-            assert "F,Node_1001,FX,1.0" in content
-            assert "F,Node_1001,FY,2.0" in content
-            assert "F,Node_1001,FZ,3.0" in content
+            assert "f,all,fx,1.000e+00" in content
+            assert "f,all,fy,2.000e+00" in content
+            assert "f,all,fz,3.000e+00" in content
     
     def test_to_ansys_path_validation(self):
         """Test to_ansys with invalid paths."""
@@ -818,7 +820,7 @@ class TestLoadSetToAnsys:
             
             # File name should have special characters replaced
             # The actual sanitization keeps hyphens, so we expect "Load_Case-1_Test"
-            expected_filename = "special_Load_Case-1_Test.txt"
+            expected_filename = "special_Load_Case-1_Test.inp"
             assert expected_filename in files
     
     def test_to_ansys_with_pathlib_path(self):
@@ -831,7 +833,7 @@ class TestLoadSetToAnsys:
             self.sample_loadset.to_ansys(path_obj, "pathlib_test")
             
             # Check that files were created
-            files = list(path_obj.glob("pathlib_test_*.txt"))
+            files = list(path_obj.glob("pathlib_test_*.inp"))
             assert len(files) == 2
 
 
