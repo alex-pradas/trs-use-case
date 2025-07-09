@@ -755,10 +755,24 @@ class TestLoadSetToAnsys:
             assert "f,all,fy,2.000e+00" in content
             assert "f,all,fz,3.000e+00" in content
     
-    def test_to_ansys_path_validation(self):
-        """Test to_ansys with invalid paths."""
-        with pytest.raises(FileNotFoundError):
-            self.sample_loadset.to_ansys("/nonexistent/path", "test")
+    def test_to_ansys_creates_folder(self):
+        """Test to_ansys creates folder if it doesn't exist."""
+        import tempfile
+        import os
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Use a non-existent subfolder
+            test_folder = os.path.join(temp_dir, "new_folder")
+            assert not os.path.exists(test_folder)
+            
+            # Export to ANSYS - should create the folder
+            self.sample_loadset.to_ansys(test_folder, "test_loads")
+            
+            # Check that folder was created and files exist
+            assert os.path.exists(test_folder)
+            assert os.path.isdir(test_folder)
+            files = os.listdir(test_folder)
+            assert len(files) == 2  # Two load cases
     
     def test_to_ansys_with_file_path(self):
         """Test to_ansys when given a file path instead of directory."""
@@ -766,7 +780,7 @@ class TestLoadSetToAnsys:
         
         with tempfile.NamedTemporaryFile() as temp_file:
             # Pass a file path instead of directory path
-            with pytest.raises(FileNotFoundError, match="Path is not a directory"):
+            with pytest.raises(FileNotFoundError, match="Path exists but is not a directory"):
                 self.sample_loadset.to_ansys(temp_file.name, "test")
     
     def test_to_ansys_empty_loadset(self):
@@ -787,6 +801,37 @@ class TestLoadSetToAnsys:
             # Should not create any files
             files = os.listdir(temp_dir)
             assert len(files) == 0
+    
+    def test_to_ansys_cleans_existing_files(self):
+        """Test to_ansys cleans existing files before creating new ones."""
+        import tempfile
+        import os
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create some existing files
+            existing_file1 = os.path.join(temp_dir, "old_file1.txt")
+            existing_file2 = os.path.join(temp_dir, "old_file2.inp")
+            
+            with open(existing_file1, 'w') as f:
+                f.write("old content")
+            with open(existing_file2, 'w') as f:
+                f.write("old ansys file")
+            
+            # Verify files exist
+            assert os.path.exists(existing_file1)
+            assert os.path.exists(existing_file2)
+            assert len(os.listdir(temp_dir)) == 2
+            
+            # Export to ANSYS - should clean existing files
+            self.sample_loadset.to_ansys(temp_dir, "test_loads")
+            
+            # Check that old files were removed and new files created
+            files = os.listdir(temp_dir)
+            assert len(files) == 2  # Only the new ANSYS files
+            assert "old_file1.txt" not in files
+            assert "old_file2.inp" not in files
+            assert "test_loads_Load_Case_1.inp" in files
+            assert "test_loads_Load_Case_2.inp" in files
     
     def test_to_ansys_special_characters_in_names(self):
         """Test ANSYS export with special characters in names."""

@@ -225,22 +225,28 @@ class LoadSet(BaseModel):
         Export LoadSet to ANSYS load files.
 
         Creates one file per load case with ANSYS F command format.
+        Creates the output folder if it doesn't exist and cleans any existing files.
 
         Args:
             folder_path: Directory to save the files
             name_stem: Base name for the files (will be suffixed with load case names)
 
         Raises:
-            FileNotFoundError: If the folder path doesn't exist
+            FileNotFoundError: If the folder path exists but is not a directory
         """
         folder = Path(folder_path)
 
-        # Validate that the folder exists
-        if not folder.exists():
-            raise FileNotFoundError(f"Directory does not exist: {folder_path}")
+        # Check if path exists and is not a directory
+        if folder.exists() and not folder.is_dir():
+            raise FileNotFoundError(f"Path exists but is not a directory: {folder_path}")
 
-        if not folder.is_dir():
-            raise FileNotFoundError(f"Path is not a directory: {folder_path}")
+        # Create folder if it doesn't exist
+        folder.mkdir(parents=True, exist_ok=True)
+
+        # Clean existing files in the folder
+        for file in folder.glob("*"):
+            if file.is_file():
+                file.unlink()
 
         # Return early if no load cases
         if not self.load_cases:
