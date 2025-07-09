@@ -289,37 +289,36 @@ class LoadSet(BaseModel):
         """
         lines = []
 
-        # Header comments
-        lines.append(f"! Load Case: {load_case.name or 'Unnamed'}")
-        if load_case.description:
-            lines.append(f"! Description: {load_case.description}")
-        lines.append(
-            f"! Units: Forces={self.units.forces}, Moments={self.units.moments}"
-        )
-        lines.append("!")
+        # Add title command with load case name
+        lines.append(f"/TITLE,{load_case.name or 'Unnamed'}")
+        lines.append("nsel,u,,,all")
+        lines.append("")
 
-        # Generate F commands for each point load
+        # Generate commands for each point load
         for point_load in load_case.point_loads:
             node_name = point_load.name or "UnnamedNode"
+            pilot_name = f"pilot_{node_name}"
             fm = point_load.force_moment
 
-            # Force components (only write non-zero values)
-            if fm.fx != 0.0:
-                lines.append(f"F,{node_name},FX,{fm.fx}")
-            if fm.fy != 0.0:
-                lines.append(f"F,{node_name},FY,{fm.fy}")
-            if fm.fz != 0.0:
-                lines.append(f"F,{node_name},FZ,{fm.fz}")
+            # Force and moment components in specific order: fx, fy, mx, my, mz, fz
+            components = [
+                ('fx', fm.fx),
+                ('fy', fm.fy), 
+                ('mx', fm.mx),
+                ('my', fm.my),
+                ('mz', fm.mz),
+                ('fz', fm.fz)
+            ]
 
-            # Moment components (only write non-zero values)
-            if fm.mx != 0.0:
-                lines.append(f"F,{node_name},MX,{fm.mx}")
-            if fm.my != 0.0:
-                lines.append(f"F,{node_name},MY,{fm.my}")
-            if fm.mz != 0.0:
-                lines.append(f"F,{node_name},MZ,{fm.mz}")
+            # Only write non-zero values
+            for dof, value in components:
+                if value != 0.0:
+                    lines.append(f"cmsel,s,{pilot_name}")
+                    lines.append(f"f,all,{dof},{value:.3e}")
+                    lines.append("nsel,u,,,all")
+                    lines.append("")
 
-        # Add final newline
         lines.append("")
+        lines.append("alls")
 
         return "\n".join(lines)

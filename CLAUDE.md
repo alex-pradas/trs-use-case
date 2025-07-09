@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Package management**: Use `uv` for all Python package management
 - **Install dependencies**: `uv sync`
 - **Add dependencies**: `uv add <package>` or `uv add --dev <package>` for dev dependencies
+- **Always use uv to run python commands**: `uv run python`
 
 ### Testing
 - **Run all tests**: `uv run pytest`
