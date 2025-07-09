@@ -49,8 +49,38 @@ Tests are organized into focused classes in `tests/test_loadset_enhanced.py`:
 - **`solution/loads/new_loads`**: Updated JSON load data files
 - **`solution/loads/old_loads`**: Original load data files
 
+## MCP Server Integration
+
+This project includes a **FastMCP server** that exposes LoadSet operations as MCP tools for LLM agent access:
+
+### MCP Server Commands
+- **Start MCP server**: `uv run python tools/mcp_server.py`
+- **Test MCP integration**: `uv run pytest tests/test_mcp_integration.py -v`
+- **Test MCP server**: `uv run pytest tests/test_mcp_server.py -v`
+
+### Available MCP Tools
+- **`load_from_json`**: Load LoadSet from JSON file path
+- **`convert_units`**: Convert units between N, kN, lbf, klbf  
+- **`scale_loads`**: Scale all loads by a factor
+- **`export_to_ansys`**: Export to ANSYS format files
+- **`get_load_summary`**: Get summary information about current LoadSet
+- **`list_load_cases`**: List all load cases in current LoadSet
+
+### MCP Architecture
+- **`tools/mcp_server.py`**: FastMCP server implementation with tool definitions
+- **`tools/agent_client.py`**: Pydantic-AI agent client for testing MCP integration
+- **Global state management**: Maintains current LoadSet across tool calls
+- **Error handling**: Comprehensive error responses for all MCP operations
+
+### Integration Testing
+The MCP server is tested both directly and through a Pydantic-AI agent client:
+- **Direct tool tests**: Unit tests for each MCP tool
+- **Agent integration tests**: Tests using Pydantic-AI agent (requires `OPENAI_API_KEY`)
+- **State management tests**: Verify LoadSet state persistence across operations
+
 ## Configuration Notes
 
 - **Python version**: Requires Python ≥3.13
 - **Test configuration**: Defined in `pyproject.toml` with verbose output, colored results, and short tracebacks
 - **VS Code integration**: Configured with proper Python interpreter and test discovery settings
+- **MCP dependencies**: Uses `fastmcp>=2.0.0` and `pydantic-ai>=0.3.6`
