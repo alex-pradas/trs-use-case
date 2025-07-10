@@ -7,6 +7,8 @@ dependencies = [
     "fastmcp>=2.0.0",
     "python-dotenv>=1.1.1",
     "logfire>=3.23.0",
+    "matplotlib>=3.8.0",
+    "numpy>=1.24.0",
 ]
 
 [tool.pytest.ini_options]
@@ -26,6 +28,7 @@ addopts = [
     "--strict-markers",     # Strict marker usage
     "--strict-config",      # Strict config file usage
     "--color=yes",          # Colored output
+    "--cov-report=xml:cov.xml",  # XML coverage report
 ]
 
 # Markers for test categorization
@@ -41,6 +44,11 @@ minversion = "6.0"
 # Test session configuration
 console_output_style = "progress"
 junit_family = "xunit2"
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+]
 
 [dependency-groups]
 dev = [
