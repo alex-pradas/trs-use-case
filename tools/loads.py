@@ -238,7 +238,9 @@ class LoadSet(BaseModel):
 
         # Check if path exists and is not a directory
         if folder.exists() and not folder.is_dir():
-            raise FileNotFoundError(f"Path exists but is not a directory: {folder_path}")
+            raise FileNotFoundError(
+                f"Path exists but is not a directory: {folder_path}"
+            )
 
         # Create folder if it doesn't exist
         folder.mkdir(parents=True, exist_ok=True)
@@ -308,12 +310,12 @@ class LoadSet(BaseModel):
 
             # Force and moment components in specific order: fx, fy, mx, my, mz, fz
             components = [
-                ('fx', fm.fx),
-                ('fy', fm.fy), 
-                ('mx', fm.mx),
-                ('my', fm.my),
-                ('mz', fm.mz),
-                ('fz', fm.fz)
+                ("fx", fm.fx),
+                ("fy", fm.fy),
+                ("mx", fm.mx),
+                ("my", fm.my),
+                ("mz", fm.mz),
+                ("fz", fm.fz),
             ]
 
             # Only write non-zero values
