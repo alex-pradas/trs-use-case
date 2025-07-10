@@ -7,7 +7,6 @@ This module provides MCP tools for load data processing operations.
 from fastmcp import FastMCP
 from typing import Optional
 from os import PathLike
-import logfire
 
 # Import LoadSet and related classes
 from loads import LoadSet, ForceUnit
@@ -30,7 +29,6 @@ def create_mcp_server() -> FastMCP:
     Returns:
         FastMCP: Configured MCP server instance
     """
-    logfire.info("Creating FastMCP server for LoadSet operations")
 
     mcp = FastMCP("LoadSet MCP Server")
 
@@ -236,6 +234,5 @@ def create_mcp_server() -> FastMCP:
 
 
 if __name__ == "__main__":
-    logfire.configure(token="pylf_v1_eu_QPTnf71y7mj90cKkfwyTDbM9Xg694W2sdkw2cQj3pT5R")
     server = create_mcp_server()
     server.run()
