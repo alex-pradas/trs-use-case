@@ -16,12 +16,12 @@ class ForceMoment(BaseModel):
     It is used to calculate the force and moment at a point in space.
     """
 
-    fx: float
-    fy: float
-    fz: float
-    mx: float
-    my: float
-    mz: float
+    fx: float = 0.0
+    fy: float = 0.0
+    fz: float = 0.0
+    mx: float = 0.0
+    my: float = 0.0
+    mz: float = 0.0
 
 
 class PointLoad(BaseModel):
