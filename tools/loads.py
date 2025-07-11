@@ -10,6 +10,61 @@ ForceUnit = Literal["N", "kN", "lbf", "klbf"]
 MomentUnit = Literal["Nm", "kNm", "lbf-ft"]
 
 
+class ComparisonRow(BaseModel):
+    """
+    ComparisonRow represents one row in a LoadSet comparison table.
+    Each row compares a specific point/component/type combination between two LoadSets.
+    """
+
+    point_name: str
+    component: Literal["fx", "fy", "fz", "mx", "my", "mz"]
+    type: Literal["max", "min"]
+    loadset1_value: float
+    loadset2_value: float
+    loadset1_loadcase: str
+    loadset2_loadcase: str
+    abs_diff: float
+    pct_diff: float  # Percentage difference relative to loadset1
+
+
+class LoadSetCompare(BaseModel):
+    """
+    LoadSetCompare contains the results of comparing two LoadSets.
+    Provides tabular comparison data and export functionality.
+    """
+
+    loadset1_metadata: dict
+    loadset2_metadata: dict
+    comparison_rows: list[ComparisonRow]
+
+    def to_dict(self) -> dict:
+        """
+        Convert LoadSetCompare to dictionary format.
+        
+        Returns:
+            dict: Dictionary representation of the comparison
+        """
+        return {
+            "metadata": {
+                "loadset1": self.loadset1_metadata,
+                "loadset2": self.loadset2_metadata,
+            },
+            "comparison_rows": [row.model_dump() for row in self.comparison_rows],
+        }
+
+    def to_json(self, indent: int = 2) -> str:
+        """
+        Export LoadSetCompare to JSON string.
+        
+        Args:
+            indent: JSON indentation level
+            
+        Returns:
+            str: JSON representation of the comparison
+        """
+        return json.dumps(self.to_dict(), indent=indent)
+
+
 class ForceMoment(BaseModel):
     """
     ForceMoment is a model that represents a force and a moment.
@@ -330,3 +385,219 @@ class LoadSet(BaseModel):
         lines.append("alls")
 
         return "\n".join(lines)
+
+    def get_point_extremes(self) -> dict:
+        """
+        Get extreme values (max/min) for each point and component across all load cases.
+        
+        Returns:
+            dict: Nested dictionary structure:
+                {
+                    "Point_A": {
+                        "fx": {"max": {"value": 100.0, "loadcase": "Case1"}, 
+                               "min": {"value": 80.0, "loadcase": "Case2"}},
+                        "fy": {...},
+                        ...
+                    },
+                    ...
+                }
+        """
+        point_extremes = {}
+        components = ["fx", "fy", "fz", "mx", "my", "mz"]
+        
+        # Collect all point data across all load cases
+        for load_case in self.load_cases:
+            for point_load in load_case.point_loads:
+                point_name = point_load.name or "Unnamed"
+                
+                if point_name not in point_extremes:
+                    point_extremes[point_name] = {}
+                
+                # Get force/moment values
+                fm = point_load.force_moment
+                values = {
+                    "fx": fm.fx, "fy": fm.fy, "fz": fm.fz,
+                    "mx": fm.mx, "my": fm.my, "mz": fm.mz
+                }
+                
+                for component in components:
+                    value = values[component]
+                    
+                    if component not in point_extremes[point_name]:
+                        point_extremes[point_name][component] = {
+                            "max": {"value": value, "loadcase": load_case.name or "Unnamed"},
+                            "min": {"value": value, "loadcase": load_case.name or "Unnamed"}
+                        }
+                    else:
+                        # Update max
+                        if value > point_extremes[point_name][component]["max"]["value"]:
+                            point_extremes[point_name][component]["max"] = {
+                                "value": value, 
+                                "loadcase": load_case.name or "Unnamed"
+                            }
+                        
+                        # Update min
+                        if value < point_extremes[point_name][component]["min"]["value"]:
+                            point_extremes[point_name][component]["min"] = {
+                                "value": value, 
+                                "loadcase": load_case.name or "Unnamed"
+                            }
+        
+        # Filter out components where both max and min are zero
+        filtered_extremes = {}
+        for point_name, point_data in point_extremes.items():
+            filtered_point_data = {}
+            for component, comp_data in point_data.items():
+                max_val = comp_data["max"]["value"]
+                min_val = comp_data["min"]["value"]
+                
+                # Only include if not both max and min are zero
+                if not (max_val == 0.0 and min_val == 0.0):
+                    filtered_point_data[component] = comp_data
+            
+            if filtered_point_data:  # Only include points that have non-zero components
+                filtered_extremes[point_name] = filtered_point_data
+        
+        return filtered_extremes
+
+    def compare_to(self, other: "LoadSet") -> LoadSetCompare:
+        """
+        Compare this LoadSet to another LoadSet.
+        
+        Args:
+            other: The LoadSet to compare against
+            
+        Returns:
+            LoadSetCompare: Detailed comparison results
+            
+        Raises:
+            ValueError: If the comparison cannot be performed
+        """
+        if not isinstance(other, LoadSet):
+            raise ValueError("Can only compare to another LoadSet instance")
+        
+        # Convert units if necessary (convert other to match self's units)
+        other_converted = other
+        if other.units.forces != self.units.forces:
+            other_converted = other.convert_to(self.units.forces)
+        
+        # Get extremes for both LoadSets
+        self_extremes = self.get_point_extremes()
+        other_extremes = other_converted.get_point_extremes()
+        
+        # Collect all unique point names from both LoadSets
+        all_points = set(self_extremes.keys()) | set(other_extremes.keys())
+        
+        comparison_rows = []
+        components: list[Literal["fx", "fy", "fz", "mx", "my", "mz"]] = ["fx", "fy", "fz", "mx", "my", "mz"]
+        
+        for point_name in sorted(all_points):
+            for component in components:
+                # Check if component exists in both LoadSets for this point
+                self_has_component = (point_name in self_extremes and 
+                                     component in self_extremes[point_name])
+                other_has_component = (point_name in other_extremes and 
+                                      component in other_extremes[point_name])
+                
+                # Skip if component doesn't exist in either LoadSet (filtered out as zero)
+                if not self_has_component and not other_has_component:
+                    continue
+                
+                # Handle max comparison
+                self_max_val = 0.0
+                self_max_case = "N/A"
+                other_max_val = 0.0
+                other_max_case = "N/A"
+                
+                if self_has_component:
+                    self_max_val = self_extremes[point_name][component]["max"]["value"]
+                    self_max_case = self_extremes[point_name][component]["max"]["loadcase"]
+                
+                if other_has_component:
+                    other_max_val = other_extremes[point_name][component]["max"]["value"]
+                    other_max_case = other_extremes[point_name][component]["max"]["loadcase"]
+                
+                # Calculate differences for max
+                abs_diff_max = abs(other_max_val - self_max_val)
+                pct_diff_max = 0.0
+                if self_max_val != 0.0:
+                    pct_diff_max = (abs_diff_max / abs(self_max_val)) * 100.0
+                elif other_max_val != 0.0:
+                    pct_diff_max = float('inf')  # Infinite percentage change
+                
+                # Create max comparison row
+                max_row = ComparisonRow(
+                    point_name=point_name,
+                    component=component,
+                    type="max",
+                    loadset1_value=self_max_val,
+                    loadset2_value=other_max_val,
+                    loadset1_loadcase=self_max_case,
+                    loadset2_loadcase=other_max_case,
+                    abs_diff=abs_diff_max,
+                    pct_diff=pct_diff_max
+                )
+                comparison_rows.append(max_row)
+                
+                # Handle min comparison
+                self_min_val = 0.0
+                self_min_case = "N/A"
+                other_min_val = 0.0
+                other_min_case = "N/A"
+                
+                if self_has_component:
+                    self_min_val = self_extremes[point_name][component]["min"]["value"]
+                    self_min_case = self_extremes[point_name][component]["min"]["loadcase"]
+                
+                if other_has_component:
+                    other_min_val = other_extremes[point_name][component]["min"]["value"]
+                    other_min_case = other_extremes[point_name][component]["min"]["loadcase"]
+                
+                # Calculate differences for min
+                abs_diff_min = abs(other_min_val - self_min_val)
+                pct_diff_min = 0.0
+                if self_min_val != 0.0:
+                    pct_diff_min = (abs_diff_min / abs(self_min_val)) * 100.0
+                elif other_min_val != 0.0:
+                    pct_diff_min = float('inf')  # Infinite percentage change
+                
+                # Create min comparison row
+                min_row = ComparisonRow(
+                    point_name=point_name,
+                    component=component,
+                    type="min",
+                    loadset1_value=self_min_val,
+                    loadset2_value=other_min_val,
+                    loadset1_loadcase=self_min_case,
+                    loadset2_loadcase=other_min_case,
+                    abs_diff=abs_diff_min,
+                    pct_diff=pct_diff_min
+                )
+                comparison_rows.append(min_row)
+        
+        # Create metadata for both LoadSets
+        self_metadata = {
+            "name": self.name,
+            "version": self.version,
+            "description": self.description,
+            "units": {
+                "forces": self.units.forces,
+                "moments": self.units.moments
+            }
+        }
+        
+        other_metadata = {
+            "name": other.name,
+            "version": other.version,
+            "description": other.description,
+            "units": {
+                "forces": other.units.forces,
+                "moments": other.units.moments
+            }
+        }
+        
+        return LoadSetCompare(
+            loadset1_metadata=self_metadata,
+            loadset2_metadata=other_metadata,
+            comparison_rows=comparison_rows
+        )
