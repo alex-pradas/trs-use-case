@@ -108,8 +108,8 @@ class LoadSetCompare(BaseModel):
         generated_files = {}
         
         for point_name, rows in points_data.items():
-            # Create figure with dual subplots
-            fig, (ax_forces, ax_moments) = plt.subplots(1, 2, figsize=(12, 6))
+            # Create figure with dual subplots - narrower width
+            fig, (ax_forces, ax_moments) = plt.subplots(1, 2, figsize=(8, 6))
             fig.suptitle(f'{point_name}: Forces vs Moments Comparison', fontsize=14, fontweight='bold')
             
             # Process data for forces and moments
@@ -140,10 +140,11 @@ class LoadSetCompare(BaseModel):
             loadset1_name = self.loadset1_metadata.get('name', 'LoadSet 1')
             loadset2_name = self.loadset2_metadata.get('name', 'LoadSet 2')
             
-            loadset1_patch = mpatches.Patch(color='#1f77b4', alpha=0.7, label=loadset1_name)
-            loadset2_patch = mpatches.Patch(color='#ff7f0e', alpha=0.7, label=loadset2_name)
-            fig.legend(handles=[loadset1_patch, loadset2_patch], loc='upper center', 
-                      bbox_to_anchor=(0.5, 0.02), ncol=2)
+            loadset1_patch = mpatches.Patch(color='lightgrey', alpha=1.0, label=loadset1_name)
+            loadset2_normal_patch = mpatches.Patch(color='darkgrey', alpha=1.0, label=f'{loadset2_name} (within range)')
+            loadset2_exceed_patch = mpatches.Patch(color='maroon', alpha=1.0, label=f'{loadset2_name} (exceeds range)')
+            fig.legend(handles=[loadset1_patch, loadset2_normal_patch, loadset2_exceed_patch], 
+                      loc='upper center', bbox_to_anchor=(0.5, 0.02), ncol=3)
             
             # Adjust layout and save
             plt.tight_layout()
@@ -210,7 +211,9 @@ class LoadSetCompare(BaseModel):
             return
         
         x_pos = np.arange(len(components))
-        bar_width = 0.35
+        # Keep consistent bar width regardless of number of components (based on 3-component layout)
+        bar_width_full = 0.8  # Width for LoadSet 1 (background bars) - same as 3-component case
+        bar_width_inner = bar_width_full * 0.5  # 50% width for LoadSet 2 (foreground bars)
         
         # Extract data for plotting
         loadset1_bottoms = []
@@ -233,25 +236,58 @@ class LoadSetCompare(BaseModel):
             loadset2_bottoms.append(ls2_min)
             loadset2_heights.append(ls2_max - ls2_min)
         
-        # Create bars
-        ax.bar(x_pos - bar_width/2, loadset1_heights, bar_width,
-               bottom=loadset1_bottoms, color='#1f77b4', alpha=0.7, 
-               edgecolor='#1f77b4', linewidth=1)
+        # Create bars - LoadSet 1 as background (light grey, 100% opacity, no edges)
+        ax.bar(x_pos, loadset1_heights, bar_width_full,
+               bottom=loadset1_bottoms, color='lightgrey', alpha=1.0, 
+               edgecolor='none', linewidth=0)
         
-        ax.bar(x_pos + bar_width/2, loadset2_heights, bar_width,
-               bottom=loadset2_bottoms, color='#ff7f0e', alpha=0.7,
-               edgecolor='#ff7f0e', linewidth=1)
+        # Determine colors for LoadSet 2 based on whether values exceed LoadSet 1
+        loadset2_colors = []
+        for component in components:
+            comp_data = data[component]
+            ls1_min = comp_data['loadset1_min']
+            ls1_max = comp_data['loadset1_max']
+            ls2_min = comp_data['loadset2_min']
+            ls2_max = comp_data['loadset2_max']
+            
+            # Check if LoadSet 2 range exceeds LoadSet 1 range (either min is lower or max is higher)
+            if ls2_min < ls1_min or ls2_max > ls1_max:
+                loadset2_colors.append('maroon')
+            else:
+                loadset2_colors.append('darkgrey')
         
-        # Add zero line
-        ax.axhline(y=0, color='black', linestyle='--', alpha=0.5, linewidth=0.8)
+        # Create bars - LoadSet 2 as foreground with conditional coloring (no edges)
+        for x, height, bottom, color in zip(x_pos, loadset2_heights, loadset2_bottoms, loadset2_colors):
+            ax.bar(x, height, bar_width_inner,
+                   bottom=bottom, color=color, alpha=1.0,
+                   edgecolor='none', linewidth=0)
         
-        # Styling
+        # Styling - clean appearance with no grid or spines
         ax.set_title(title, fontweight='bold')
         ax.set_xlabel('Component')
         ax.set_ylabel(f'Value ({units})')
         ax.set_xticks(x_pos)
         ax.set_xticklabels(components)
-        ax.grid(True, alpha=0.3)
+        
+        # Remove all spines (box around plot)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        
+        # Remove grid
+        ax.grid(False)
+        
+        # Set x-axis limits to maintain consistent bar width and auto-center regardless of number of components
+        # Calculate centering offset to center the group of bars
+        if len(components) > 0:
+            # Center point of the component group
+            center_point = (len(components) - 1) / 2.0
+            # Fixed range width to maintain consistent bar scaling (based on 3-component case)
+            range_width = 3.0  # Total width that would accommodate 3 components with proper spacing
+            
+            # Auto-center by adjusting the x-axis limits around the center point
+            ax.set_xlim(center_point - range_width/2, center_point + range_width/2)
         
         # Set y-axis limits with some padding
         all_values = loadset1_bottoms + [b+h for b, h in zip(loadset1_bottoms, loadset1_heights)] + \
