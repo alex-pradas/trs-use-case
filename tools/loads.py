@@ -287,6 +287,9 @@ class LoadSetCompare(BaseModel):
                    bottom=bottom, color=color, alpha=1.0,
                    edgecolor='none', linewidth=0)
         
+        # Add subtle zero reference line for visual grounding
+        ax.axhline(y=0, color='#333333', linestyle='-', linewidth=1, alpha=0.6, zorder=1)
+        
         # Styling - clean appearance with no grid or spines
         ax.set_title(title, fontweight='bold')
         ax.set_xlabel('Component')
