@@ -7,6 +7,8 @@ dependencies = [
     "fastmcp>=2.0.0",
     "python-dotenv>=1.1.1",
     "logfire>=3.23.0",
+    "matplotlib>=3.8.0",
+    "numpy>=1.24.0",
 ]
 
 [tool.pytest.ini_options]
@@ -26,6 +28,8 @@ addopts = [
     "--strict-markers",     # Strict marker usage
     "--strict-config",      # Strict config file usage
     "--color=yes",          # Colored output
+    "--cov-report=xml:cov.xml",  # XML coverage report
+    "-m", "not visuals",    # Skip visual tests by default
 ]
 
 # Markers for test categorization
@@ -33,6 +37,7 @@ markers = [
     "unit: Unit tests",
     "integration: Integration tests", 
     "slow: Slow running tests",
+    "visuals: Visual chart generation tests (run with: pytest -m visuals)",
 ]
 
 # Minimum version
@@ -41,6 +46,11 @@ minversion = "6.0"
 # Test session configuration
 console_output_style = "progress"
 junit_family = "xunit2"
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+]
 
 [dependency-groups]
 dev = [

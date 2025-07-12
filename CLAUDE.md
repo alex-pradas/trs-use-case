@@ -13,9 +13,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing
 - **Run all tests**: `uv run pytest`
 - **Run specific test file**: `uv run pytest tests/test_loadset_enhanced.py -v`
+- **Run comparison tests**: `uv run pytest tests/test_loadset_comparison.py -v`
+- **Run range chart tests**: `uv run pytest tests/test_range_charts.py -v`
 - **Run specific test class**: `uv run pytest tests/test_loadset_enhanced.py::TestLoadSetReadJson -v`
 - **Run specific test method**: `uv run pytest tests/test_loadset_enhanced.py::TestLoadSetConvertTo::test_convert_to_kN -v`
 - **Run with coverage**: `uv run pytest --cov=tools --cov-report=html`
+- **Generate visual charts**: `uv run pytest -m visuals -s`
 
 ### Verification
 - **Verify setup**: `uv run python verify_setup.py`
@@ -30,21 +33,39 @@ This is a **load-transform-export pipeline** for aerospace structural load data 
    - `LoadCase`: Individual load case with point loads
    - `PointLoad`: Single point load with force/moment components
    - `ForceMoment`: Force (fx,fy,fz) and moment (mx,my,mz) values
+   - `ComparisonRow`: Individual comparison result row
+   - `LoadSetCompare`: Comparison results container with export functionality
 
-2. **Data Flow**: Load JSON → Transform (convert units/scale) → Export ANSYS files
+2. **Data Flow**: Load JSON → Transform (convert units/scale) → Export ANSYS files → Compare LoadSets → Generate visualizations
 
 ### Key Features
 - **Unit conversion**: Supports N, kN, lbf, klbf for forces; Nm, kNm, lbf-ft for moments
 - **Scaling**: Factor-based scaling of all load values
 - **ANSYS export**: Generates F-command format files for each load case
+- **LoadSet comparison**: Compare two LoadSets with detailed min/max analysis
+- **Range visualization**: Generate dual subplot bar charts (forces vs moments)
+- **JSON export**: Export comparison results in structured JSON format
 - **Immutable operations**: All transform methods return new instances
 
 ### Test Structure
-Tests are organized into focused classes in `tests/test_loadset_enhanced.py`:
+Tests are organized into focused classes across multiple files:
+
+#### Core LoadSet Tests (`tests/test_loadset_enhanced.py`):
 - `TestLoadSetReadJson`: JSON loading and validation
 - `TestLoadSetConvertTo`: Unit conversion testing
 - `TestLoadSetFactor`: Load scaling functionality
 - `TestLoadSetToAnsys`: ANSYS export validation
+
+#### Comparison Tests (`tests/test_loadset_comparison.py`):
+- `TestComparisonRow`: Individual comparison row functionality
+- `TestLoadSetCompare`: Comparison result container and export
+- `TestLoadSetPointExtremes`: Min/max value extraction
+- `TestLoadSetComparison`: LoadSet comparison functionality
+- `TestLoadSetComparisonWithRealData`: Integration tests with real data
+
+#### Visualization Tests (`tests/test_range_charts.py`):
+- `TestRangeChartGeneration`: Range chart generation functionality
+- `TestRangeChartsWithRealData`: Tests with real data including visual generation (marked with `@pytest.mark.visuals`)
 
 ### Data Sources
 - **`solution/loads/new_loads.json`**: Updated JSON load data files
@@ -83,5 +104,7 @@ The MCP server is tested both directly and through a Pydantic-AI agent client:
 
 - **Python version**: Requires Python ≥3.13
 - **Test configuration**: Defined in `pyproject.toml` with verbose output, colored results, and short tracebacks
+- **Visual tests**: Marked with `@pytest.mark.visuals` and skipped by default (use `pytest -m visuals` to run)
 - **VS Code integration**: Configured with proper Python interpreter and test discovery settings
-- **MCP dependencies**: Uses `fastmcp>=2.0.0` and `pydantic-ai>=0.3.6`
+- **Dependencies**: Uses `matplotlib>=3.8.0` and `numpy>=1.24.0` for visualization, `fastmcp>=2.0.0` and `pydantic-ai>=0.3.6` for MCP
+- **Visualization output**: Range charts saved to `tests/visual_range_charts/` when visual tests are run
