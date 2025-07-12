@@ -64,7 +64,7 @@ class LoadSetCompare(BaseModel):
         """
         return json.dumps(self.to_dict(), indent=indent)
 
-    def generate_range_charts(self, output_dir: PathLike, format: str = "png") -> dict[str, Path]:
+    def generate_range_charts(self, output_dir: PathLike = None, format: str = "png", as_base64: bool = False) -> dict[str, Path | str]:
         """
         Generate range bar chart images comparing LoadSets for each point.
         
@@ -72,15 +72,18 @@ class LoadSetCompare(BaseModel):
         representing the min-to-max range for each component.
         
         Args:
-            output_dir: Directory to save the generated images
+            output_dir: Directory to save the generated images (required if as_base64=False)
             format: Image format (png, svg, pdf)
+            as_base64: If True, return base64-encoded strings instead of saving files
             
         Returns:
-            dict: Mapping of point names to generated image file paths
+            dict: If as_base64=False, mapping of point names to generated image file paths.
+                  If as_base64=True, mapping of point names to base64-encoded image strings.
             
         Raises:
             ImportError: If matplotlib is not available
-            FileNotFoundError: If output directory doesn't exist and can't be created
+            FileNotFoundError: If output directory doesn't exist and can't be created (when as_base64=False)
+            ValueError: If output_dir is None and as_base64=False
         """
         try:
             import matplotlib.pyplot as plt
@@ -90,13 +93,19 @@ class LoadSetCompare(BaseModel):
         
         from pathlib import Path
         
-        output_path = Path(output_dir)
+        # Validate parameters
+        if not as_base64 and output_dir is None:
+            raise ValueError("output_dir is required when as_base64=False")
         
-        # Create output directory if it doesn't exist
-        if not output_path.exists():
-            output_path.mkdir(parents=True, exist_ok=True)
-        elif not output_path.is_dir():
-            raise FileNotFoundError(f"Output path exists but is not a directory: {output_dir}")
+        # Handle output directory for file saving
+        output_path: Path | None = None
+        if not as_base64:
+            output_path = Path(output_dir)
+            # Create output directory if it doesn't exist
+            if not output_path.exists():
+                output_path.mkdir(parents=True, exist_ok=True)
+            elif not output_path.is_dir():
+                raise FileNotFoundError(f"Output path exists but is not a directory: {output_dir}")
         
         # Group comparison rows by point
         points_data = {}
@@ -150,15 +159,31 @@ class LoadSetCompare(BaseModel):
             plt.tight_layout()
             plt.subplots_adjust(top=0.85, bottom=0.15)
             
-            # Generate filename
-            safe_point_name = self._sanitize_filename(point_name)
-            filename = f"{safe_point_name}_ranges.{format}"
-            file_path = output_path / filename
+            if as_base64:
+                # Generate base64 string
+                import io
+                import base64
+                
+                buffer = io.BytesIO()
+                plt.savefig(buffer, format=format, dpi=300, bbox_inches='tight')
+                buffer.seek(0)
+                
+                # Convert to base64
+                image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                generated_files[point_name] = image_base64
+                
+                buffer.close()
+            else:
+                # Save to file
+                assert output_path is not None  # This should never be None when as_base64=False
+                safe_point_name = self._sanitize_filename(point_name)
+                filename = f"{safe_point_name}_ranges.{format}"
+                file_path = output_path / filename
+                
+                plt.savefig(file_path, dpi=300, bbox_inches='tight')
+                generated_files[point_name] = file_path
             
-            plt.savefig(file_path, dpi=300, bbox_inches='tight')
             plt.close()
-            
-            generated_files[point_name] = file_path
         
         return generated_files
 

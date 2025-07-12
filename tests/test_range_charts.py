@@ -245,6 +245,44 @@ class TestRangeChartGeneration:
             with pytest.raises(FileNotFoundError, match="not a directory"):
                 comparison.generate_range_charts(temp_file.name)
 
+    def test_generate_range_charts_base64_mode(self):
+        """Test base64 generation mode."""
+        import base64
+        
+        comparison = self.loadset1.compare_to(self.loadset2)
+        
+        # Generate as base64
+        base64_charts = comparison.generate_range_charts(as_base64=True, format="png")
+        
+        # Verify we get base64 strings
+        assert isinstance(base64_charts, dict)
+        assert len(base64_charts) > 0
+        
+        for point_name, base64_data in base64_charts.items():
+            # Should be a string
+            assert isinstance(base64_data, str)
+            # Should be valid base64
+            try:
+                decoded = base64.b64decode(base64_data)
+                # Should be a reasonable size for a PNG
+                assert len(decoded) > 1000  # At least 1KB
+                # PNG files start with specific magic bytes
+                assert decoded[:8] == b'\x89PNG\r\n\x1a\n'
+            except Exception as e:
+                pytest.fail(f"Invalid base64 data for {point_name}: {e}")
+
+    def test_generate_range_charts_base64_validation(self):
+        """Test parameter validation for base64 mode."""
+        comparison = self.loadset1.compare_to(self.loadset2)
+        
+        # Should work without output_dir when as_base64=True
+        base64_charts = comparison.generate_range_charts(as_base64=True)
+        assert len(base64_charts) > 0
+        
+        # Should raise error when output_dir is None and as_base64=False
+        with pytest.raises(ValueError, match="output_dir is required"):
+            comparison.generate_range_charts(as_base64=False)
+
 
 class TestRangeChartsWithRealData:
     """Test range chart generation with real data files."""
