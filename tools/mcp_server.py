@@ -19,32 +19,21 @@ if str(tools_dir) not in sys.path:
 from loads import LoadSet, ForceUnit, LoadSetCompare
 
 
-# Global state for LoadSets
-_current_loadset: Optional[LoadSet] = None
-_comparison_loadset: Optional[LoadSet] = None
-_current_comparison: Optional[LoadSetCompare] = None
+class LoadSetMCPProvider:
+    """Provider class for LoadSet MCP operations with encapsulated state."""
+    
+    def __init__(self):
+        self._current_loadset: Optional[LoadSet] = None
+        self._comparison_loadset: Optional[LoadSet] = None
+        self._current_comparison: Optional[LoadSetCompare] = None
 
+    def reset_state(self):
+        """Reset the LoadSet state."""
+        self._current_loadset = None
+        self._comparison_loadset = None
+        self._current_comparison = None
 
-def reset_global_state():
-    """Reset the global LoadSet state."""
-    global _current_loadset, _comparison_loadset, _current_comparison
-    _current_loadset = None
-    _comparison_loadset = None
-    _current_comparison = None
-
-
-def create_mcp_server() -> FastMCP:
-    """
-    Create and configure the FastMCP server for LoadSet operations.
-
-    Returns:
-        FastMCP: Configured MCP server instance
-    """
-
-    mcp = FastMCP("LoadSet MCP Server")
-
-    @mcp.tool
-    def load_from_json(file_path: PathLike) -> dict:
+    def load_from_json(self, file_path: PathLike) -> dict:
         """
         Load a LoadSet from a JSON file.
 
@@ -57,25 +46,22 @@ def create_mcp_server() -> FastMCP:
         Raises:
             ValueError: If file cannot be loaded or parsed
         """
-        global _current_loadset
-
         try:
-            _current_loadset = LoadSet.read_json(file_path)
+            self._current_loadset = LoadSet.read_json(file_path)
             return {
                 "success": True,
                 "message": f"LoadSet loaded from {file_path}",
-                "loadset_name": _current_loadset.name,
-                "num_load_cases": len(_current_loadset.load_cases),
+                "loadset_name": self._current_loadset.name,
+                "num_load_cases": len(self._current_loadset.load_cases),
                 "units": {
-                    "forces": _current_loadset.units.forces,
-                    "moments": _current_loadset.units.moments,
+                    "forces": self._current_loadset.units.forces,
+                    "moments": self._current_loadset.units.moments,
                 },
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    @mcp.tool
-    def convert_units(target_units: ForceUnit) -> dict:
+    def convert_units(self, target_units: ForceUnit) -> dict:
         """
         Convert the current LoadSet to different units.
 
@@ -85,31 +71,28 @@ def create_mcp_server() -> FastMCP:
         Returns:
             dict: Success message and conversion info
         """
-        global _current_loadset
-
-        if _current_loadset is None:
+        if self._current_loadset is None:
             return {
                 "success": False,
                 "error": "No LoadSet loaded. Use load_from_json first.",
             }
 
         try:
-            original_units = _current_loadset.units.forces
-            _current_loadset = _current_loadset.convert_to(target_units)
+            original_units = self._current_loadset.units.forces
+            self._current_loadset = self._current_loadset.convert_to(target_units)
 
             return {
                 "success": True,
                 "message": f"Units converted from {original_units} to {target_units}",
                 "new_units": {
-                    "forces": _current_loadset.units.forces,
-                    "moments": _current_loadset.units.moments,
+                    "forces": self._current_loadset.units.forces,
+                    "moments": self._current_loadset.units.moments,
                 },
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    @mcp.tool
-    def scale_loads(factor: float) -> dict:
+    def scale_loads(self, factor: float) -> dict:
         """
         Scale all loads in the current LoadSet by a factor.
 
@@ -119,16 +102,14 @@ def create_mcp_server() -> FastMCP:
         Returns:
             dict: Success message and scaling info
         """
-        global _current_loadset
-
-        if _current_loadset is None:
+        if self._current_loadset is None:
             return {
                 "success": False,
                 "error": "No LoadSet loaded. Use load_from_json first.",
             }
 
         try:
-            _current_loadset = _current_loadset.factor(factor)
+            self._current_loadset = self._current_loadset.factor(factor)
 
             return {
                 "success": True,
@@ -138,8 +119,7 @@ def create_mcp_server() -> FastMCP:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    @mcp.tool
-    def export_to_ansys(folder_path: PathLike, name_stem: str) -> dict:
+    def export_to_ansys(self, folder_path: PathLike, name_stem: str) -> dict:
         """
         Export the current LoadSet to ANSYS format files.
 
@@ -150,36 +130,31 @@ def create_mcp_server() -> FastMCP:
         Returns:
             dict: Success message and export info
         """
-        global _current_loadset
-
-        if _current_loadset is None:
+        if self._current_loadset is None:
             return {
                 "success": False,
                 "error": "No LoadSet loaded. Use load_from_json first.",
             }
 
         try:
-            _current_loadset.to_ansys(folder_path, name_stem)
+            self._current_loadset.to_ansys(folder_path, name_stem)
 
             return {
                 "success": True,
                 "message": f"ANSYS files exported to {folder_path} with stem {name_stem}",
-                "num_files": len(_current_loadset.load_cases),
+                "num_files": len(self._current_loadset.load_cases),
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    @mcp.tool
-    def get_load_summary() -> dict:
+    def get_load_summary(self) -> dict:
         """
         Get summary information about the current LoadSet.
 
         Returns:
             dict: LoadSet summary information
         """
-        global _current_loadset
-
-        if _current_loadset is None:
+        if self._current_loadset is None:
             return {
                 "success": False,
                 "error": "No LoadSet loaded. Use load_from_json first.",
@@ -187,35 +162,32 @@ def create_mcp_server() -> FastMCP:
 
         try:
             total_point_loads = sum(
-                len(lc.point_loads) for lc in _current_loadset.load_cases
+                len(lc.point_loads) for lc in self._current_loadset.load_cases
             )
 
             return {
                 "success": True,
-                "name": _current_loadset.name,
-                "description": _current_loadset.description,
-                "version": _current_loadset.version,
+                "name": self._current_loadset.name,
+                "description": self._current_loadset.description,
+                "version": self._current_loadset.version,
                 "units": {
-                    "forces": _current_loadset.units.forces,
-                    "moments": _current_loadset.units.moments,
+                    "forces": self._current_loadset.units.forces,
+                    "moments": self._current_loadset.units.moments,
                 },
-                "num_load_cases": len(_current_loadset.load_cases),
+                "num_load_cases": len(self._current_loadset.load_cases),
                 "total_point_loads": total_point_loads,
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    @mcp.tool
-    def list_load_cases() -> dict:
+    def list_load_cases(self) -> dict:
         """
         List all load cases in the current LoadSet.
 
         Returns:
             dict: List of load cases with their information
         """
-        global _current_loadset
-
-        if _current_loadset is None:
+        if self._current_loadset is None:
             return {
                 "success": False,
                 "error": "No LoadSet loaded. Use load_from_json first.",
@@ -223,7 +195,7 @@ def create_mcp_server() -> FastMCP:
 
         try:
             load_cases = []
-            for lc in _current_loadset.load_cases:
+            for lc in self._current_loadset.load_cases:
                 load_cases.append(
                     {
                         "name": lc.name,
@@ -241,8 +213,7 @@ def create_mcp_server() -> FastMCP:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    @mcp.tool
-    def load_second_loadset(file_path: PathLike) -> dict:
+    def load_second_loadset(self, file_path: PathLike) -> dict:
         """
         Load a second LoadSet from a JSON file for comparison.
 
@@ -255,28 +226,25 @@ def create_mcp_server() -> FastMCP:
         Raises:
             ValueError: If file cannot be loaded or parsed
         """
-        global _comparison_loadset, _current_comparison
-
         try:
-            _comparison_loadset = LoadSet.read_json(file_path)
+            self._comparison_loadset = LoadSet.read_json(file_path)
             # Reset any existing comparison when loading new comparison loadset
-            _current_comparison = None
+            self._current_comparison = None
             
             return {
                 "success": True,
                 "message": f"Comparison LoadSet loaded from {file_path}",
-                "loadset_name": _comparison_loadset.name,
-                "num_load_cases": len(_comparison_loadset.load_cases),
+                "loadset_name": self._comparison_loadset.name,
+                "num_load_cases": len(self._comparison_loadset.load_cases),
                 "units": {
-                    "forces": _comparison_loadset.units.forces,
-                    "moments": _comparison_loadset.units.moments,
+                    "forces": self._comparison_loadset.units.forces,
+                    "moments": self._comparison_loadset.units.moments,
                 },
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    @mcp.tool
-    def compare_loadsets() -> dict:
+    def compare_loadsets(self) -> dict:
         """
         Compare the current LoadSet with the comparison LoadSet.
 
@@ -286,37 +254,34 @@ def create_mcp_server() -> FastMCP:
         Raises:
             ValueError: If LoadSets are not loaded or comparison fails
         """
-        global _current_loadset, _comparison_loadset, _current_comparison
-
-        if _current_loadset is None:
+        if self._current_loadset is None:
             return {
                 "success": False,
                 "error": "No current LoadSet loaded. Use load_from_json first.",
             }
 
-        if _comparison_loadset is None:
+        if self._comparison_loadset is None:
             return {
                 "success": False,
                 "error": "No comparison LoadSet loaded. Use load_second_loadset first.",
             }
 
         try:
-            _current_comparison = _current_loadset.compare_to(_comparison_loadset)
-            comparison_dict = _current_comparison.to_dict()
+            self._current_comparison = self._current_loadset.compare_to(self._comparison_loadset)
+            comparison_dict = self._current_comparison.to_dict()
             
             return {
                 "success": True,
                 "message": "LoadSets compared successfully",
-                "loadset1_name": _current_loadset.name,
-                "loadset2_name": _comparison_loadset.name,
-                "total_comparison_rows": len(_current_comparison.comparison_rows),
+                "loadset1_name": self._current_loadset.name,
+                "loadset2_name": self._comparison_loadset.name,
+                "total_comparison_rows": len(self._current_comparison.comparison_rows),
                 "comparison_data": comparison_dict,
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    @mcp.tool
-    def generate_comparison_charts(output_dir: PathLike = None, format: str = "png", as_base64: bool = False) -> dict:
+    def generate_comparison_charts(self, output_dir: PathLike = None, format: str = "png", as_base64: bool = False) -> dict:
         """
         Generate range bar charts comparing the LoadSets.
 
@@ -328,9 +293,7 @@ def create_mcp_server() -> FastMCP:
         Returns:
             dict: Success message and chart information or base64 data
         """
-        global _current_comparison
-
-        if _current_comparison is None:
+        if self._current_comparison is None:
             return {
                 "success": False,
                 "error": "No comparison available. Use compare_loadsets first.",
@@ -340,7 +303,7 @@ def create_mcp_server() -> FastMCP:
             if as_base64:
                 # Generate charts as base64 strings
                 from pathlib import Path
-                charts = _current_comparison.generate_range_charts(
+                charts = self._current_comparison.generate_range_charts(
                     output_dir=Path.cwd(), format=format, as_base64=True
                 )
                 return {
@@ -357,7 +320,7 @@ def create_mcp_server() -> FastMCP:
                         "error": "output_dir required when as_base64=False",
                     }
                 
-                charts = _current_comparison.generate_range_charts(
+                charts = self._current_comparison.generate_range_charts(
                     output_dir=output_dir, format=format, as_base64=False
                 )
                 # Convert Path objects to strings for JSON serialization
@@ -372,8 +335,7 @@ def create_mcp_server() -> FastMCP:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    @mcp.tool
-    def export_comparison_json(file_path: PathLike) -> dict:
+    def export_comparison_json(self, file_path: PathLike) -> dict:
         """
         Export the current comparison to a JSON file.
 
@@ -383,9 +345,7 @@ def create_mcp_server() -> FastMCP:
         Returns:
             dict: Success message and export info
         """
-        global _current_comparison
-
-        if _current_comparison is None:
+        if self._current_comparison is None:
             return {
                 "success": False,
                 "error": "No comparison available. Use compare_loadsets first.",
@@ -395,35 +355,32 @@ def create_mcp_server() -> FastMCP:
             # Export to JSON file
             from pathlib import Path
             
-            json_content = _current_comparison.to_json()
+            json_content = self._current_comparison.to_json()
             Path(file_path).write_text(json_content)
             
             return {
                 "success": True,
                 "message": f"Comparison exported to {file_path}",
-                "total_rows": len(_current_comparison.comparison_rows),
+                "total_rows": len(self._current_comparison.comparison_rows),
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    @mcp.tool
-    def get_comparison_summary() -> dict:
+    def get_comparison_summary(self) -> dict:
         """
         Get a high-level summary of the current comparison.
 
         Returns:
             dict: Comparison summary statistics
         """
-        global _current_comparison, _current_loadset, _comparison_loadset
-
-        if _current_comparison is None:
+        if self._current_comparison is None:
             return {
                 "success": False,
                 "error": "No comparison available. Use compare_loadsets first.",
             }
 
         try:
-            comparison_rows = _current_comparison.comparison_rows
+            comparison_rows = self._current_comparison.comparison_rows
             
             # Calculate summary statistics
             total_rows = len(comparison_rows)
@@ -439,8 +396,8 @@ def create_mcp_server() -> FastMCP:
             
             return {
                 "success": True,
-                "loadset1_name": _current_loadset.name if _current_loadset else "Unknown",
-                "loadset2_name": _comparison_loadset.name if _comparison_loadset else "Unknown",
+                "loadset1_name": self._current_loadset.name if self._current_loadset else "Unknown",
+                "loadset2_name": self._comparison_loadset.name if self._comparison_loadset else "Unknown",
                 "total_comparison_rows": total_rows,
                 "unique_points": len(points),
                 "unique_components": len(components),
@@ -459,18 +416,48 @@ def create_mcp_server() -> FastMCP:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+
+def create_mcp_server() -> FastMCP:
+    """
+    Create and configure the FastMCP server for LoadSet operations.
+
+    Returns:
+        FastMCP: Configured MCP server instance
+    """
+    mcp = FastMCP("LoadSet MCP Server")
+    provider = LoadSetMCPProvider()
+    
+    # Register all methods as tools
+    mcp.tool(provider.load_from_json)
+    mcp.tool(provider.convert_units)
+    mcp.tool(provider.scale_loads)
+    mcp.tool(provider.export_to_ansys)
+    mcp.tool(provider.get_load_summary)
+    mcp.tool(provider.list_load_cases)
+    mcp.tool(provider.load_second_loadset)
+    mcp.tool(provider.compare_loadsets)
+    mcp.tool(provider.generate_comparison_charts)
+    mcp.tool(provider.export_comparison_json)
+    mcp.tool(provider.get_comparison_summary)
+    
     return mcp
+
+
+def reset_global_state():
+    """Reset the global LoadSet state (for backward compatibility)."""
+    pass  # No longer needed with class-based approach
 
 
 if __name__ == "__main__":
     import sys
+    from typing import Literal
     
     # Allow transport to be specified via command line argument
-    transport = "sse"  # Default to SSE
+    transport: Literal["stdio", "http"] = "http"  # Default to HTTP
     
     # Check for command line argument
-    if len(sys.argv) > 1 and sys.argv[1] in ["stdio", "sse"]:
-        transport = sys.argv[1]
+    if len(sys.argv) > 1 and sys.argv[1] in ["stdio", "http"]:
+        transport = sys.argv[1]  # type: ignore
     
     server = create_mcp_server()
     server.run(transport=transport)
