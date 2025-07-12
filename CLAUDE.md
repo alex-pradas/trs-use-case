@@ -76,8 +76,9 @@ Tests are organized into focused classes across multiple files:
 This project includes a **FastMCP server** that exposes LoadSet operations as MCP tools for LLM agent access:
 
 ### MCP Server Commands
-- **Start MCP server**: `uv run python tools/mcp_server.py`
-- **Test MCP integration**: `uv run pytest tests/test_mcp_integration.py -v`
+- **Start MCP server**: `uv run python tools/mcp_server.py` (defaults to HTTP transport)
+- **Start with specific transport**: `uv run python tools/mcp_server.py http` or `uv run python tools/mcp_server.py stdio`
+- **Test MCP integration**: `uv run pytest tests/test_anthropic_mcp_integration.py -v`
 - **Test MCP server**: `uv run pytest tests/test_mcp_server.py -v`
 
 ### Available MCP Tools
@@ -91,13 +92,15 @@ This project includes a **FastMCP server** that exposes LoadSet operations as MC
 ### MCP Architecture
 - **`tools/mcp_server.py`**: FastMCP server implementation with tool definitions
 - **`tools/agent_client.py`**: Pydantic-AI agent client for testing MCP integration
-- **Global state management**: Maintains current LoadSet across tool calls
+- **Class-based state management**: `LoadSetMCPProvider` encapsulates state across tool calls
+- **HTTP transport**: Uses modern HTTP transport (default) with fallback to stdio
 - **Error handling**: Comprehensive error responses for all MCP operations
 
 ### Integration Testing
 The MCP server is tested both directly and through a Pydantic-AI agent client:
 - **Direct tool tests**: Unit tests for each MCP tool
-- **Agent integration tests**: Tests using Pydantic-AI agent (requires `OPENAI_API_KEY`)
+- **Agent integration tests**: Tests using Pydantic-AI agent (requires `ANTHROPIC_API_KEY`)
+- **HTTP transport tests**: Verify HTTP transport functionality with real agents
 - **State management tests**: Verify LoadSet state persistence across operations
 
 ## Configuration Notes

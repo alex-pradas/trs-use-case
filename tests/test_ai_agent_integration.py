@@ -10,9 +10,15 @@ import asyncio
 import os
 import tempfile
 import shutil
+import sys
 from pathlib import Path
 from typing import Dict, Any
 from dotenv import load_dotenv
+
+# Add the project root to Python path so we can import from tools
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 from tools.mcp_server import create_mcp_server, reset_global_state
 from tools.loads import LoadSet
