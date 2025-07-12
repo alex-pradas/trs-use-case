@@ -64,6 +64,224 @@ class LoadSetCompare(BaseModel):
         """
         return json.dumps(self.to_dict(), indent=indent)
 
+    def generate_range_charts(self, output_dir: PathLike, format: str = "png") -> dict[str, Path]:
+        """
+        Generate range bar chart images comparing LoadSets for each point.
+        
+        Creates dual subplot charts showing force and moment ranges with bars
+        representing the min-to-max range for each component.
+        
+        Args:
+            output_dir: Directory to save the generated images
+            format: Image format (png, svg, pdf)
+            
+        Returns:
+            dict: Mapping of point names to generated image file paths
+            
+        Raises:
+            ImportError: If matplotlib is not available
+            FileNotFoundError: If output directory doesn't exist and can't be created
+        """
+        try:
+            import matplotlib.pyplot as plt
+            import matplotlib.patches as mpatches
+        except ImportError:
+            raise ImportError("matplotlib is required for image generation")
+        
+        from pathlib import Path
+        
+        output_path = Path(output_dir)
+        
+        # Create output directory if it doesn't exist
+        if not output_path.exists():
+            output_path.mkdir(parents=True, exist_ok=True)
+        elif not output_path.is_dir():
+            raise FileNotFoundError(f"Output path exists but is not a directory: {output_dir}")
+        
+        # Group comparison rows by point
+        points_data = {}
+        for row in self.comparison_rows:
+            if row.point_name not in points_data:
+                points_data[row.point_name] = []
+            points_data[row.point_name].append(row)
+        
+        generated_files = {}
+        
+        for point_name, rows in points_data.items():
+            # Create figure with dual subplots
+            fig, (ax_forces, ax_moments) = plt.subplots(1, 2, figsize=(12, 6))
+            fig.suptitle(f'{point_name}: Forces vs Moments Comparison', fontsize=14, fontweight='bold')
+            
+            # Process data for forces and moments
+            force_data = self._extract_component_ranges(rows, ['fx', 'fy', 'fz'])
+            moment_data = self._extract_component_ranges(rows, ['mx', 'my', 'mz'])
+            
+            # Create force subplot
+            if force_data:
+                self._create_range_subplot(
+                    ax_forces, force_data, 'Forces', 
+                    self.loadset1_metadata.get('units', {}).get('forces', 'N')
+                )
+            else:
+                ax_forces.text(0.5, 0.5, 'No force data', ha='center', va='center', transform=ax_forces.transAxes)
+                ax_forces.set_title('Forces')
+            
+            # Create moment subplot
+            if moment_data:
+                self._create_range_subplot(
+                    ax_moments, moment_data, 'Moments',
+                    self.loadset1_metadata.get('units', {}).get('moments', 'Nm')
+                )
+            else:
+                ax_moments.text(0.5, 0.5, 'No moment data', ha='center', va='center', transform=ax_moments.transAxes)
+                ax_moments.set_title('Moments')
+            
+            # Add legend
+            loadset1_name = self.loadset1_metadata.get('name', 'LoadSet 1')
+            loadset2_name = self.loadset2_metadata.get('name', 'LoadSet 2')
+            
+            loadset1_patch = mpatches.Patch(color='#1f77b4', alpha=0.7, label=loadset1_name)
+            loadset2_patch = mpatches.Patch(color='#ff7f0e', alpha=0.7, label=loadset2_name)
+            fig.legend(handles=[loadset1_patch, loadset2_patch], loc='upper center', 
+                      bbox_to_anchor=(0.5, 0.02), ncol=2)
+            
+            # Adjust layout and save
+            plt.tight_layout()
+            plt.subplots_adjust(top=0.85, bottom=0.15)
+            
+            # Generate filename
+            safe_point_name = self._sanitize_filename(point_name)
+            filename = f"{safe_point_name}_ranges.{format}"
+            file_path = output_path / filename
+            
+            plt.savefig(file_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            
+            generated_files[point_name] = file_path
+        
+        return generated_files
+
+    def _extract_component_ranges(self, rows: list[ComparisonRow], components: list[str]) -> dict:
+        """
+        Extract min/max ranges for specified components from comparison rows.
+        
+        Args:
+            rows: List of ComparisonRow objects for a point
+            components: List of component names to extract
+            
+        Returns:
+            dict: Component data with min/max values for both LoadSets
+        """
+        component_data = {}
+        
+        for component in components:
+            # Find max and min rows for this component
+            max_row = next((row for row in rows if row.component == component and row.type == "max"), None)
+            min_row = next((row for row in rows if row.component == component and row.type == "min"), None)
+            
+            if max_row and min_row:
+                component_data[component] = {
+                    'loadset1_min': min_row.loadset1_value,
+                    'loadset1_max': max_row.loadset1_value,
+                    'loadset2_min': min_row.loadset2_value,
+                    'loadset2_max': max_row.loadset2_value,
+                    'loadset1_min_case': min_row.loadset1_loadcase,
+                    'loadset1_max_case': max_row.loadset1_loadcase,
+                    'loadset2_min_case': min_row.loadset2_loadcase,
+                    'loadset2_max_case': max_row.loadset2_loadcase,
+                }
+        
+        return component_data
+
+    def _create_range_subplot(self, ax, data: dict, title: str, units: str):
+        """
+        Create a range bar subplot for force or moment components.
+        
+        Args:
+            ax: Matplotlib axis object
+            data: Component range data
+            title: Subplot title
+            units: Units string for y-axis label
+        """
+        import numpy as np
+        
+        components = list(data.keys())
+        if not components:
+            return
+        
+        x_pos = np.arange(len(components))
+        bar_width = 0.35
+        
+        # Extract data for plotting
+        loadset1_bottoms = []
+        loadset1_heights = []
+        loadset2_bottoms = []
+        loadset2_heights = []
+        
+        for component in components:
+            comp_data = data[component]
+            
+            # LoadSet 1
+            ls1_min = comp_data['loadset1_min']
+            ls1_max = comp_data['loadset1_max']
+            loadset1_bottoms.append(ls1_min)
+            loadset1_heights.append(ls1_max - ls1_min)
+            
+            # LoadSet 2
+            ls2_min = comp_data['loadset2_min']
+            ls2_max = comp_data['loadset2_max']
+            loadset2_bottoms.append(ls2_min)
+            loadset2_heights.append(ls2_max - ls2_min)
+        
+        # Create bars
+        ax.bar(x_pos - bar_width/2, loadset1_heights, bar_width,
+               bottom=loadset1_bottoms, color='#1f77b4', alpha=0.7, 
+               edgecolor='#1f77b4', linewidth=1)
+        
+        ax.bar(x_pos + bar_width/2, loadset2_heights, bar_width,
+               bottom=loadset2_bottoms, color='#ff7f0e', alpha=0.7,
+               edgecolor='#ff7f0e', linewidth=1)
+        
+        # Add zero line
+        ax.axhline(y=0, color='black', linestyle='--', alpha=0.5, linewidth=0.8)
+        
+        # Styling
+        ax.set_title(title, fontweight='bold')
+        ax.set_xlabel('Component')
+        ax.set_ylabel(f'Value ({units})')
+        ax.set_xticks(x_pos)
+        ax.set_xticklabels(components)
+        ax.grid(True, alpha=0.3)
+        
+        # Set y-axis limits with some padding
+        all_values = loadset1_bottoms + [b+h for b, h in zip(loadset1_bottoms, loadset1_heights)] + \
+                    loadset2_bottoms + [b+h for b, h in zip(loadset2_bottoms, loadset2_heights)]
+        if all_values:
+            y_min, y_max = min(all_values), max(all_values)
+            y_range = y_max - y_min
+            if y_range > 0:
+                padding = y_range * 0.1
+                ax.set_ylim(y_min - padding, y_max + padding)
+
+    def _sanitize_filename(self, name: str) -> str:
+        """
+        Sanitize a string to be safe for use as a filename.
+        
+        Args:
+            name: Original name
+            
+        Returns:
+            str: Sanitized name safe for filenames
+        """
+        import re
+        # Replace spaces, special characters with underscores
+        sanitized = re.sub(r"[^\w\-_]", "_", name)
+        # Remove multiple consecutive underscores
+        sanitized = re.sub(r"_+", "_", sanitized)
+        # Remove leading/trailing underscores
+        sanitized = sanitized.strip("_")
+        return sanitized
+
 
 class ForceMoment(BaseModel):
     """
