@@ -19,3 +19,5 @@ tests/visual_range_charts/*.pdf
 .claude
 .logfire
 .ruff_cache
+
+.DS_Store
