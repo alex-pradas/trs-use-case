@@ -1,0 +1,44 @@
+LoadSet Comparison Summary
+==================================================
+
+Old LoadSet: Aerospace Structural Load Cases
+New LoadSet: Aerospace Structural Load Cases
+Units: Forces=N, Moments=Nm
+
+
+Point A:
+--------
+  Forces:
+    fx: Old range=0.8798N, New range=0.8987N, Change=+2.2%
+         Max: 0.9783 → 0.9972 (+1.9%)
+         Min: 0.0986 → 0.0986 (+0.0%)
+    fy: Old range=0.8997N, New range=0.9723N, Change=+8.1%
+         Max: 0.9097 → 0.9824 (+8.0%)
+         Min: 0.0101 → 0.0101 (+0.0%)
+    fz: Old range=0.9757N, New range=0.9757N, Change=+0.0%
+         Max: 0.9970 → 0.9970 (+0.0%)
+         Min: 0.0212 → 0.0212 (+0.0%)
+  Moments:
+    mx: Old range=0.9269Nm, New range=0.9269Nm, Change=+0.0%
+         Max: 0.9568 → 0.9568 (+0.0%)
+         Min: 0.0299 → 0.0299 (+0.0%)
+    my: Old range=0.9516Nm, New range=0.9644Nm, Change=+1.3%
+         Max: 0.9563 → 0.9691 (+1.3%)
+         Min: 0.0047 → 0.0047 (+0.0%)
+    mz: Old range=0.9199Nm, New range=0.9199Nm, Change=+0.0%
+         Max: 0.9355 → 0.9355 (+0.0%)
+         Min: 0.0155 → 0.0155 (+0.0%)
+
+Point B:
+--------
+  Forces:
+    fx: Old range=0.8671N, New range=0.8671N, Change=+0.0%
+         Max: 0.9078 → 0.9078 (+0.0%)
+         Min: 0.0407 → 0.0407 (+0.0%)
+    fy: Old range=0.9555N, New range=0.9555N, Change=+0.0%
+         Max: 0.9751 → 0.9751 (+0.0%)
+         Min: 0.0196 → 0.0196 (+0.0%)
+  Moments:
+    mx: Old range=0.9598Nm, New range=0.9598Nm, Change=+0.0%
+         Max: 0.9808 → 0.9808 (+0.0%)
+         Min: 0.0210 → 0.0210 (+0.0%)
