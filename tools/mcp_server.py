@@ -234,5 +234,14 @@ def create_mcp_server() -> FastMCP:
 
 
 if __name__ == "__main__":
+    import sys
+    
+    # Allow transport to be specified via command line argument
+    transport = "sse"  # Default to SSE
+    
+    # Check for command line argument
+    if len(sys.argv) > 1 and sys.argv[1] in ["stdio", "sse"]:
+        transport = sys.argv[1]
+    
     server = create_mcp_server()
-    server.run()
+    server.run(transport=transport)

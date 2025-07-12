@@ -43,6 +43,7 @@ class AnthropicMCPTestAgent:
                 "run",
                 "python",
                 "tools/mcp_server.py",
+                "stdio",  # Specify stdio transport for integration tests
             ],
         )
 
