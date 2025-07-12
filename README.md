@@ -7,6 +7,8 @@ This project provides a load-transform-export pipeline for aerospace structural 
 - **Load**: Read LoadSet data from JSON files with validation
 - **Transform**: Convert between units (N, kN, lbf, klbf) and scale by factors  
 - **Export**: Generate ANSYS load files in F-command format
+- **Compare**: Compare two LoadSets with detailed analysis and percentage differences
+- **Visualize**: Generate range bar charts showing force and moment comparisons
 
 ## Installation
 
@@ -31,6 +33,18 @@ scaled = converted.factor(1.5)        # Scale by factor of 1.5
 
 # Export to ANSYS
 scaled.to_ansys('/output/folder', 'my_loads')
+
+# Compare LoadSets
+old_loadset = LoadSet.read_json('solution/loads/old_loads.json')
+new_loadset = LoadSet.read_json('solution/loads/new_loads.json')
+comparison = old_loadset.compare_to(new_loadset)
+
+# Export comparison results to JSON
+json_output = comparison.to_json()
+
+# Generate visual range charts
+chart_files = comparison.generate_range_charts('output_charts/')
+# Creates: Point_A_ranges.png, Point_B_ranges.png, etc.
 ```
 
 ## Running Tests
@@ -64,6 +78,12 @@ uv run pytest -v -s
 # Run only the enhanced LoadSet tests
 uv run pytest tests/test_loadset_enhanced.py -v
 
+# Run LoadSet comparison tests
+uv run pytest tests/test_loadset_comparison.py -v
+
+# Run range chart tests (excluding visual generation)
+uv run pytest tests/test_range_charts.py -v
+
 # Run only the original loads tests
 uv run pytest tests/test_loads.py -v
 ```
@@ -82,6 +102,12 @@ uv run pytest tests/test_loadset_enhanced.py::TestLoadSetFactor -v
 
 # Test only ANSYS export
 uv run pytest tests/test_loadset_enhanced.py::TestLoadSetToAnsys -v
+
+# Test LoadSet comparison functionality
+uv run pytest tests/test_loadset_comparison.py::TestLoadSetComparison -v
+
+# Test range chart generation
+uv run pytest tests/test_range_charts.py::TestRangeChartGeneration -v
 ```
 
 ### Run Specific Test Methods
@@ -90,6 +116,23 @@ uv run pytest tests/test_loadset_enhanced.py::TestLoadSetToAnsys -v
 # Test a specific method
 uv run pytest tests/test_loadset_enhanced.py::TestLoadSetConvertTo::test_convert_to_kN -v
 ```
+
+### Visual Chart Generation
+
+Visual chart generation tests are marked with the `visuals` marker and are **skipped by default** to avoid generating images during regular test runs.
+
+```bash
+# Generate visual range charts from real data
+uv run pytest -m visuals -s
+
+# Run specific visual test
+uv run pytest tests/test_range_charts.py::TestRangeChartsWithRealData::test_generate_visual_range_charts -m visuals -s
+
+# Run tests excluding visual generation (default behavior)
+uv run pytest tests/test_range_charts.py -v
+```
+
+Visual tests create range charts comparing old_loads.json vs new_loads.json in `tests/visual_range_charts/`.
 
 ### VS Code Integration
 
@@ -173,12 +216,24 @@ If you get "ModuleNotFoundError: No module named 'pytest'" or tests aren't showi
 
 ## Test Structure
 
-The tests are organized into focused test classes:
+The tests are organized into focused test classes across multiple files:
 
+### Core LoadSet Tests (`test_loadset_enhanced.py`)
 - **`TestLoadSetReadJson`**: Tests for loading JSON files with error handling
 - **`TestLoadSetConvertTo`**: Tests for unit conversion between different systems
 - **`TestLoadSetFactor`**: Tests for scaling load values by factors
 - **`TestLoadSetToAnsys`**: Tests for ANSYS file export functionality
+
+### Comparison Tests (`test_loadset_comparison.py`)
+- **`TestComparisonRow`**: Tests for individual comparison row functionality
+- **`TestLoadSetCompare`**: Tests for comparison result container and export
+- **`TestLoadSetPointExtremes`**: Tests for min/max value extraction
+- **`TestLoadSetComparison`**: Tests for LoadSet comparison functionality
+- **`TestLoadSetComparisonWithRealData`**: Integration tests with real data
+
+### Visualization Tests (`test_range_charts.py`)
+- **`TestRangeChartGeneration`**: Tests for range chart generation functionality
+- **`TestRangeChartsWithRealData`**: Tests with real data including visual generation
 
 Each test class includes:
 - Comprehensive edge case testing
@@ -188,8 +243,9 @@ Each test class includes:
 
 ## Test Coverage
 
-The test suite includes **29 comprehensive tests** covering:
+The test suite includes **55+ comprehensive tests** covering:
 
+### Core Functionality
 - ✅ JSON file loading and validation
 - ✅ Unit conversions (N ↔ kN ↔ lbf ↔ klbf)
 - ✅ Load scaling and factoring
@@ -200,13 +256,26 @@ The test suite includes **29 comprehensive tests** covering:
 - ✅ Floating point precision handling
 - ✅ Special character sanitization
 
+### Comparison & Visualization
+- ✅ LoadSet comparison with detailed analysis
+- ✅ Min/max value extraction across load cases
+- ✅ Percentage difference calculations
+- ✅ JSON export of comparison results
+- ✅ Range bar chart generation
+- ✅ Dual subplot layouts (forces vs moments)
+- ✅ Visual styling and formatting
+- ✅ Multiple image format support (PNG, SVG, PDF)
+- ✅ Edge case handling (empty data, zero values)
+- ✅ Real data integration testing
+
 ## Configuration Files
 
 ### `pyproject.toml`
 Contains pytest configuration including:
 - Test discovery paths and patterns
 - Default command-line options (verbose, colored output)
-- Test markers for categorization
+- Test markers for categorization (`unit`, `integration`, `slow`, `visuals`)
+- Visual tests excluded by default (`-m "not visuals"`)
 - Output formatting preferences
 
 ### `.vscode/settings.json`
@@ -227,10 +296,13 @@ Debug configurations for:
 
 ```
 ├── tools/
-│   └── loads.py              # Main LoadSet implementation
+│   └── loads.py              # Main LoadSet implementation with comparison
 ├── tests/
 │   ├── test_loads.py         # Original load file tests
-│   └── test_loadset_enhanced.py  # Enhanced LoadSet tests
+│   ├── test_loadset_enhanced.py  # Enhanced LoadSet tests
+│   ├── test_loadset_comparison.py  # LoadSet comparison tests
+│   ├── test_range_charts.py  # Range chart visualization tests
+│   └── visual_range_charts/  # Generated visual charts (created by tests)
 ├── solution/
 │   └── loads/
 │       ├── new_loads.json   # Updated JSON load data

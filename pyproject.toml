@@ -29,6 +29,7 @@ addopts = [
     "--strict-config",      # Strict config file usage
     "--color=yes",          # Colored output
     "--cov-report=xml:cov.xml",  # XML coverage report
+    "-m", "not visuals",    # Skip visual tests by default
 ]
 
 # Markers for test categorization
@@ -36,6 +37,7 @@ markers = [
     "unit: Unit tests",
     "integration: Integration tests", 
     "slow: Slow running tests",
+    "visuals: Visual chart generation tests (run with: pytest -m visuals)",
 ]
 
 # Minimum version
