@@ -11,6 +11,11 @@ __pycache__/
 /htmlcov
 cov.xml
 
+# Generated visual charts (test artifacts)
+tests/visual_range_charts/*.png
+tests/visual_range_charts/*.svg
+tests/visual_range_charts/*.pdf
+
 .claude
 .logfire
 .ruff_cache
