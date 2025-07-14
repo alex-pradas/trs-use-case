@@ -75,16 +75,19 @@ Tests are organized into focused classes across multiple files:
 
 ## MCP Server Integration
 
-This project includes **two FastMCP servers** that expose different capabilities as MCP tools for LLM agent access:
+This project includes **three FastMCP servers** that expose different capabilities as MCP tools for LLM agent access:
 
 ### MCP Server Commands
 - **Start LoadSet MCP server**: `uv run python tools/mcp_server.py` (defaults to HTTP transport)
 - **Start Python execution MCP server**: `uv run python tools/python_exec_mcp_server.py` (defaults to HTTP transport)
+- **Start Script execution MCP server**: `uv run python tools/script_exec_mcp_server.py` (defaults to HTTP transport, port 8002)
 - **Start with specific transport**: `uv run python tools/mcp_server.py http` or `uv run python tools/mcp_server.py stdio`
 - **Test MCP integration**: `uv run pytest tests/test_anthropic_mcp_integration.py -v`
 - **Test LoadSet MCP server**: `uv run pytest tests/test_mcp_server.py -v`
 - **Test Python execution MCP server**: `uv run pytest tests/test_python_exec_mcp_server.py -v`
 - **Test Python execution agent integration**: `uv run pytest tests/test_python_exec_agent_integration.py -v`
+- **Test Script execution MCP server**: `uv run pytest tests/test_script_exec_mcp_server.py -v`
+- **Test Script generation agent integration**: `uv run pytest tests/test_script_agent_integration.py -v`
 
 ### Available MCP Tools
 
@@ -110,6 +113,15 @@ This project includes **two FastMCP servers** that expose different capabilities
 - **`get_execution_history`**: Get recent code execution history
 - **`configure_security`**: Configure security settings for code execution
 
+#### Script Execution MCP Server (`tools/script_exec_mcp_server.py`)
+- **`execute_python_script`**: Execute complete Python scripts in isolated workspace
+- **`list_output_files`**: List all files created during script execution
+- **`download_file`**: Download files from workspace as base64 or text
+- **`upload_file`**: Upload files to workspace before script execution
+- **`get_execution_result`**: Get detailed execution results (stdout, stderr, timing)
+- **`reset_workspace`**: Clean up execution workspace
+- **`get_workspace_info`**: Get information about current workspace
+
 ### MCP Architecture
 
 #### LoadSet MCP Server
@@ -128,7 +140,7 @@ This project includes **two FastMCP servers** that expose different capabilities
 - **Package management**: Integrated with project's uv workflow
 
 ### Integration Testing
-Both MCP servers are comprehensively tested:
+All three MCP servers are comprehensively tested:
 
 #### LoadSet MCP Server Testing
 - **Direct tool tests**: Unit tests for each LoadSet MCP tool
@@ -148,6 +160,20 @@ Both MCP servers are comprehensively tested:
   - Agents can perform data analysis with numpy and matplotlib
   - Agents handle errors and debug code autonomously
   - Agents can access and work with project-specific LoadSet functionality
+
+#### Script Execution MCP Server Testing
+- **Direct tool tests**: Unit tests for script execution, workspace management, file I/O
+- **LoadSet integration tests**: Test LoadSet classes availability and functionality in scripts
+- **File transfer tests**: Test upload/download of files with base64 and text encoding
+- **Workspace management tests**: Test isolated workspace creation and cleanup
+- **Agent integration tests**: Test AI agent's ability to generate and execute complete scripts
+  - Agent generates Python scripts from natural language instructions
+  - Agent handles LoadSet processing workflows (load, convert, scale, export)
+  - Agent performs unit conversion analysis across multiple unit systems
+  - Agent executes LoadSet comparison workflows with real aerospace data
+  - Agent exports to ANSYS format and manages output files
+  - Agent downloads and saves output files to local filesystem
+  - Agent handles errors and debugging of generated scripts
 
 ## Configuration Notes
 
