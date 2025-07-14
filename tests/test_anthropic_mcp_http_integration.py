@@ -67,7 +67,7 @@ class AnthropicMCPHTTPTestAgent:
         self.server_process = subprocess.Popen([
             "/opt/homebrew/bin/uv",
             "--directory", str(Path.cwd()),
-            "run", "python", "tools/mcp_server.py", "http"
+            "run", "python", "tools/mcps/loads_mcp_server.py", "http"
         ])
         
         # Give the server time to start

@@ -12,7 +12,7 @@ from pathlib import Path
 tools_dir = Path(__file__).parent.parent / "tools"
 sys.path.insert(0, str(tools_dir))
 
-from python_exec_mcp_server import (
+from mcps.python_exec_mcp_server import (
     PythonExecutorMCPProvider,
     ExecutionResult, 
     create_mcp_server

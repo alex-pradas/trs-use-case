@@ -18,7 +18,7 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from tools.python_exec_mcp_server import create_mcp_server, PythonExecutorMCPProvider
+from tools.mcps.python_exec_mcp_server import create_mcp_server, PythonExecutorMCPProvider
 
 # Load environment variables from .env file
 load_dotenv()

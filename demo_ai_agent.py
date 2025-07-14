@@ -15,7 +15,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from tests.test_ai_agent_integration import AnthropicMCPTestAgent
-from tools.mcp_server import create_mcp_server, reset_global_state
+from tools.mcps.loads_mcp_server import create_mcp_server, reset_global_state
 
 # Load environment variables
 load_dotenv()

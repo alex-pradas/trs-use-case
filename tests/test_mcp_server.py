@@ -8,7 +8,7 @@ import pytest
 from pathlib import Path
 
 
-from mcp_server import create_mcp_server, reset_global_state
+from mcps.loads_mcp_server import create_mcp_server, reset_global_state
 import tempfile
 import json
 
@@ -63,8 +63,8 @@ class TestMCPServerImport:
         assert FastMCP is not None
 
     def test_mcp_server_import(self):
-        """Test that mcp_server module can be imported."""
-        import mcp_server
+        """Test that loads_mcp_server module can be imported."""
+        import mcps.loads_mcp_server as mcp_server
 
         assert hasattr(mcp_server, "create_mcp_server")
 

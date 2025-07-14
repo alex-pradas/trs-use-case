@@ -18,7 +18,7 @@ import time
 tools_dir = Path(__file__).parent.parent / "tools"
 sys.path.insert(0, str(tools_dir))
 
-from script_exec_mcp_server import (
+from mcps.script_exec_mcp_server import (
     ScriptExecutorMCPProvider,
     ExecutionResult,
     FileInfo,
