@@ -15,6 +15,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Run specific test file**: `uv run pytest tests/test_loadset_enhanced.py -v`
 - **Run comparison tests**: `uv run pytest tests/test_loadset_comparison.py -v`
 - **Run range chart tests**: `uv run pytest tests/test_range_charts.py -v`
+- **Run Python execution MCP tests**: `uv run pytest tests/test_python_exec_mcp_server.py -v`
+- **Run Python execution agent integration tests**: `uv run pytest tests/test_python_exec_agent_integration.py -v`
 - **Run specific test class**: `uv run pytest tests/test_loadset_enhanced.py::TestLoadSetReadJson -v`
 - **Run specific test method**: `uv run pytest tests/test_loadset_enhanced.py::TestLoadSetConvertTo::test_convert_to_kN -v`
 - **Run with coverage**: `uv run pytest --cov=tools --cov-report=html`
@@ -73,35 +75,79 @@ Tests are organized into focused classes across multiple files:
 
 ## MCP Server Integration
 
-This project includes a **FastMCP server** that exposes LoadSet operations as MCP tools for LLM agent access:
+This project includes **two FastMCP servers** that expose different capabilities as MCP tools for LLM agent access:
 
 ### MCP Server Commands
-- **Start MCP server**: `uv run python tools/mcp_server.py` (defaults to HTTP transport)
+- **Start LoadSet MCP server**: `uv run python tools/mcp_server.py` (defaults to HTTP transport)
+- **Start Python execution MCP server**: `uv run python tools/python_exec_mcp_server.py` (defaults to HTTP transport)
 - **Start with specific transport**: `uv run python tools/mcp_server.py http` or `uv run python tools/mcp_server.py stdio`
 - **Test MCP integration**: `uv run pytest tests/test_anthropic_mcp_integration.py -v`
-- **Test MCP server**: `uv run pytest tests/test_mcp_server.py -v`
+- **Test LoadSet MCP server**: `uv run pytest tests/test_mcp_server.py -v`
+- **Test Python execution MCP server**: `uv run pytest tests/test_python_exec_mcp_server.py -v`
+- **Test Python execution agent integration**: `uv run pytest tests/test_python_exec_agent_integration.py -v`
 
 ### Available MCP Tools
+
+#### LoadSet MCP Server (`tools/mcp_server.py`)
 - **`load_from_json`**: Load LoadSet from JSON file path
 - **`convert_units`**: Convert units between N, kN, lbf, klbf  
 - **`scale_loads`**: Scale all loads by a factor
 - **`export_to_ansys`**: Export to ANSYS format files
 - **`get_load_summary`**: Get summary information about current LoadSet
 - **`list_load_cases`**: List all load cases in current LoadSet
+- **`load_second_loadset`**: Load second LoadSet for comparison
+- **`compare_loadsets`**: Compare two LoadSets with detailed analysis
+- **`generate_comparison_charts`**: Generate range bar charts as base64 or files
+- **`export_comparison_json`**: Export comparison results to JSON
+- **`get_comparison_summary`**: Get high-level comparison statistics
+
+#### Python Execution MCP Server (`tools/python_exec_mcp_server.py`)
+- **`execute_code`**: Execute Python code in persistent IPython session
+- **`list_variables`**: List all variables in current session namespace
+- **`get_variable`**: Get detailed information about specific variable
+- **`reset_session`**: Clear all variables and reset execution environment
+- **`install_package`**: Install Python packages using uv
+- **`get_execution_history`**: Get recent code execution history
+- **`configure_security`**: Configure security settings for code execution
 
 ### MCP Architecture
-- **`tools/mcp_server.py`**: FastMCP server implementation with tool definitions
+
+#### LoadSet MCP Server
+- **`tools/mcp_server.py`**: FastMCP server implementation with LoadSet tool definitions
 - **`tools/agent_client.py`**: Pydantic-AI agent client for testing MCP integration
 - **Class-based state management**: `LoadSetMCPProvider` encapsulates state across tool calls
 - **HTTP transport**: Uses modern HTTP transport (default) with fallback to stdio
 - **Error handling**: Comprehensive error responses for all MCP operations
 
+#### Python Execution MCP Server
+- **`tools/python_exec_mcp_server.py`**: FastMCP server with persistent IPython execution
+- **IPython integration**: Uses IPython kernel for advanced Python execution capabilities
+- **Persistent sessions**: Variables and imports persist across multiple code executions
+- **Rich output capture**: Handles matplotlib plots, pandas DataFrames, numpy arrays
+- **Security features**: Optional filtering of dangerous imports and operations
+- **Package management**: Integrated with project's uv workflow
+
 ### Integration Testing
-The MCP server is tested both directly and through a Pydantic-AI agent client:
-- **Direct tool tests**: Unit tests for each MCP tool
+Both MCP servers are comprehensively tested:
+
+#### LoadSet MCP Server Testing
+- **Direct tool tests**: Unit tests for each LoadSet MCP tool
 - **Agent integration tests**: Tests using Pydantic-AI agent (requires `ANTHROPIC_API_KEY`)
 - **HTTP transport tests**: Verify HTTP transport functionality with real agents
 - **State management tests**: Verify LoadSet state persistence across operations
+
+#### Python Execution MCP Server Testing
+- **Execution tests**: Test code execution with persistent sessions
+- **Security tests**: Verify dangerous code filtering and safety features
+- **Output capture tests**: Test matplotlib plot capture and rich data serialization
+- **Session management tests**: Test variable persistence, reset, and history tracking
+- **Integration tests**: Test LoadSet class availability and project integration
+- **Agent integration tests**: Test AI agent's ability to autonomously generate and execute Python code
+  - Agents can solve programming challenges (factorial, fibonacci calculations)
+  - Agents demonstrate iterative development with persistent variables
+  - Agents can perform data analysis with numpy and matplotlib
+  - Agents handle errors and debug code autonomously
+  - Agents can access and work with project-specific LoadSet functionality
 
 ## Configuration Notes
 
@@ -109,5 +155,5 @@ The MCP server is tested both directly and through a Pydantic-AI agent client:
 - **Test configuration**: Defined in `pyproject.toml` with verbose output, colored results, and short tracebacks
 - **Visual tests**: Marked with `@pytest.mark.visuals` and skipped by default (use `pytest -m visuals` to run)
 - **VS Code integration**: Configured with proper Python interpreter and test discovery settings
-- **Dependencies**: Uses `matplotlib>=3.8.0` and `numpy>=1.24.0` for visualization, `fastmcp>=2.0.0` and `pydantic-ai>=0.3.6` for MCP
+- **Dependencies**: Uses `matplotlib>=3.8.0` and `numpy>=1.24.0` for visualization, `fastmcp>=2.0.0` and `pydantic-ai>=0.3.6` for MCP, `ipython>=9.4.0` for Python execution server
 - **Visualization output**: Range charts saved to `tests/visual_range_charts/` when visual tests are run
