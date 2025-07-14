@@ -242,6 +242,7 @@ class AnthropicMCPTestAgent:
             return {"success": False, "error": str(e)}
 
 
+@pytest.mark.expensive
 class TestAnthropicAgentIntegration:
     """Test suite for Anthropic AI agent integration with MCP server."""
 

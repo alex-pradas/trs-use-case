@@ -137,6 +137,7 @@ def calculate_expected_values(
     return expected
 
 
+@pytest.mark.expensive
 class TestAnthropicMCPHTTPIntegration:
     """Test class for Anthropic MCP HTTP integration."""
 
