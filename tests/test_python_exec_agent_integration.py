@@ -241,6 +241,7 @@ class PythonExecutionMCPTestAgent:
             return {"success": False, "error": str(e)}
 
 
+@pytest.mark.expensive
 class TestPythonExecutionAgentIntegration:
     """Test suite for AI agent integration with Python execution MCP server."""
 

@@ -11,16 +11,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Always use uv to run python commands**: `uv run python`
 
 ### Testing
-- **Run all tests**: `uv run pytest`
+- **Run all tests (excluding expensive LLM tests)**: `uv run pytest`
+- **Run expensive LLM/AI tests**: `uv run pytest -m expensive`
+- **Run all tests including expensive ones**: `uv run pytest -m "not expensive or expensive"`
 - **Run specific test file**: `uv run pytest tests/test_loadset_enhanced.py -v`
 - **Run comparison tests**: `uv run pytest tests/test_loadset_comparison.py -v`
 - **Run range chart tests**: `uv run pytest tests/test_range_charts.py -v`
 - **Run Python execution MCP tests**: `uv run pytest tests/test_python_exec_mcp_server.py -v`
-- **Run Python execution agent integration tests**: `uv run pytest tests/test_python_exec_agent_integration.py -v`
 - **Run specific test class**: `uv run pytest tests/test_loadset_enhanced.py::TestLoadSetReadJson -v`
 - **Run specific test method**: `uv run pytest tests/test_loadset_enhanced.py::TestLoadSetConvertTo::test_convert_to_kN -v`
 - **Run with coverage**: `uv run pytest --cov=tools --cov-report=html`
 - **Generate visual charts**: `uv run pytest -m visuals -s`
+
+#### Test Categories
+- **Regular tests (137)**: Fast unit and integration tests that run by default
+- **Expensive tests (30)**: LLM/AI agent tests requiring API keys - run explicitly with `-m expensive`
+- **Visual tests (1)**: Chart generation tests - run explicitly with `-m visuals`
 
 ### Verification
 - **Verify setup**: `uv run python verify_setup.py`

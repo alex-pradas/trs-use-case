@@ -15,6 +15,7 @@ from typing import Optional, Dict
 from dotenv import load_dotenv
 from pydantic_ai import Agent
 from pydantic_ai.mcp import MCPServerStdio
+import pytest
 
 from loads import LoadSet
 
@@ -115,6 +116,7 @@ def calculate_expected_values(
     return expected
 
 
+@pytest.mark.expensive
 class TestAnthropicMCPIntegration:
     """Test suite for Anthropic AI agent integration with focus on final value validation."""
 

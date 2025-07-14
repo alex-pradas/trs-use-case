@@ -28,6 +28,7 @@ from tools.script_agent_client import ScriptGenerationAgent
 load_dotenv()
 
 
+@pytest.mark.expensive
 class TestScriptAgentIntegration:
     """Test suite for script generation agent integration with real LoadSet workflows."""
     
