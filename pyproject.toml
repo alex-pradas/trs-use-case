@@ -14,7 +14,7 @@ dependencies = [
 
 [tool.pytest.ini_options]
 # Test discovery
-testpaths = ["tests"]
+testpaths = ["tests", "tests/tools", "tests/mcps", "tests/agents"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

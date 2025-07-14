@@ -8,11 +8,11 @@ import pytest
 import sys
 from pathlib import Path
 
-# Add tools directory to path
-tools_dir = Path(__file__).parent.parent / "tools"
-sys.path.insert(0, str(tools_dir))
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
-from mcps.python_exec_mcp_server import (
+from tools.mcps.python_exec_mcp_server import (
     PythonExecutorMCPProvider,
     ExecutionResult, 
     create_mcp_server

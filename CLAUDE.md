@@ -14,19 +14,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Run all tests (excluding expensive LLM tests)**: `uv run pytest`
 - **Run expensive LLM/AI tests**: `uv run pytest -m expensive`
 - **Run all tests including expensive ones**: `uv run pytest -m "not expensive or expensive"`
-- **Run specific test file**: `uv run pytest tests/test_loadset_enhanced.py -v`
-- **Run comparison tests**: `uv run pytest tests/test_loadset_comparison.py -v`
-- **Run range chart tests**: `uv run pytest tests/test_range_charts.py -v`
-- **Run Python execution MCP tests**: `uv run pytest tests/test_python_exec_mcp_server.py -v`
-- **Run specific test class**: `uv run pytest tests/test_loadset_enhanced.py::TestLoadSetReadJson -v`
-- **Run specific test method**: `uv run pytest tests/test_loadset_enhanced.py::TestLoadSetConvertTo::test_convert_to_kN -v`
-- **Run with coverage**: `uv run pytest --cov=tools --cov-report=html`
 - **Generate visual charts**: `uv run pytest -m visuals -s`
+- **Run with coverage**: `uv run pytest --cov=tools --cov-report=html`
+
+#### Test Category Commands
+- **Core implementation tests**: `uv run pytest tests/tools/ -v`
+- **MCP server tests**: `uv run pytest tests/mcps/ -v`
+- **Agent integration tests**: `uv run pytest tests/agents/ -v`
+
+#### Specific Test Files
+- **Core LoadSet tests**: `uv run pytest tests/tools/test_loadset_enhanced.py -v`
+- **LoadSet comparison tests**: `uv run pytest tests/tools/test_loadset_comparison.py -v`
+- **Range chart tests**: `uv run pytest tests/tools/test_range_charts.py -v`
+- **LoadSet MCP server tests**: `uv run pytest tests/mcps/test_mcp_server.py -v`
+- **Python execution MCP tests**: `uv run pytest tests/mcps/test_python_exec_mcp_server.py -v`
+- **Script execution MCP tests**: `uv run pytest tests/mcps/test_script_exec_mcp_server.py -v`
+- **Agent integration tests**: `uv run pytest tests/agents/test_ai_agent_integration.py -v`
+- **Python execution agent tests**: `uv run pytest tests/agents/test_python_exec_agent_integration.py -v`
+- **Script generation agent tests**: `uv run pytest tests/agents/test_script_agent_integration.py -v`
+
+#### Specific Test Classes and Methods
+- **Run specific test class**: `uv run pytest tests/tools/test_loadset_enhanced.py::TestLoadSetReadJson -v`
+- **Run specific test method**: `uv run pytest tests/tools/test_loadset_enhanced.py::TestLoadSetConvertTo::test_convert_to_kN -v`
 
 #### Test Categories
-- **Regular tests (137)**: Fast unit and integration tests that run by default
-- **Expensive tests (30)**: LLM/AI agent tests requiring API keys - run explicitly with `-m expensive`
-- **Visual tests (1)**: Chart generation tests - run explicitly with `-m visuals`
+- **Core tests (57)**: Fast unit and integration tests for LoadSet functionality in `tests/tools/`
+- **MCP tests (80)**: Mock MCP server tests for tool functionality in `tests/mcps/`
+- **Agent tests (30)**: Expensive LLM/AI agent tests requiring API keys in `tests/agents/` - run explicitly with `-m expensive`
+- **Visual tests (1)**: Chart generation tests in `tests/agents/` - run explicitly with `-m visuals`
+- **Total fast tests (137)**: Core + MCP tests that run by default
+- **Total tests (168)**: All tests including expensive and visual tests
 
 ### Verification
 - **Verify setup**: `uv run python verify_setup.py`
@@ -56,24 +73,40 @@ This is a **load-transform-export pipeline** for aerospace structural load data 
 - **Immutable operations**: All transform methods return new instances
 
 ### Test Structure
-Tests are organized into focused classes across multiple files:
+Tests are organized into three main categories for better organization and performance:
 
-#### Core LoadSet Tests (`tests/test_loadset_enhanced.py`):
-- `TestLoadSetReadJson`: JSON loading and validation
-- `TestLoadSetConvertTo`: Unit conversion testing
-- `TestLoadSetFactor`: Load scaling functionality
-- `TestLoadSetToAnsys`: ANSYS export validation
+#### **Core Implementation Tests (`tests/tools/`)**
+Fast unit and integration tests for core functionality (no LLM calls, no expensive operations):
+- **`test_loadset_enhanced.py`**: Core LoadSet objects, JSON loading, unit conversion, scaling, ANSYS export
+  - `TestLoadSetReadJson`: JSON loading and validation
+  - `TestLoadSetConvertTo`: Unit conversion testing
+  - `TestLoadSetFactor`: Load scaling functionality  
+  - `TestLoadSetToAnsys`: ANSYS export validation
+- **`test_loadset_comparison.py`**: LoadSet comparison algorithms and data structures
+  - `TestComparisonRow`: Individual comparison row functionality
+  - `TestLoadSetCompare`: Comparison result container and export
+  - `TestLoadSetPointExtremes`: Min/max value extraction
+  - `TestLoadSetComparison`: LoadSet comparison functionality
+  - `TestLoadSetComparisonWithRealData`: Integration tests with real data
+- **`test_range_charts.py`**: Chart generation logic (fast tests only)
+  - `TestRangeChartGeneration`: Range chart generation functionality
+  - `TestRangeChartsWithRealData`: Tests with real data (non-visual tests)
 
-#### Comparison Tests (`tests/test_loadset_comparison.py`):
-- `TestComparisonRow`: Individual comparison row functionality
-- `TestLoadSetCompare`: Comparison result container and export
-- `TestLoadSetPointExtremes`: Min/max value extraction
-- `TestLoadSetComparison`: LoadSet comparison functionality
-- `TestLoadSetComparisonWithRealData`: Integration tests with real data
+#### **MCP Server Tests (`tests/mcps/`)**
+Tests that mock MCP servers and test their tool interactions (no real LLM agents):
+- **`test_mcp_server.py`**: LoadSet MCP server tools testing
+- **`test_mcp_server_comparison.py`**: Comparison-specific MCP tools
+- **`test_python_exec_mcp_server.py`**: Python execution MCP server tools
+- **`test_script_exec_mcp_server.py`**: Script execution MCP server tools
 
-#### Visualization Tests (`tests/test_range_charts.py`):
-- `TestRangeChartGeneration`: Range chart generation functionality
-- `TestRangeChartsWithRealData`: Tests with real data including visual generation (marked with `@pytest.mark.visuals`)
+#### **Agent Integration Tests (`tests/agents/`)**
+Expensive tests using real LLM calls and complete workflows (all `@pytest.mark.expensive`):
+- **`test_ai_agent_integration.py`**: Basic agent integration with LoadSet MCP
+- **`test_anthropic_mcp_integration.py`**: stdio transport agent tests  
+- **`test_anthropic_mcp_http_integration.py`**: HTTP transport agent tests
+- **`test_python_exec_agent_integration.py`**: Python execution agent workflows
+- **`test_script_agent_integration.py`**: Script generation agent workflows
+- **`test_range_charts_visual.py`**: Visual chart generation test (marked with `@pytest.mark.visuals`)
 
 ### Data Sources
 - **`solution/loads/new_loads.json`**: Updated JSON load data files
