@@ -19,7 +19,7 @@ import sys
 tools_dir = Path(__file__).parent / "tools"
 sys.path.insert(0, str(tools_dir))
 
-from tools.script_exec_mcp_server import create_mcp_server
+from tools.mcps.script_exec_mcp_server import create_mcp_server
 from tools.script_agent_client import ScriptGenerationAgent
 
 # Load environment variables

@@ -20,7 +20,7 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from tools.mcp_server import create_mcp_server, reset_global_state
+from tools.mcps.loads_mcp_server import create_mcp_server, reset_global_state
 from tools.loads import LoadSet
 
 # Load environment variables from .env file

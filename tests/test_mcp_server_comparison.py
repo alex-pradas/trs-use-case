@@ -9,7 +9,7 @@ import tempfile
 import os
 from pathlib import Path
 
-from mcp_server import create_mcp_server, reset_global_state
+from mcps.loads_mcp_server import create_mcp_server, reset_global_state
 
 
 class TestMCPServerComparison:

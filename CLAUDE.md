@@ -78,10 +78,25 @@ Tests are organized into focused classes across multiple files:
 This project includes **three FastMCP servers** that expose different capabilities as MCP tools for LLM agent access:
 
 ### MCP Server Commands
-- **Start LoadSet MCP server**: `uv run python tools/mcp_server.py` (defaults to HTTP transport)
-- **Start Python execution MCP server**: `uv run python tools/python_exec_mcp_server.py` (defaults to HTTP transport)
-- **Start Script execution MCP server**: `uv run python tools/script_exec_mcp_server.py` (defaults to HTTP transport, port 8002)
-- **Start with specific transport**: `uv run python tools/mcp_server.py http` or `uv run python tools/mcp_server.py stdio`
+
+#### Unified Server Management (Recommended)
+- **Start all MCP servers**: `uv run python tools/mcps/start_servers.py` (starts all servers on ports 8000-8002)
+- **Start specific servers**: `uv run python tools/mcps/start_servers.py --only loads,python`
+- **Start with stdio transport**: `uv run python tools/mcps/start_servers.py --transport stdio`
+- **Get help**: `uv run python tools/mcps/start_servers.py --help`
+
+#### Individual Server Management
+- **Start LoadSet MCP server**: `uv run python tools/mcps/loads_mcp_server.py` (defaults to HTTP transport, port 8000)
+- **Start Python execution MCP server**: `uv run python tools/mcps/python_exec_mcp_server.py` (defaults to HTTP transport, port 8001)
+- **Start Script execution MCP server**: `uv run python tools/mcps/script_exec_mcp_server.py` (defaults to HTTP transport, port 8002)
+- **Start with specific transport**: `uv run python tools/mcps/loads_mcp_server.py http` or `uv run python tools/mcps/loads_mcp_server.py stdio`
+
+#### Server Configuration
+- **LoadSet MCP Server (`loads`)**: Port 8000 - LoadSet operations and comparisons
+- **Python Execution MCP Server (`python`)**: Port 8001 - Python code execution with persistent sessions  
+- **Script Execution MCP Server (`script`)**: Port 8002 - Python script execution with workspace management
+
+#### Testing Commands
 - **Test MCP integration**: `uv run pytest tests/test_anthropic_mcp_integration.py -v`
 - **Test LoadSet MCP server**: `uv run pytest tests/test_mcp_server.py -v`
 - **Test Python execution MCP server**: `uv run pytest tests/test_python_exec_mcp_server.py -v`
@@ -91,7 +106,7 @@ This project includes **three FastMCP servers** that expose different capabiliti
 
 ### Available MCP Tools
 
-#### LoadSet MCP Server (`tools/mcp_server.py`)
+#### LoadSet MCP Server (`tools/mcps/loads_mcp_server.py`)
 - **`load_from_json`**: Load LoadSet from JSON file path
 - **`convert_units`**: Convert units between N, kN, lbf, klbf  
 - **`scale_loads`**: Scale all loads by a factor
@@ -104,7 +119,7 @@ This project includes **three FastMCP servers** that expose different capabiliti
 - **`export_comparison_json`**: Export comparison results to JSON
 - **`get_comparison_summary`**: Get high-level comparison statistics
 
-#### Python Execution MCP Server (`tools/python_exec_mcp_server.py`)
+#### Python Execution MCP Server (`tools/mcps/python_exec_mcp_server.py`)
 - **`execute_code`**: Execute Python code in persistent IPython session
 - **`list_variables`**: List all variables in current session namespace
 - **`get_variable`**: Get detailed information about specific variable
@@ -113,7 +128,7 @@ This project includes **three FastMCP servers** that expose different capabiliti
 - **`get_execution_history`**: Get recent code execution history
 - **`configure_security`**: Configure security settings for code execution
 
-#### Script Execution MCP Server (`tools/script_exec_mcp_server.py`)
+#### Script Execution MCP Server (`tools/mcps/script_exec_mcp_server.py`)
 - **`execute_python_script`**: Execute complete Python scripts in isolated workspace
 - **`list_output_files`**: List all files created during script execution
 - **`download_file`**: Download files from workspace as base64 or text
@@ -125,14 +140,14 @@ This project includes **three FastMCP servers** that expose different capabiliti
 ### MCP Architecture
 
 #### LoadSet MCP Server
-- **`tools/mcp_server.py`**: FastMCP server implementation with LoadSet tool definitions
+- **`tools/mcps/loads_mcp_server.py`**: FastMCP server implementation with LoadSet tool definitions
 - **`tools/agent_client.py`**: Pydantic-AI agent client for testing MCP integration
 - **Class-based state management**: `LoadSetMCPProvider` encapsulates state across tool calls
 - **HTTP transport**: Uses modern HTTP transport (default) with fallback to stdio
 - **Error handling**: Comprehensive error responses for all MCP operations
 
 #### Python Execution MCP Server
-- **`tools/python_exec_mcp_server.py`**: FastMCP server with persistent IPython execution
+- **`tools/mcps/python_exec_mcp_server.py`**: FastMCP server with persistent IPython execution
 - **IPython integration**: Uses IPython kernel for advanced Python execution capabilities
 - **Persistent sessions**: Variables and imports persist across multiple code executions
 - **Rich output capture**: Handles matplotlib plots, pandas DataFrames, numpy arrays

@@ -42,7 +42,7 @@ class AnthropicMCPTestAgent:
                 str(Path.cwd()),  # Use current working directory
                 "run",
                 "python",
-                "tools/mcp_server.py",
+                "tools/mcps/loads_mcp_server.py",
                 "stdio",  # Specify stdio transport for integration tests
             ],
         )

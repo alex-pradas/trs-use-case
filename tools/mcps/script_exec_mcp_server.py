@@ -21,7 +21,7 @@ import hashlib
 import os
 
 # Add the tools directory to Python path so we can import loads
-tools_dir = Path(__file__).parent
+tools_dir = Path(__file__).parent.parent  # Go up one level from mcps to tools
 if str(tools_dir) not in sys.path:
     sys.path.insert(0, str(tools_dir))
 
@@ -76,7 +76,7 @@ class ScriptExecutorMCPProvider:
         
         # LoadSet template imports for scripts
         # Get the absolute path to the tools directory from this server file
-        server_tools_dir = Path(__file__).parent.absolute()
+        server_tools_dir = Path(__file__).parent.parent.absolute()  # Go up one level from mcps to tools
         
         self.loadset_imports = f'''
 import sys
