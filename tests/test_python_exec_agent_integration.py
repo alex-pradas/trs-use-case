@@ -32,10 +32,11 @@ class PythonExecutionMCPTestAgent:
     to test autonomous code generation and execution capabilities.
     """
 
-    def __init__(self, server):
+    def __init__(self, server, disable_security=False):
         """Initialize the agent with a Python execution MCP server."""
         self.server = server
         self.agent = None
+        self.disable_security = disable_security
 
         # Only create pydantic-ai agent if Anthropic API key is available
         if os.getenv("ANTHROPIC_API_KEY"):
@@ -62,6 +63,13 @@ class PythonExecutionMCPTestAgent:
                     - LoadSet, numpy, and matplotlib are pre-imported
                     - Generate and execute code to solve problems step by step
                     
+                    IMPORTANT LoadSet API reference:
+                    - LoadSet.read_json(file_path) - Load from JSON file (NOT from_json)
+                    - loadset.convert_to(target_units) - Convert units ("N", "kN", "lbf", "klbf")
+                    - loadset.factor(scale_factor) - Scale all loads by factor
+                    - loadset.compare_to(other_loadset) - Compare two LoadSets
+                    - Use Path() for file paths when needed for JSON writing
+                    
                     When asked to solve problems:
                     1. Break down the problem into steps
                     2. Write and execute code incrementally
@@ -74,6 +82,10 @@ class PythonExecutionMCPTestAgent:
 
                 # Register MCP tools with the agent
                 self._register_tools()
+                
+                # Disable security if requested for testing
+                if self.disable_security:
+                    self.call_tool_directly("configure_security", enable_security=False)
             except ImportError:
                 self.agent = None
 
@@ -368,6 +380,81 @@ class TestPythonExecutionAgentIntegration:
         found_classes = [cls for cls in loadset_classes if cls in var_names]
         
         assert len(found_classes) > 0, f"LoadSet classes {loadset_classes} not found in namespace {list(var_names)}"
+
+    @pytest.mark.asyncio
+    async def test_agent_aerospace_load_processing_workflow(self):
+        """Test agent's ability to process real aerospace load data with unit conversion, scaling, and comparison."""
+        if not os.getenv("ANTHROPIC_API_KEY"):
+            pytest.skip("ANTHROPIC_API_KEY not available")
+        
+        # Create a special agent with security disabled for file operations
+        aerospace_agent = PythonExecutionMCPTestAgent(self.server, disable_security=True)
+
+        challenge = """
+        I need you to process real aerospace structural load data. Please complete this workflow:
+        
+        STEP 1: Load the aerospace load data
+        - Use: new_loads = LoadSet.read_json('solution/loads/new_loads.json')
+        - Show the summary (name, units, number of load cases)
+        
+        STEP 2: Process the loads
+        - Convert units: processed_loads = new_loads.convert_to('kN')
+        - Scale loads: processed_loads = processed_loads.factor(1.5)
+        - Show a sample of the processed data
+        
+        STEP 3: Export processed data  
+        - Import json and Path: from pathlib import Path; import json
+        - Use: output_data = processed_loads.to_dict()
+        - Write: Path('processed_aerospace_loads.json').write_text(json.dumps(output_data, indent=2))
+        - Verify the file was created
+        
+        STEP 4: Load comparison data and compare
+        - Load: old_loads = LoadSet.read_json('solution/loads/old_loads.json')
+        - Compare: comparison = new_loads.compare_to(old_loads)
+        - Show comparison statistics and key differences
+        
+        STEP 5: Analysis summary
+        - Count load cases in each file
+        - Identify load case name differences  
+        - Show the largest value differences found
+        
+        Execute each step with Python code and show the results. Use the exact LoadSet API methods shown.
+        """
+
+        result = await aerospace_agent.solve_programming_challenge(challenge)
+
+        assert result["success"], f"Aerospace load processing test failed: {result.get('error', 'Unknown error')}"
+
+        # Check execution history to verify comprehensive workflow
+        history = aerospace_agent.call_tool_directly("get_execution_history", limit=15)
+        assert history["success"], "Failed to get execution history"
+        assert len(history["tool_result"]["history"]) > 3, "Agent should have executed multiple steps"
+
+        # Look for evidence of the workflow in the code history
+        code_history = [entry["code"] for entry in history["tool_result"]["history"]]
+        code_text = " ".join(code_history).lower()
+        
+        # Verify key workflow elements were executed
+        workflow_evidence = [
+            "loadset.read_json",  # Loading data
+            "convert_to",         # Unit conversion
+            "factor",             # Scaling
+            "json",               # JSON file operations
+            "compare",            # LoadSet comparison
+        ]
+        
+        missing_elements = [elem for elem in workflow_evidence if elem not in code_text]
+        assert len(missing_elements) == 0, f"Missing workflow elements: {missing_elements}. Code: {code_text[:500]}..."
+
+        # Verify variables were created for the workflow
+        variables = aerospace_agent.call_tool_directly("list_variables")
+        assert variables["success"], "Failed to list variables"
+        
+        var_names = list(variables["tool_result"]["variables"].keys())
+        
+        # Should have created LoadSet-related variables
+        loadset_vars = [var for var in var_names if "load" in var.lower() or "processed" in var.lower()]
+        assert len(loadset_vars) > 0, f"Expected LoadSet variables but found: {var_names}"
 
     @pytest.mark.asyncio
     async def test_agent_error_handling_and_debugging(self):
