@@ -17,7 +17,7 @@ from pydantic_ai import Agent
 from pydantic_ai.mcp import MCPServerStdio
 import pytest
 
-from loads import LoadSet
+from tools.loads import LoadSet
 
 # Load environment variables from .env file
 load_dotenv()

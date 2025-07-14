@@ -8,7 +8,7 @@ and provides detailed analysis of differences between them.
 import pytest
 from pathlib import Path
 
-from loads import LoadSet, LoadCase, PointLoad, ForceMoment, Units, ComparisonRow, LoadSetCompare
+from tools.loads import LoadSet, LoadCase, PointLoad, ForceMoment, Units, ComparisonRow, LoadSetCompare
 
 
 class TestComparisonRow:

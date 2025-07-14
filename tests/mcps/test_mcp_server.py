@@ -8,7 +8,7 @@ import pytest
 from pathlib import Path
 
 
-from mcps.loads_mcp_server import create_mcp_server, reset_global_state
+from tools.mcps.loads_mcp_server import create_mcp_server, reset_global_state
 import tempfile
 import json
 
