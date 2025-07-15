@@ -1,12 +1,16 @@
+# Development Environment
 /.vscode/
 .venv/
 
+# Environment and Package Management
 .env
 uv.lock
 
+# Python
 *.pyc
 __pycache__/
 
+# Testing and Coverage
 .coverage
 /htmlcov
 cov.xml
@@ -16,8 +20,13 @@ tests/visual_range_charts/*.png
 tests/visual_range_charts/*.svg
 tests/visual_range_charts/*.pdf
 
+# Tools and Cache
 .claude
 .logfire
 .ruff_cache
 
+# Claude Code MCP Config
+.mcp.json
+
+# System Files
 .DS_Store
