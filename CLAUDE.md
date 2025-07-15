@@ -48,6 +48,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Verification
 - **Verify setup**: `uv run python verify_setup.py`
 
+## FIREWORKS AI Integration
+
+This project supports FIREWORKS AI as an alternative to Anthropic Claude models using pydantic-ai.
+
+### Configuration
+1. **Get FIREWORKS API Key**: Sign up at [fireworks.ai](https://fireworks.ai) and get your API key
+2. **Add to environment**: Add `FIREWORKS_API_KEY=your-key-here` to your `.env` file
+3. **Verify configuration**: `uv run python tools/fireworks_client.py`
+
+### Available Models
+- **Llama 3.3 70B Instruct**: Latest model with improved coding capabilities (default)
+- **Llama 3.1 70B Instruct**: Enhanced reasoning and long context support
+
+### Testing FIREWORKS Integration
+- **Basic integration test**: `uv run python test_fireworks_integration.py`
+- **MCP server integration**: `uv run python test_fireworks_mcp_integration.py`
+
+### Using FIREWORKS with MCP Agents
+```python
+from tools.fireworks_mcp_agent import FireworksMCPAgent
+from tools.mcps.loads_mcp_server import create_mcp_server
+
+# Create MCP server and FIREWORKS agent
+server = create_mcp_server()
+agent = FireworksMCPAgent(server)
+
+# Process LoadSet operations
+result = await agent.process_user_prompt(
+    "Load 'solution/loads/new_loads.json' and convert to kN units"
+)
+```
+
+### FIREWORKS vs Anthropic
+- **Performance**: FIREWORKS offers faster inference with competitive quality
+- **Cost**: Generally more cost-effective than Anthropic
+- **Models**: Specialized in open-source models (Llama series)
+- **Compatibility**: Drop-in replacement for Anthropic agents in most workflows
+
 ## Architecture Overview
 
 This is a **load-transform-export pipeline** for aerospace structural load data processing:
