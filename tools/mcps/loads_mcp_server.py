@@ -284,7 +284,7 @@ class LoadSetMCPProvider:
             return {"success": False, "error": str(e)}
 
     def generate_comparison_charts(
-        self, output_dir: PathLike = None, format: str = "png", as_base64: bool = False
+        self, output_dir: PathLike | None = None, format: str = "png", as_base64: bool = False
     ) -> dict:
         """
         Generate range bar charts comparing the LoadSets.
