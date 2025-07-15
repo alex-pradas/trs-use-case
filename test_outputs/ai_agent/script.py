@@ -1,4 +1,3 @@
-
 import sys
 from pathlib import Path
 
@@ -10,7 +9,8 @@ try:
     from loads import LoadSet, LoadCase, PointLoad, ForceMoment, ForceUnit
     import numpy as np
     import matplotlib
-    matplotlib.use('Agg')  # Non-interactive backend
+
+    matplotlib.use("Agg")  # Non-interactive backend
     import matplotlib.pyplot as plt
 except ImportError as e:
     print(f"Import error: {e}")
@@ -26,13 +26,10 @@ numbers = list(range(1, 6))
 total = sum(numbers)
 
 # Create result dictionary
-result = {
-    "numbers": numbers,
-    "sum": total
-}
+result = {"numbers": numbers, "sum": total}
 
 # Save to JSON file
-with open('simple_math.json', 'w') as f:
+with open("simple_math.json", "w") as f:
     json.dump(result, f, indent=4)
 
 # Print summary

@@ -1,7 +1,7 @@
 """
 Integration test for AI agent with MCP server using clean architecture.
 
-This test validates that the clean pydantic-ai agents can successfully interact 
+This test validates that the clean pydantic-ai agents can successfully interact
 with the MCP server to process load data using any configured AI model.
 """
 
@@ -126,9 +126,10 @@ class TestCleanAgentIntegration:
         # Create agent and dependencies
         agent = create_loadset_agent()
         deps = MCPServerProvider()
-        
+
         # Run the complete workflow using clean architecture
-        result = await agent.run(f"""
+        result = await agent.run(
+            f"""
         Please help me process the loads in {json_path}. 
         Factor by {scale_factor} and convert to {target_units}. 
         Generate files for ansys in a subfolder called {output_folder}.
@@ -141,7 +142,9 @@ class TestCleanAgentIntegration:
         5. Get a summary of the final LoadSet
         
         Return the results of each operation.
-        """, deps=deps)
+        """,
+            deps=deps,
+        )
 
         # Validate agent response
         assert result.output, "Agent should return a response"
@@ -182,11 +185,10 @@ class TestCleanAgentIntegration:
         # Create agent and dependencies
         agent = create_loadset_agent()
         deps = MCPServerProvider()
-        
+
         # Test with invalid file path
         result = await agent.run(
-            "Please load LoadSet data from nonexistent_file.json",
-            deps=deps
+            "Please load LoadSet data from nonexistent_file.json", deps=deps
         )
 
         # Should handle the error gracefully
@@ -198,22 +200,36 @@ class TestCleanAgentIntegration:
         loadset_agent = create_loadset_agent()
         python_agent = create_python_agent()
         script_agent = create_script_agent()
-        
+
         # Check that agents have tools registered
-        assert hasattr(loadset_agent, '_tools'), "LoadSet agent should have tools"
-        assert hasattr(python_agent, '_tools'), "Python agent should have tools"
-        assert hasattr(script_agent, '_tools'), "Script agent should have tools"
+        assert hasattr(loadset_agent, "_tools"), "LoadSet agent should have tools"
+        assert hasattr(python_agent, "_tools"), "Python agent should have tools"
+        assert hasattr(script_agent, "_tools"), "Script agent should have tools"
 
         # Check specific tools exist
-        loadset_tool_names = [tool.function.__name__ for tool in loadset_agent._tools.values()]
-        assert "load_from_json" in loadset_tool_names, "LoadSet agent should have load_from_json tool"
-        assert "convert_units" in loadset_tool_names, "LoadSet agent should have convert_units tool"
+        loadset_tool_names = [
+            tool.function.__name__ for tool in loadset_agent._tools.values()
+        ]
+        assert "load_from_json" in loadset_tool_names, (
+            "LoadSet agent should have load_from_json tool"
+        )
+        assert "convert_units" in loadset_tool_names, (
+            "LoadSet agent should have convert_units tool"
+        )
 
-        python_tool_names = [tool.function.__name__ for tool in python_agent._tools.values()]
-        assert "execute_code" in python_tool_names, "Python agent should have execute_code tool"
+        python_tool_names = [
+            tool.function.__name__ for tool in python_agent._tools.values()
+        ]
+        assert "execute_code" in python_tool_names, (
+            "Python agent should have execute_code tool"
+        )
 
-        script_tool_names = [tool.function.__name__ for tool in script_agent._tools.values()]
-        assert "execute_python_script" in script_tool_names, "Script agent should have execute_python_script tool"
+        script_tool_names = [
+            tool.function.__name__ for tool in script_agent._tools.values()
+        ]
+        assert "execute_python_script" in script_tool_names, (
+            "Script agent should have execute_python_script tool"
+        )
 
     @pytest.mark.asyncio
     async def test_clean_agent_model_switching(self):
@@ -224,19 +240,21 @@ class TestCleanAgentIntegration:
             pytest.skip(f"Model configuration error: {error}")
 
         current_model = get_model_name()
-        
+
         # Create agent and dependencies
         agent = create_loadset_agent()
         deps = MCPServerProvider()
-        
+
         # Test basic functionality with current model
         result = await agent.run(
             "Load 'solution/loads/new_loads.json' and tell me how many load cases it contains.",
-            deps=deps
+            deps=deps,
         )
 
         assert result.output, "Agent should work with current model"
-        assert "25" in result.output or "load cases" in result.output.lower(), "Should report load case count"
+        assert "25" in result.output or "load cases" in result.output.lower(), (
+            "Should report load case count"
+        )
 
 
 # Helper functions
@@ -253,7 +271,7 @@ if __name__ == "__main__":
         """Quick test of clean agent architecture."""
         print("🧪 Clean Agent Integration Test")
         print("=" * 40)
-        
+
         # Validate configuration
         is_valid, error = validate_model_config()
         if not is_valid:
@@ -261,29 +279,32 @@ if __name__ == "__main__":
             sys.exit(1)
 
         print(f"✅ Using model: {get_model_name()}")
-        
+
         try:
             # Create agents and dependencies
             loadset_agent = create_loadset_agent()
             python_agent = create_python_agent()
             deps = MCPServerProvider()
-            
+
             # Test basic LoadSet agent functionality
             result = await loadset_agent.run(
                 "Load 'solution/loads/new_loads.json' and give me a quick summary.",
-                deps=deps
+                deps=deps,
             )
-            print(f"✅ LoadSet agent test passed: {len(result.output)} character response")
-            
+            print(
+                f"✅ LoadSet agent test passed: {len(result.output)} character response"
+            )
+
             # Test Python agent functionality
             result = await python_agent.run(
-                "Execute: print('Hello from clean architecture!')",
-                deps=deps
+                "Execute: print('Hello from clean architecture!')", deps=deps
             )
-            print(f"✅ Python agent test passed: {len(result.output)} character response")
-            
+            print(
+                f"✅ Python agent test passed: {len(result.output)} character response"
+            )
+
             print("🎉 Clean architecture integration test passed!")
-            
+
         except Exception as e:
             print(f"❌ Integration test failed: {e}")
             sys.exit(1)

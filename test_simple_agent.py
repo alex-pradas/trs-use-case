@@ -18,24 +18,24 @@ async def simple_test():
     """Test the basic loadset agent functionality."""
     print("🧪 Simple Agent Test")
     print("=" * 30)
-    
+
     # Validate configuration
     is_valid, error = validate_model_config()
     if not is_valid:
         print(f"❌ Configuration error: {error}")
         return False
-    
+
     print(f"✅ Using model: {get_model_name()}")
-    
+
     # Simple test - just load a LoadSet
     try:
         result = await loadset_agent.run(
             "Load the LoadSet from 'solution/loads/new_loads.json' and give me a brief summary."
         )
-        
+
         print(f"✅ Agent response: {result.output}")
         return True
-        
+
     except Exception as e:
         print(f"❌ Test failed: {e}")
         return False

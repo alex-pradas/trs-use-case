@@ -1,7 +1,7 @@
 """
 Integration test for AI agent with Python execution MCP server using clean architecture.
 
-This test validates that the clean python_agent can successfully interact with the Python execution 
+This test validates that the clean python_agent can successfully interact with the Python execution
 MCP server to generate and execute Python code autonomously.
 """
 
@@ -26,7 +26,10 @@ if str(tools_path) not in sys.path:
 from tools.agents import create_python_agent
 from tools.dependencies import MCPServerProvider
 from tools.model_config import get_model_name, validate_model_config
-from tools.mcps.python_exec_mcp_server import create_mcp_server, PythonExecutorMCPProvider
+from tools.mcps.python_exec_mcp_server import (
+    create_mcp_server,
+    PythonExecutorMCPProvider,
+)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -35,7 +38,7 @@ load_dotenv()
 # No more boilerplate agent classes needed with clean architecture!
 
 
-@pytest.mark.expensive  
+@pytest.mark.expensive
 class TestPythonExecutionCleanAgentIntegration:
     """Test suite for clean Python execution agent integration."""
 
@@ -50,22 +53,29 @@ class TestPythonExecutionCleanAgentIntegration:
         # Create agent and dependencies
         agent = create_python_agent()
         deps = MCPServerProvider()
-        
+
         # Test basic code execution
-        result = await agent.run("""
+        result = await agent.run(
+            """
         Generate Python code to:
         1. Calculate the factorial of 5
         2. Create a list of the first 10 fibonacci numbers  
         3. Print both results
         
         Execute the code step by step.
-        """, deps=deps)
+        """,
+            deps=deps,
+        )
 
         # Validate response
         assert result.output, "Agent should return a response"
-        assert "factorial" in result.output.lower() or "120" in result.output, "Should mention factorial calculation"
-        
-        print(f"✅ Clean Python agent test passed: {len(result.output)} character response")
+        assert "factorial" in result.output.lower() or "120" in result.output, (
+            "Should mention factorial calculation"
+        )
+
+        print(
+            f"✅ Clean Python agent test passed: {len(result.output)} character response"
+        )
 
 
 # Keep one old test class for comparison (can be removed after full migration)
@@ -122,7 +132,7 @@ class TestPythonExecutionAgentIntegration:
 
                 # Register MCP tools with the agent
                 self._register_tools()
-                
+
                 # Disable security if requested for testing
                 if self.disable_security:
                     self.call_tool_directly("configure_security", enable_security=False)
@@ -167,12 +177,14 @@ class TestPythonExecutionAgentIntegration:
             ]
 
         @self.agent.tool_plain
-        def configure_security(enable_security: bool = True, execution_timeout: int = 30) -> dict:
+        def configure_security(
+            enable_security: bool = True, execution_timeout: int = 30
+        ) -> dict:
             """Configure security settings for code execution."""
             return self.call_tool_directly(
-                "configure_security", 
-                enable_security=enable_security, 
-                execution_timeout=execution_timeout
+                "configure_security",
+                enable_security=enable_security,
+                execution_timeout=execution_timeout,
             )["tool_result"]
 
     async def solve_programming_challenge(self, challenge: str) -> Dict[str, Any]:
@@ -238,7 +250,7 @@ class TestPythonExecutionAgentIntegration:
             Execute each step separately to show that variables persist between executions.
             """)
 
-            # Count tool calls from messages  
+            # Count tool calls from messages
             tool_calls_count = 0
             for msg in result.all_messages():
                 if hasattr(msg, "tool_calls") and msg.tool_calls:
@@ -310,20 +322,26 @@ class TestPythonExecutionAgentIntegration:
 
         result = await self.agent.solve_programming_challenge(challenge)
 
-        assert result["success"], f"Agent challenge failed: {result.get('error', 'Unknown error')}"
+        assert result["success"], (
+            f"Agent challenge failed: {result.get('error', 'Unknown error')}"
+        )
         assert "agent_response" in result
 
         # Check that the agent actually executed code by examining execution history
         history = self.agent.call_tool_directly("get_execution_history", limit=10)
         assert history["success"], "Failed to get execution history"
-        assert len(history["tool_result"]["history"]) > 0, "No code executions found in history"
-        
+        assert len(history["tool_result"]["history"]) > 0, (
+            "No code executions found in history"
+        )
+
         # Look for evidence of factorial and fibonacci in the code history
         code_history = [entry["code"] for entry in history["tool_result"]["history"]]
         code_text = " ".join(code_history).lower()
-        
+
         # The agent should have generated code related to the challenge
-        assert any(word in code_text for word in ["factorial", "fibonacci"]), f"Expected factorial/fibonacci code but found: {code_text}"
+        assert any(word in code_text for word in ["factorial", "fibonacci"]), (
+            f"Expected factorial/fibonacci code but found: {code_text}"
+        )
 
     @pytest.mark.asyncio
     async def test_agent_iterative_development(self):
@@ -333,23 +351,29 @@ class TestPythonExecutionAgentIntegration:
 
         result = await self.agent.test_iterative_development()
 
-        assert result["success"], f"Iterative development test failed: {result.get('error', 'Unknown error')}"
+        assert result["success"], (
+            f"Iterative development test failed: {result.get('error', 'Unknown error')}"
+        )
 
         # Check execution history to verify multiple code executions
         history = self.agent.call_tool_directly("get_execution_history", limit=10)
         assert history["success"], "Failed to get execution history"
-        assert len(history["tool_result"]["history"]) > 1, "Agent should have made multiple executions for iterative development"
+        assert len(history["tool_result"]["history"]) > 1, (
+            "Agent should have made multiple executions for iterative development"
+        )
 
         # Verify that variables were created and persist
         variables = self.agent.call_tool_directly("list_variables")
         assert variables["success"], "Failed to list variables"
-        
+
         var_names = variables["tool_result"]["variables"].keys()
         expected_vars = ["numbers", "total", "average"]
-        
+
         # At least some of the expected variables should exist
         found_vars = [var for var in expected_vars if var in var_names]
-        assert len(found_vars) > 0, f"Expected variables {expected_vars} not found in {list(var_names)}"
+        assert len(found_vars) > 0, (
+            f"Expected variables {expected_vars} not found in {list(var_names)}"
+        )
 
     @pytest.mark.asyncio
     async def test_agent_data_analysis_challenge(self):
@@ -371,21 +395,29 @@ class TestPythonExecutionAgentIntegration:
 
         result = await self.agent.solve_programming_challenge(challenge)
 
-        assert result["success"], f"Data analysis challenge failed: {result.get('error', 'Unknown error')}"
+        assert result["success"], (
+            f"Data analysis challenge failed: {result.get('error', 'Unknown error')}"
+        )
 
         # Check that numpy was used and results were calculated
         history = self.agent.call_tool_directly("get_execution_history", limit=10)
         assert history["success"], "Failed to get execution history"
-        assert len(history["tool_result"]["history"]) > 1, "Agent should have executed multiple code blocks"
-        
+        assert len(history["tool_result"]["history"]) > 1, (
+            "Agent should have executed multiple code blocks"
+        )
+
         # Look for evidence of numpy usage and statistics calculation
         code_history = [entry["code"] for entry in history["tool_result"]["history"]]
         code_text = " ".join(code_history).lower()
-        
-        assert "numpy" in code_text or "np." in code_text, "Agent should have used numpy"
-        assert any(stat in code_text for stat in ["mean", "std", "statistics"]), "Agent should have calculated statistics"
 
-    @pytest.mark.asyncio 
+        assert "numpy" in code_text or "np." in code_text, (
+            "Agent should have used numpy"
+        )
+        assert any(stat in code_text for stat in ["mean", "std", "statistics"]), (
+            "Agent should have calculated statistics"
+        )
+
+    @pytest.mark.asyncio
     async def test_agent_loadset_integration(self):
         """Test agent's ability to work with LoadSet classes."""
         if not os.getenv("ANTHROPIC_API_KEY"):
@@ -404,32 +436,40 @@ class TestPythonExecutionAgentIntegration:
 
         result = await self.agent.solve_programming_challenge(challenge)
 
-        assert result["success"], f"LoadSet integration test failed: {result.get('error', 'Unknown error')}"
+        assert result["success"], (
+            f"LoadSet integration test failed: {result.get('error', 'Unknown error')}"
+        )
 
         # Check that the agent executed code
         history = self.agent.call_tool_directly("get_execution_history", limit=5)
         assert history["success"], "Failed to get execution history"
-        assert len(history["tool_result"]["history"]) > 0, "Agent should have executed code to check LoadSet"
+        assert len(history["tool_result"]["history"]) > 0, (
+            "Agent should have executed code to check LoadSet"
+        )
 
         # Verify that LoadSet classes are accessible
         variables = self.agent.call_tool_directly("list_variables")
         assert variables["success"], "Failed to list variables"
-        
+
         # LoadSet should be in the namespace
         var_names = variables["tool_result"]["variables"].keys()
         loadset_classes = ["LoadSet", "LoadCase", "PointLoad", "ForceMoment"]
         found_classes = [cls for cls in loadset_classes if cls in var_names]
-        
-        assert len(found_classes) > 0, f"LoadSet classes {loadset_classes} not found in namespace {list(var_names)}"
+
+        assert len(found_classes) > 0, (
+            f"LoadSet classes {loadset_classes} not found in namespace {list(var_names)}"
+        )
 
     @pytest.mark.asyncio
     async def test_agent_aerospace_load_processing_workflow(self):
         """Test agent's ability to process real aerospace load data with unit conversion, scaling, and comparison."""
         if not os.getenv("ANTHROPIC_API_KEY"):
             pytest.skip("ANTHROPIC_API_KEY not available")
-        
+
         # Create a special agent with security disabled for file operations
-        aerospace_agent = PythonExecutionMCPTestAgent(self.server, disable_security=True)
+        aerospace_agent = PythonExecutionMCPTestAgent(
+            self.server, disable_security=True
+        )
 
         challenge = """
         I need you to process real aerospace structural load data. Please complete this workflow:
@@ -464,38 +504,50 @@ class TestPythonExecutionAgentIntegration:
 
         result = await aerospace_agent.solve_programming_challenge(challenge)
 
-        assert result["success"], f"Aerospace load processing test failed: {result.get('error', 'Unknown error')}"
+        assert result["success"], (
+            f"Aerospace load processing test failed: {result.get('error', 'Unknown error')}"
+        )
 
         # Check execution history to verify comprehensive workflow
         history = aerospace_agent.call_tool_directly("get_execution_history", limit=15)
         assert history["success"], "Failed to get execution history"
-        assert len(history["tool_result"]["history"]) > 3, "Agent should have executed multiple steps"
+        assert len(history["tool_result"]["history"]) > 3, (
+            "Agent should have executed multiple steps"
+        )
 
         # Look for evidence of the workflow in the code history
         code_history = [entry["code"] for entry in history["tool_result"]["history"]]
         code_text = " ".join(code_history).lower()
-        
+
         # Verify key workflow elements were executed
         workflow_evidence = [
             "loadset.read_json",  # Loading data
-            "convert_to",         # Unit conversion
-            "factor",             # Scaling
-            "json",               # JSON file operations
-            "compare",            # LoadSet comparison
+            "convert_to",  # Unit conversion
+            "factor",  # Scaling
+            "json",  # JSON file operations
+            "compare",  # LoadSet comparison
         ]
-        
+
         missing_elements = [elem for elem in workflow_evidence if elem not in code_text]
-        assert len(missing_elements) == 0, f"Missing workflow elements: {missing_elements}. Code: {code_text[:500]}..."
+        assert len(missing_elements) == 0, (
+            f"Missing workflow elements: {missing_elements}. Code: {code_text[:500]}..."
+        )
 
         # Verify variables were created for the workflow
         variables = aerospace_agent.call_tool_directly("list_variables")
         assert variables["success"], "Failed to list variables"
-        
+
         var_names = list(variables["tool_result"]["variables"].keys())
-        
+
         # Should have created LoadSet-related variables
-        loadset_vars = [var for var in var_names if "load" in var.lower() or "processed" in var.lower()]
-        assert len(loadset_vars) > 0, f"Expected LoadSet variables but found: {var_names}"
+        loadset_vars = [
+            var
+            for var in var_names
+            if "load" in var.lower() or "processed" in var.lower()
+        ]
+        assert len(loadset_vars) > 0, (
+            f"Expected LoadSet variables but found: {var_names}"
+        )
 
     @pytest.mark.asyncio
     async def test_agent_error_handling_and_debugging(self):
@@ -516,22 +568,30 @@ class TestPythonExecutionAgentIntegration:
 
         result = await self.agent.solve_programming_challenge(challenge)
 
-        assert result["success"], f"Error handling test failed: {result.get('error', 'Unknown error')}"
+        assert result["success"], (
+            f"Error handling test failed: {result.get('error', 'Unknown error')}"
+        )
 
         # Check execution history for evidence of error and recovery
         history = self.agent.call_tool_directly("get_execution_history", limit=10)
         assert history["success"], "Failed to get execution history"
-        assert len(history["tool_result"]["history"]) > 1, "Agent should have executed multiple attempts"
-        
+        assert len(history["tool_result"]["history"]) > 1, (
+            "Agent should have executed multiple attempts"
+        )
+
         # Look for evidence of errors and corrections
         executions = history["tool_result"]["history"]
-        
+
         # Should have at least one failed execution and one successful one
         failed_executions = [exec for exec in executions if not exec["success"]]
         successful_executions = [exec for exec in executions if exec["success"]]
-        
-        assert len(failed_executions) > 0, "Agent should have encountered at least one error"
-        assert len(successful_executions) > 0, "Agent should have successfully executed corrected code"
+
+        assert len(failed_executions) > 0, (
+            "Agent should have encountered at least one error"
+        )
+        assert len(successful_executions) > 0, (
+            "Agent should have successfully executed corrected code"
+        )
 
     def test_direct_tool_functionality(self):
         """Test that all tools work correctly without agent."""
@@ -548,7 +608,9 @@ class TestPythonExecutionAgentIntegration:
         # Test get_variable
         result = self.agent.call_tool_directly("get_variable", name="x")
         assert result["success"], f"get_variable failed: {result.get('error')}"
-        assert result["tool_result"]["variable_info"]["type"] == "int", "Variable type incorrect"
+        assert result["tool_result"]["variable_info"]["type"] == "int", (
+            "Variable type incorrect"
+        )
 
         # Test execution history
         result = self.agent.call_tool_directly("get_execution_history", limit=5)
@@ -561,8 +623,12 @@ class TestPythonExecutionAgentIntegration:
 
         # Verify variables are cleared
         result = self.agent.call_tool_directly("list_variables")
-        assert result["success"], f"list_variables after reset failed: {result.get('error')}"
-        assert "x" not in result["tool_result"]["variables"], "Variable 'x' should be cleared after reset"
+        assert result["success"], (
+            f"list_variables after reset failed: {result.get('error')}"
+        )
+        assert "x" not in result["tool_result"]["variables"], (
+            "Variable 'x' should be cleared after reset"
+        )
 
 
 if __name__ == "__main__":

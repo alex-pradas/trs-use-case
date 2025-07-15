@@ -19,7 +19,7 @@ load_dotenv()
 class FireworksMCPAgent:
     """
     A Pydantic-AI agent client using FIREWORKS models for MCP server interaction.
-    
+
     This agent connects to MCP servers and uses FIREWORKS AI models
     as an alternative to Anthropic Claude models.
     """
@@ -50,19 +50,19 @@ class FireworksMCPAgent:
                     Be precise and follow the user's instructions exactly.
                     Focus on providing clear, concise responses about the operations performed.
                     """,
-                    model_name=model_name
+                    model_name=model_name,
                 )
 
                 # Register MCP tools with the agent
                 self._register_tools()
-                
+
             except Exception as e:
                 print(f"Failed to create FIREWORKS agent: {e}")
                 self.agent = None
 
     def _register_tools(self):
         """Register MCP server tools with the Pydantic-AI agent."""
-        
+
         @self.agent.tool_plain
         def load_from_json(file_path: str) -> dict:
             """Load a LoadSet from a JSON file."""
@@ -125,7 +125,7 @@ class FireworksMCPAgent:
                 "tool_calls": [
                     msg for msg in result.all_messages() if hasattr(msg, "tool_calls")
                 ],
-                "model_used": self.model_name
+                "model_used": self.model_name,
             }
 
         except Exception as e:
@@ -180,7 +180,7 @@ class FireworksMCPAgent:
                 "tool_calls": [
                     msg for msg in result.all_messages() if hasattr(msg, "tool_calls")
                 ],
-                "model_used": self.model_name
+                "model_used": self.model_name,
             }
 
         except Exception as e:
@@ -240,7 +240,7 @@ class FireworksMCPAgent:
 class FireworksPythonExecutionAgent:
     """
     FIREWORKS AI agent for Python execution MCP server interaction.
-    
+
     This agent connects to the Python execution MCP server and uses FIREWORKS AI
     to generate and execute Python code autonomously.
     """
@@ -288,12 +288,12 @@ class FireworksPythonExecutionAgent:
                     
                     Always execute the code you write to demonstrate the solution.
                     """,
-                    model_name=model_name
+                    model_name=model_name,
                 )
 
                 # Register MCP tools with the agent
                 self._register_tools()
-                
+
             except Exception as e:
                 print(f"Failed to create FIREWORKS Python execution agent: {e}")
                 self.agent = None
@@ -336,12 +336,14 @@ class FireworksPythonExecutionAgent:
             ]
 
         @self.agent.tool_plain
-        def configure_security(enable_security: bool = True, execution_timeout: int = 30) -> dict:
+        def configure_security(
+            enable_security: bool = True, execution_timeout: int = 30
+        ) -> dict:
             """Configure security settings for code execution."""
             return self.call_tool_directly(
-                "configure_security", 
-                enable_security=enable_security, 
-                execution_timeout=execution_timeout
+                "configure_security",
+                enable_security=enable_security,
+                execution_timeout=execution_timeout,
             )["tool_result"]
 
     async def solve_programming_challenge(self, challenge: str) -> Dict[str, Any]:
@@ -376,7 +378,7 @@ class FireworksPythonExecutionAgent:
                 "agent_response": result.output,
                 "messages": [str(msg) for msg in result.all_messages()],
                 "tool_calls_count": tool_calls_count,
-                "model_used": self.model_name
+                "model_used": self.model_name,
             }
 
         except Exception as e:
@@ -415,7 +417,7 @@ if __name__ == "__main__":
     # Quick test of FIREWORKS MCP agent
     print("🔥 FIREWORKS MCP Agent Test")
     print("=" * 40)
-    
+
     if FireworksConfig.is_configured():
         print("✅ FIREWORKS_API_KEY found")
         print(f"🎯 Default model: {FireworksConfig.DEFAULT_CODE_MODEL}")

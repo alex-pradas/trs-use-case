@@ -21,7 +21,7 @@ from loads import LoadSet, ForceUnit, LoadSetCompare
 
 class LoadSetMCPProvider:
     """Provider class for LoadSet MCP operations with encapsulated state."""
-    
+
     def __init__(self):
         self._current_loadset: Optional[LoadSet] = None
         self._comparison_loadset: Optional[LoadSet] = None
@@ -230,7 +230,7 @@ class LoadSetMCPProvider:
             self._comparison_loadset = LoadSet.read_json(file_path)
             # Reset any existing comparison when loading new comparison loadset
             self._current_comparison = None
-            
+
             return {
                 "success": True,
                 "message": f"Comparison LoadSet loaded from {file_path}",
@@ -267,9 +267,11 @@ class LoadSetMCPProvider:
             }
 
         try:
-            self._current_comparison = self._current_loadset.compare_to(self._comparison_loadset)
+            self._current_comparison = self._current_loadset.compare_to(
+                self._comparison_loadset
+            )
             comparison_dict = self._current_comparison.to_dict()
-            
+
             return {
                 "success": True,
                 "message": "LoadSets compared successfully",
@@ -281,7 +283,9 @@ class LoadSetMCPProvider:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def generate_comparison_charts(self, output_dir: PathLike = None, format: str = "png", as_base64: bool = False) -> dict:
+    def generate_comparison_charts(
+        self, output_dir: PathLike = None, format: str = "png", as_base64: bool = False
+    ) -> dict:
         """
         Generate range bar charts comparing the LoadSets.
 
@@ -303,8 +307,9 @@ class LoadSetMCPProvider:
             if as_base64:
                 # Generate charts as base64 strings
                 from pathlib import Path
+
                 charts = self._current_comparison.generate_range_charts(
-                    output_dir=Path.cwd(), format=format, as_base64=True
+                    output_dir=Path.cwd(), image_format=format, as_base64=True
                 )
                 return {
                     "success": True,
@@ -319,13 +324,13 @@ class LoadSetMCPProvider:
                         "success": False,
                         "error": "output_dir required when as_base64=False",
                     }
-                
+
                 charts = self._current_comparison.generate_range_charts(
-                    output_dir=output_dir, format=format, as_base64=False
+                    output_dir=output_dir, image_format=format, as_base64=False
                 )
                 # Convert Path objects to strings for JSON serialization
                 chart_paths = {point: str(path) for point, path in charts.items()}
-                
+
                 return {
                     "success": True,
                     "message": f"Comparison charts saved to {output_dir}",
@@ -354,10 +359,10 @@ class LoadSetMCPProvider:
         try:
             # Export to JSON file
             from pathlib import Path
-            
+
             json_content = self._current_comparison.to_json()
             Path(file_path).write_text(json_content)
-            
+
             return {
                 "success": True,
                 "message": f"Comparison exported to {file_path}",
@@ -381,23 +386,36 @@ class LoadSetMCPProvider:
 
         try:
             comparison_rows = self._current_comparison.comparison_rows
-            
+
             # Calculate summary statistics
             total_rows = len(comparison_rows)
             points = set(row.point_name for row in comparison_rows)
             components = set(row.component for row in comparison_rows)
-            
+
             # Find largest differences
-            max_abs_diff = max((abs(row.abs_diff) for row in comparison_rows), default=0)
-            max_pct_diff = max((abs(row.pct_diff) for row in comparison_rows if row.pct_diff is not None), default=0)
-            
+            max_abs_diff = max(
+                (abs(row.abs_diff) for row in comparison_rows), default=0
+            )
+            max_pct_diff = max(
+                (
+                    abs(row.pct_diff)
+                    for row in comparison_rows
+                    if row.pct_diff is not None
+                ),
+                default=0,
+            )
+
             # Find row with maximum absolute difference
             max_diff_row = max(comparison_rows, key=lambda r: abs(r.abs_diff))
-            
+
             return {
                 "success": True,
-                "loadset1_name": self._current_loadset.name if self._current_loadset else "Unknown",
-                "loadset2_name": self._comparison_loadset.name if self._comparison_loadset else "Unknown",
+                "loadset1_name": self._current_loadset.name
+                if self._current_loadset
+                else "Unknown",
+                "loadset2_name": self._comparison_loadset.name
+                if self._comparison_loadset
+                else "Unknown",
                 "total_comparison_rows": total_rows,
                 "unique_points": len(points),
                 "unique_components": len(components),
@@ -426,7 +444,7 @@ def create_mcp_server() -> FastMCP:
     """
     mcp = FastMCP("LoadSet MCP Server")
     provider = LoadSetMCPProvider()
-    
+
     # Register all methods as tools
     mcp.tool(provider.load_from_json)
     mcp.tool(provider.convert_units)
@@ -439,7 +457,7 @@ def create_mcp_server() -> FastMCP:
     mcp.tool(provider.generate_comparison_charts)
     mcp.tool(provider.export_comparison_json)
     mcp.tool(provider.get_comparison_summary)
-    
+
     return mcp
 
 
@@ -451,13 +469,13 @@ def reset_global_state():
 if __name__ == "__main__":
     import sys
     from typing import Literal
-    
+
     # Allow transport to be specified via command line argument
     transport: Literal["stdio", "http"] = "http"  # Default to HTTP
-    
+
     # Check for command line argument
     if len(sys.argv) > 1 and sys.argv[1] in ["stdio", "http"]:
         transport = sys.argv[1]  # type: ignore
-    
+
     server = create_mcp_server()
     server.run(transport=transport)
