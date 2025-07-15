@@ -1,32 +1,18 @@
-# Simplified Agent Architecture Guide
+# Agent Architecture Guide
 
 ## Overview
 
-This guide documents the new simplified pydantic-ai agent architecture that achieves a **57.2% code reduction** while following best practices and maintaining full functionality.
+This guide documents the pydantic-ai agent architecture that follows best practices with dependency injection and type-safe responses.
 
-## Architecture Comparison
+## Architecture Pattern
 
-### Before (Original Architecture)
 ```python
-# 400+ lines across multiple files
-# Complex MCP bridge abstraction
-# Manual error handling in each tool
-# Raw dictionary responses
-# Provider-specific agent classes
-
-from tools.agents import loadset_agent
-result = await loadset_agent.run("Load data")
-```
-
-### After (Simplified Architecture)
-```python
-# 171 lines in single file
-# Direct dependency injection
+# Factory functions with dependency injection
 # Centralized error handling
 # Type-safe Pydantic responses
-# Single factory functions
+# Direct MCP server access
 
-from tools.agents_v2 import create_loadset_agent
+from tools.agents import create_loadset_agent
 from tools.dependencies import MCPServerProvider
 
 agent = create_loadset_agent()
@@ -36,7 +22,7 @@ result = await agent.run("Load data", deps=deps)
 
 ## Key Components
 
-### 1. Agent Factory Functions (`tools/agents_v2.py`)
+### 1. Agent Factory Functions (`tools/agents.py`)
 
 #### LoadSet Agent
 ```python
@@ -146,7 +132,7 @@ class ExecutionResponse(BaseModel):
 
 ### Basic LoadSet Processing
 ```python
-from tools.agents_v2 import create_loadset_agent
+from tools.agents import create_loadset_agent
 from tools.dependencies import MCPServerProvider
 
 # Create agent and dependencies
@@ -162,7 +148,7 @@ result = await agent.run(
 
 ### Python Code Execution
 ```python
-from tools.agents_v2 import create_python_agent
+from tools.agents import create_python_agent
 from tools.dependencies import MCPServerProvider
 
 # Create agent and dependencies
@@ -178,7 +164,7 @@ result = await agent.run(
 
 ### Script Generation and Execution
 ```python
-from tools.agents_v2 import create_script_agent
+from tools.agents import create_script_agent
 from tools.dependencies import MCPServerProvider
 
 # Create agent and dependencies
@@ -209,80 +195,12 @@ agent = create_loadset_agent()
 result = await agent.run("Process data", deps=custom_deps)
 ```
 
-## Migration Guide
-
-### From Original to Simplified Architecture
-
-#### Before (Original)
-```python
-# tools/agents.py - 400+ lines
-from tools.agents import loadset_agent, python_agent, script_agent
-from tools.mcp_bridge import call_mcp_tool
-
-# Global agents with complex setup
-result = await loadset_agent.run("Load data")
-```
-
-#### After (Simplified)
-```python
-# tools/agents_v2.py - 171 lines
-from tools.agents_v2 import create_loadset_agent, create_python_agent, create_script_agent
-from tools.dependencies import MCPServerProvider
-
-# Factory functions with dependency injection
-agent = create_loadset_agent()
-deps = MCPServerProvider()
-result = await agent.run("Load data", deps=deps)
-```
-
-### Key Changes
-
-1. **Agent Creation**: Global instances → Factory functions
-2. **Dependencies**: MCP bridge → Direct dependency injection
-3. **Responses**: Raw dictionaries → Pydantic models
-4. **Error Handling**: Manual try-catch → Centralized via pydantic-ai
-5. **Tool Access**: Bridge abstraction → Direct RunContext access
-
-### Migration Steps
-
-1. **Replace imports**:
-   ```python
-   # Old
-   from tools.agents import loadset_agent
-   
-   # New
-   from tools.agents_v2 import create_loadset_agent
-   from tools.dependencies import MCPServerProvider
-   ```
-
-2. **Update agent usage**:
-   ```python
-   # Old
-   result = await loadset_agent.run("Load data")
-   
-   # New
-   agent = create_loadset_agent()
-   deps = MCPServerProvider()
-   result = await agent.run("Load data", deps=deps)
-   ```
-
-3. **Handle structured responses**:
-   ```python
-   # Old
-   if result.get("success"):
-       data = result.get("data")
-   
-   # New
-   # Response is already structured via Pydantic
-   print(result.output)  # Agent response
-   ```
-
 ## Benefits
 
-### 1. Code Reduction
-- **57.2% reduction** in lines of code
-- **Eliminated**: 650+ lines of boilerplate
-- **Simplified**: Complex abstractions to direct patterns
+### 1. Clean Architecture
+- **Factory functions** for agent creation
+- **Eliminated boilerplate** through best practices
+- **Simplified patterns** with direct dependency injection
 
 ### 2. Type Safety
 - **Pydantic models** for all responses
@@ -306,20 +224,10 @@ result = await agent.run("Load data", deps=deps)
 
 ## Testing
 
-### TDD Validation
-The simplified architecture was developed using Test-Driven Development:
-
-- **RED Phase**: 17 failing tests defined requirements
-- **GREEN Phase**: 19 passing tests implemented solution
-- **REFACTOR Phase**: 137 existing tests validated compatibility
-
 ### Test Coverage
 ```bash
-# Run TDD tests
-uv run pytest tests/test_simplified_agents_tdd.py -v
-
-# Run comparison test
-uv run python test_simplified_vs_original.py
+# Run agent tests
+uv run pytest tests/test_agents.py -v
 
 # Run all fast tests
 uv run pytest tests/tools/ tests/mcps/ -v
@@ -375,15 +283,13 @@ prod_deps = MCPServerProvider(
 )
 ```
 
-## Performance Metrics
+## Architecture Characteristics
 
-| Metric | Original | Simplified | Improvement |
-|--------|----------|------------|-------------|
-| Lines of Code | 400+ | 171 | -57.2% |
-| Boilerplate | 650+ lines | 0 lines | -100% |
-| Test Coverage | 137 tests | 156 tests | +13.9% |
-| Memory Usage | High | Low | -40% |
-| Startup Time | Slow | Fast | -60% |
+- **Concise**: Clean factory functions (171 lines)
+- **Type-safe**: Pydantic models for all responses
+- **Tested**: Comprehensive test coverage (156+ tests)
+- **Efficient**: Direct MCP server access
+- **Fast**: Optimized startup and execution
 
 ## Future Enhancements
 
@@ -395,11 +301,11 @@ prod_deps = MCPServerProvider(
 
 ## Conclusion
 
-The simplified architecture successfully achieves the goals of:
-- **Dramatic code reduction** (57.2%)
-- **Following pydantic-ai best practices**
-- **Maintaining full functionality**
-- **Improving maintainability and type safety**
-- **Enabling better testing and debugging**
+This architecture successfully achieves:
+- **Clean factory function pattern**
+- **Follows pydantic-ai best practices**
+- **Full functionality with dependency injection**
+- **Improved maintainability and type safety**
+- **Better testing and debugging capabilities**
 
-This architecture provides a solid foundation for future AI agent development while significantly reducing complexity and maintenance overhead.
+This architecture provides a solid foundation for AI agent development with clear patterns and minimal complexity.

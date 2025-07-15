@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Demo script showcasing the simplified pydantic-ai agent architecture.
+Demo script showcasing the pydantic-ai agent architecture.
 
-This script demonstrates the new simplified architecture that achieves 57.2% code reduction
-while maintaining full functionality and following pydantic-ai best practices.
+This script demonstrates the clean factory function architecture with dependency injection
+and type-safe responses following pydantic-ai best practices.
 """
 
 import asyncio
@@ -18,8 +18,8 @@ sys.path.insert(0, str(project_root))
 # Load environment variables
 load_dotenv()
 
-# Import simplified architecture components
-from tools.agents_v2 import create_loadset_agent, create_python_agent, create_script_agent
+# Import agent architecture components
+from tools.agents import create_loadset_agent, create_python_agent, create_script_agent
 from tools.dependencies import MCPServerProvider
 from tools.model_config import get_model_name, validate_model_config
 
@@ -128,32 +128,31 @@ async def demo_custom_dependencies():
 
 
 def show_architecture_metrics():
-    """Show architecture comparison metrics."""
+    """Show architecture metrics."""
     print_subheader("Architecture Metrics")
     
-    print("📊 Code Reduction Achievement:")
-    print(f"   Original Architecture: ~400 lines")
-    print(f"   Simplified Architecture: 171 lines")
-    print(f"   Reduction: 57.2%")
+    print("📊 Architecture Characteristics:")
+    print(f"   Clean Architecture: 171 lines")
+    print(f"   Type-safe: Pydantic models")
+    print(f"   Pattern: Factory functions")
     
-    print("\n🏆 Key Improvements:")
-    print("   • Eliminated MCP bridge abstraction")
-    print("   • Implemented true dependency injection")
-    print("   • Added structured Pydantic response models")
+    print("\n🏆 Key Features:")
+    print("   • Factory function pattern")
+    print("   • True dependency injection")
+    print("   • Structured Pydantic response models")
     print("   • Centralized error handling via pydantic-ai")
     print("   • Direct MCP server access for performance")
     print("   • Follows pydantic-ai best practices")
     
     print("\n📈 Testing Results:")
-    print("   • TDD Tests: 19/19 passing")
+    print("   • Agent Tests: 19/19 passing")
     print("   • Fast Tests: 156/156 passing")
     print("   • Architecture Validation: ✅ PASS")
-    print("   • Backward Compatibility: ✅ PASS")
 
 
 async def run_demo():
     """Run the complete demo."""
-    print_header("Simplified Pydantic-AI Agent Architecture Demo")
+    print_header("Pydantic-AI Agent Architecture Demo")
     
     # Validate configuration
     is_valid, error = validate_model_config()
@@ -191,17 +190,17 @@ async def run_demo():
         
         if success_count == total_demos:
             print("\n🎉 All demos completed successfully!")
-            print("The simplified architecture is working perfectly with:")
+            print("The agent architecture is working perfectly with:")
             print("• Dependency injection")
             print("• Type-safe responses")
             print("• Centralized error handling")
             print("• Direct MCP server access")
-            print("• 57.2% code reduction")
+            print("• Clean factory pattern")
             
             print("\n📚 Next Steps:")
-            print("• Review SIMPLIFIED_ARCHITECTURE_GUIDE.md for detailed documentation")
-            print("• Run tests: uv run pytest tests/test_simplified_agents_tdd.py -v")
-            print("• Compare architectures: uv run python test_simplified_vs_original.py")
+            print("• Review ARCHITECTURE_GUIDE.md for detailed documentation")
+            print("• Run tests: uv run pytest tests/test_agents.py -v")
+            print("• Explore agent functionality and patterns")
             
             return True
         else:

@@ -25,7 +25,8 @@ tools_path = project_root / "tools"
 if str(tools_path) not in sys.path:
     sys.path.insert(0, str(tools_path))
 
-from tools.agents import loadset_agent, python_agent, script_agent
+from tools.agents import create_loadset_agent, create_python_agent, create_script_agent
+from tools.dependencies import MCPServerProvider
 from tools.model_config import get_model_name, validate_model_config
 from tools.mcps.loads_mcp_server import reset_global_state
 from tools.loads import LoadSet
@@ -122,8 +123,12 @@ class TestCleanAgentIntegration:
         scale_factor = 1.5
         output_folder = str(self.output_folder)
 
+        # Create agent and dependencies
+        agent = create_loadset_agent()
+        deps = MCPServerProvider()
+        
         # Run the complete workflow using clean architecture
-        result = await loadset_agent.run(f"""
+        result = await agent.run(f"""
         Please help me process the loads in {json_path}. 
         Factor by {scale_factor} and convert to {target_units}. 
         Generate files for ansys in a subfolder called {output_folder}.
@@ -136,7 +141,7 @@ class TestCleanAgentIntegration:
         5. Get a summary of the final LoadSet
         
         Return the results of each operation.
-        """)
+        """, deps=deps)
 
         # Validate agent response
         assert result.output, "Agent should return a response"
@@ -174,9 +179,14 @@ class TestCleanAgentIntegration:
         if not is_valid:
             pytest.skip(f"Model configuration error: {error}")
 
+        # Create agent and dependencies
+        agent = create_loadset_agent()
+        deps = MCPServerProvider()
+        
         # Test with invalid file path
-        result = await loadset_agent.run(
-            "Please load LoadSet data from nonexistent_file.json"
+        result = await agent.run(
+            "Please load LoadSet data from nonexistent_file.json",
+            deps=deps
         )
 
         # Should handle the error gracefully
@@ -184,6 +194,11 @@ class TestCleanAgentIntegration:
 
     def test_direct_tool_access(self):
         """Test that clean agents have properly registered tools."""
+        # Create agents
+        loadset_agent = create_loadset_agent()
+        python_agent = create_python_agent()
+        script_agent = create_script_agent()
+        
         # Check that agents have tools registered
         assert hasattr(loadset_agent, '_tools'), "LoadSet agent should have tools"
         assert hasattr(python_agent, '_tools'), "Python agent should have tools"
@@ -210,9 +225,14 @@ class TestCleanAgentIntegration:
 
         current_model = get_model_name()
         
+        # Create agent and dependencies
+        agent = create_loadset_agent()
+        deps = MCPServerProvider()
+        
         # Test basic functionality with current model
-        result = await loadset_agent.run(
-            "Load 'solution/loads/new_loads.json' and tell me how many load cases it contains."
+        result = await agent.run(
+            "Load 'solution/loads/new_loads.json' and tell me how many load cases it contains.",
+            deps=deps
         )
 
         assert result.output, "Agent should work with current model"
@@ -243,15 +263,22 @@ if __name__ == "__main__":
         print(f"✅ Using model: {get_model_name()}")
         
         try:
+            # Create agents and dependencies
+            loadset_agent = create_loadset_agent()
+            python_agent = create_python_agent()
+            deps = MCPServerProvider()
+            
             # Test basic LoadSet agent functionality
             result = await loadset_agent.run(
-                "Load 'solution/loads/new_loads.json' and give me a quick summary."
+                "Load 'solution/loads/new_loads.json' and give me a quick summary.",
+                deps=deps
             )
             print(f"✅ LoadSet agent test passed: {len(result.output)} character response")
             
             # Test Python agent functionality
             result = await python_agent.run(
-                "Execute: print('Hello from clean architecture!')"
+                "Execute: print('Hello from clean architecture!')",
+                deps=deps
             )
             print(f"✅ Python agent test passed: {len(result.output)} character response")
             
