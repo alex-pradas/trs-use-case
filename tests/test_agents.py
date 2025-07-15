@@ -115,8 +115,8 @@ class TestAgentArchitecture:
         
         # We can check the source of our agent creation to ensure no try-catch boilerplate
         import inspect
-        from tools import agents_v2
-        source = inspect.getsource(agents_v2)
+        from tools import agents
+        source = inspect.getsource(agents)
         
         # Count try-catch blocks - should be minimal or none in tool functions
         try_count = source.count("try:")
@@ -150,11 +150,11 @@ class TestAgentArchitecture:
         # Expected: 60% reduction (400 -> 160 lines)
         
         try:
-            from tools import agents_v2
+            from tools import agents
             import inspect
             
             # Count lines in new implementation
-            source = inspect.getsource(agents_v2)
+            source = inspect.getsource(agents)
             new_lines = len(source.splitlines())
             
             # Should be significantly smaller than original
