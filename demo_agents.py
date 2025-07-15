@@ -26,116 +26,114 @@ from tools.model_config import get_model_name, validate_model_config
 
 def print_header(title: str):
     """Print a formatted header."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {title}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 def print_subheader(title: str):
     """Print a formatted subheader."""
-    print(f"\n{'-'*40}")
+    print(f"\n{'-' * 40}")
     print(f"  {title}")
-    print(f"{'-'*40}")
+    print(f"{'-' * 40}")
 
 
 async def demo_loadset_agent():
     """Demonstrate LoadSet agent functionality."""
     print_subheader("LoadSet Agent Demo")
-    
+
     # Create agent and dependencies
     agent = create_loadset_agent()
     deps = MCPServerProvider()
-    
+
     print("🔄 Loading and processing LoadSet data...")
-    
+
     result = await agent.run(
         "Load 'solution/loads/new_loads.json' and give me a summary of the LoadSet including units, number of load cases, and a sample of the data",
-        deps=deps
+        deps=deps,
     )
-    
+
     print(f"✅ LoadSet Agent Response ({len(result.output)} chars):")
     print(f"   {result.output[:200]}...")
-    
+
     return True
 
 
 async def demo_python_agent():
     """Demonstrate Python execution agent functionality."""
     print_subheader("Python Agent Demo")
-    
+
     # Create agent and dependencies
     agent = create_python_agent()
     deps = MCPServerProvider()
-    
+
     print("🔄 Executing Python code...")
-    
+
     result = await agent.run(
         "Calculate the factorial of 8 and create a list of the first 10 prime numbers. Show the results.",
-        deps=deps
+        deps=deps,
     )
-    
+
     print(f"✅ Python Agent Response ({len(result.output)} chars):")
     print(f"   {result.output[:200]}...")
-    
+
     return True
 
 
 async def demo_script_agent():
     """Demonstrate Script generation agent functionality."""
     print_subheader("Script Agent Demo")
-    
+
     # Create agent and dependencies
     agent = create_script_agent()
     deps = MCPServerProvider()
-    
+
     print("🔄 Generating and executing a Python script...")
-    
+
     result = await agent.run(
         "Generate a Python script that creates a simple data analysis report with some sample data and basic statistics",
-        deps=deps
+        deps=deps,
     )
-    
+
     print(f"✅ Script Agent Response ({len(result.output)} chars):")
     print(f"   {result.output[:200]}...")
-    
+
     return True
 
 
 async def demo_custom_dependencies():
     """Demonstrate custom dependency configuration."""
     print_subheader("Custom Dependencies Demo")
-    
+
     # Create custom dependency provider
     custom_deps = MCPServerProvider(
-        loads_timeout=60,
-        python_timeout=45,
-        script_timeout=120
+        loads_timeout=60, python_timeout=45, script_timeout=120
     )
-    
+
     print("🔄 Using custom dependency configuration...")
-    
+
     # Use with LoadSet agent
     agent = create_loadset_agent()
     result = await agent.run(
         "Check if the LoadSet functionality is working with custom timeouts",
-        deps=custom_deps
+        deps=custom_deps,
     )
-    
+
     print(f"✅ Custom Dependencies Response ({len(result.output)} chars):")
     print(f"   {result.output[:200]}...")
-    
+
     return True
 
 
 def show_architecture_metrics():
     """Show architecture metrics."""
     print_subheader("Architecture Metrics")
-    
+
     print("📊 Architecture Characteristics:")
     print(f"   Clean Architecture: 171 lines")
     print(f"   Type-safe: Pydantic models")
     print(f"   Pattern: Factory functions")
-    
+
     print("\n🏆 Key Features:")
     print("   • Factory function pattern")
     print("   • True dependency injection")
@@ -143,7 +141,7 @@ def show_architecture_metrics():
     print("   • Centralized error handling via pydantic-ai")
     print("   • Direct MCP server access for performance")
     print("   • Follows pydantic-ai best practices")
-    
+
     print("\n📈 Testing Results:")
     print("   • Agent Tests: 19/19 passing")
     print("   • Fast Tests: 156/156 passing")
@@ -153,41 +151,41 @@ def show_architecture_metrics():
 async def run_demo():
     """Run the complete demo."""
     print_header("Pydantic-AI Agent Architecture Demo")
-    
+
     # Validate configuration
     is_valid, error = validate_model_config()
     if not is_valid:
         print(f"❌ Configuration Error: {error}")
         print("Please set the appropriate API key for your chosen model.")
         return False
-    
+
     print(f"🤖 Using Model: {get_model_name()}")
     print(f"✅ Configuration Valid")
-    
+
     # Show architecture metrics
     show_architecture_metrics()
-    
+
     # Run agent demos
     try:
         success_count = 0
         total_demos = 4
-        
+
         if await demo_loadset_agent():
             success_count += 1
-        
+
         if await demo_python_agent():
             success_count += 1
-        
+
         if await demo_script_agent():
             success_count += 1
-        
+
         if await demo_custom_dependencies():
             success_count += 1
-        
+
         # Summary
         print_header("Demo Summary")
         print(f"✅ Successful Demos: {success_count}/{total_demos}")
-        
+
         if success_count == total_demos:
             print("\n🎉 All demos completed successfully!")
             print("The agent architecture is working perfectly with:")
@@ -196,17 +194,17 @@ async def run_demo():
             print("• Centralized error handling")
             print("• Direct MCP server access")
             print("• Clean factory pattern")
-            
+
             print("\n📚 Next Steps:")
             print("• Review ARCHITECTURE_GUIDE.md for detailed documentation")
             print("• Run tests: uv run pytest tests/test_agents.py -v")
             print("• Explore agent functionality and patterns")
-            
+
             return True
         else:
             print(f"\n⚠️  {total_demos - success_count} demos failed")
             return False
-    
+
     except Exception as e:
         print(f"\n❌ Demo failed with error: {e}")
         return False

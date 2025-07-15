@@ -46,7 +46,7 @@ class AnthropicMCPHTTPTestAgent:
         # Use HTTP transport with the server running on default port
         self.mcp_server = MCPServerStreamableHTTP(
             url="http://127.0.0.1:8000/mcp/",
-            timeout=30.0  # Increased timeout for HTTP connections
+            timeout=30.0,  # Increased timeout for HTTP connections
         )
 
         self.agent = Agent(
@@ -64,12 +64,18 @@ class AnthropicMCPHTTPTestAgent:
     async def start_server(self):
         """Start the MCP server in HTTP mode."""
         # Start the server process
-        self.server_process = subprocess.Popen([
-            "/opt/homebrew/bin/uv",
-            "--directory", str(Path.cwd()),
-            "run", "python", "tools/mcps/loads_mcp_server.py", "http"
-        ])
-        
+        self.server_process = subprocess.Popen(
+            [
+                "/opt/homebrew/bin/uv",
+                "--directory",
+                str(Path.cwd()),
+                "run",
+                "python",
+                "tools/mcps/loads_mcp_server.py",
+                "http",
+            ]
+        )
+
         # Give the server time to start
         await asyncio.sleep(3)
 
@@ -150,7 +156,7 @@ class TestAnthropicMCPHTTPIntegration:
         self.agent = AnthropicMCPHTTPTestAgent()
 
     def teardown_method(self):
-        """Teardown for each test method.""" 
+        """Teardown for each test method."""
         # Cleanup will be handled by async context managers in tests
         pass
 
@@ -160,7 +166,7 @@ class TestAnthropicMCPHTTPIntegration:
         try:
             # Start server
             await self.agent.start_server()
-            
+
             async with self.agent.mcp_server:
                 result = await self.agent.agent.run(
                     """
@@ -171,7 +177,10 @@ class TestAnthropicMCPHTTPIntegration:
                 # Verify the result contains information about loading
                 result_text = str(result.output)
                 assert "load" in result_text.lower()
-                assert any(keyword in result_text.lower() for keyword in ["case", "point", "summary"])
+                assert any(
+                    keyword in result_text.lower()
+                    for keyword in ["case", "point", "summary"]
+                )
 
         except Exception as e:
             pytest.fail(f"HTTP connection test failed: {e}")
@@ -179,7 +188,7 @@ class TestAnthropicMCPHTTPIntegration:
             # Stop server
             await self.agent.stop_server()
 
-    @pytest.mark.asyncio  
+    @pytest.mark.asyncio
     async def test_agent_http_final_value_validation(self):
         """Test HTTP transport with final value validation using known data."""
         # Get original values from the JSON for validation
@@ -204,7 +213,7 @@ class TestAnthropicMCPHTTPIntegration:
             try:
                 # Start server
                 await self.agent.start_server()
-                
+
                 async with self.agent.mcp_server:
                     result = await self.agent.agent.run(
                         f"""
@@ -223,42 +232,59 @@ class TestAnthropicMCPHTTPIntegration:
                     assert len(output_files) > 0, "No ANSYS files were created"
 
                     # Find the file for the first load case (Take_off_004) to match our test data
-                    first_load_case_name = "Take_off_004" 
-                    target_files = [f for f in output_files if first_load_case_name in f.name]
-                    assert len(target_files) > 0, f"Could not find ANSYS file for {first_load_case_name}"
+                    first_load_case_name = "Take_off_004"
+                    target_files = [
+                        f for f in output_files if first_load_case_name in f.name
+                    ]
+                    assert len(target_files) > 0, (
+                        f"Could not find ANSYS file for {first_load_case_name}"
+                    )
                     first_file = target_files[0]
                     with open(first_file, "r") as f:
                         ansys_content = f.read()
 
                     # Extract values and compare with expected (use percentage-based tolerances)
-                    tolerance_percent_force = 0.01  # 1% tolerance for forces (high precision expected)
-                    tolerance_percent_moment = 0.01  # 1% tolerance for moments (high precision expected)
-                    
+                    tolerance_percent_force = (
+                        0.01  # 1% tolerance for forces (high precision expected)
+                    )
+                    tolerance_percent_moment = (
+                        0.01  # 1% tolerance for moments (high precision expected)
+                    )
+
                     for component in ["fx", "fy", "fz", "mx", "my", "mz"]:
                         actual_value = extract_force_value(ansys_content, component)
                         expected_value = expected_values[component]
 
-                        assert actual_value is not None, f"Could not find {component} in ANSYS file"
-                        
+                        assert actual_value is not None, (
+                            f"Could not find {component} in ANSYS file"
+                        )
+
                         # Use percentage-based tolerance
                         if component in ["fx", "fy", "fz"]:
                             tolerance_percent = tolerance_percent_force
                         else:
                             tolerance_percent = tolerance_percent_moment
-                        
+
                         # Calculate absolute tolerance based on expected value
                         absolute_tolerance = abs(expected_value) * tolerance_percent
                         difference = abs(actual_value - expected_value)
-                        percent_difference = (difference / abs(expected_value)) * 100 if expected_value != 0 else 0
-                            
+                        percent_difference = (
+                            (difference / abs(expected_value)) * 100
+                            if expected_value != 0
+                            else 0
+                        )
+
                         assert difference < absolute_tolerance, (
                             f"{component}: expected {expected_value:.6f}, got {actual_value:.6f}, "
-                            f"difference {difference:.6f} ({percent_difference:.2f}%) > {tolerance_percent*100:.1f}% tolerance"
+                            f"difference {difference:.6f} ({percent_difference:.2f}%) > {tolerance_percent * 100:.1f}% tolerance"
                         )
 
                     # Verify the agent's response mentions the operations
                     result_text = str(result.output).lower()
-                    assert any(keyword in result_text for keyword in ["load", "scale", "convert", "export"])
+                    assert any(
+                        keyword in result_text
+                        for keyword in ["load", "scale", "convert", "export"]
+                    )
 
             except Exception as e:
                 pytest.fail(f"HTTP final value validation test failed: {e}")
@@ -272,7 +298,7 @@ class TestAnthropicMCPHTTPIntegration:
         try:
             # Start server
             await self.agent.start_server()
-            
+
             async with self.agent.mcp_server:
                 result = await self.agent.agent.run(
                     """
@@ -283,7 +309,10 @@ class TestAnthropicMCPHTTPIntegration:
 
                 # Verify the result contains load case information
                 result_text = str(result.output)
-                assert "load case" in result_text.lower() or "loadcase" in result_text.lower()
+                assert (
+                    "load case" in result_text.lower()
+                    or "loadcase" in result_text.lower()
+                )
 
         except Exception as e:
             pytest.fail(f"HTTP load case selection test failed: {e}")
@@ -297,7 +326,7 @@ class TestAnthropicMCPHTTPIntegration:
         try:
             # Start server
             await self.agent.start_server()
-            
+
             async with self.agent.mcp_server:
                 result = await self.agent.agent.run(
                     """
@@ -309,7 +338,10 @@ class TestAnthropicMCPHTTPIntegration:
 
                 # Verify the result mentions unit conversion
                 result_text = str(result.output).lower()
-                assert any(keyword in result_text for keyword in ["unit", "convert", "kn", "newton"])
+                assert any(
+                    keyword in result_text
+                    for keyword in ["unit", "convert", "kn", "newton"]
+                )
 
         except Exception as e:
             pytest.fail(f"HTTP mathematical calculations test failed: {e}")

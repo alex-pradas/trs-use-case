@@ -171,25 +171,25 @@ class TestAnthropicMCPIntegration:
 
         # Read original values from new_loads.json for Take_off_004, Point A
         original_loadset = LoadSet.read_json(Path("solution/loads/new_loads.json"))
-        
+
         # Find Take_off_004 load case
         take_off_004 = None
         for load_case in original_loadset.load_cases:
             if load_case.name == "Take_off_004":
                 take_off_004 = load_case
                 break
-        
+
         assert take_off_004 is not None, "Take_off_004 load case not found in JSON file"
-        
+
         # Find Point A in Take_off_004
         point_a = None
         for point_load in take_off_004.point_loads:
             if point_load.name == "Point A":
                 point_a = point_load
                 break
-        
+
         assert point_a is not None, "Point A not found in Take_off_004 load case"
-        
+
         # Extract original values from the JSON data
         fm = point_a.force_moment
         original_values = {
@@ -229,7 +229,6 @@ class TestAnthropicMCPIntegration:
     async def test_agent_handles_load_case_selection(self):
         """Test that agent can process multiple load cases correctly."""
 
-
         # Run agent workflow
         async with self.agent.mcp_server:
             result = await self.agent.agent.run(
@@ -262,11 +261,13 @@ class TestAnthropicMCPIntegration:
         """Test the mathematical calculation functions used for validation."""
         # Read test values from Take_off_004, Point A
         original_loadset = LoadSet.read_json(Path("solution/loads/new_loads.json"))
-        
+
         # Find Take_off_004 load case and Point A
-        take_off_004 = next(lc for lc in original_loadset.load_cases if lc.name == "Take_off_004")
+        take_off_004 = next(
+            lc for lc in original_loadset.load_cases if lc.name == "Take_off_004"
+        )
         point_a = next(pl for pl in take_off_004.point_loads if pl.name == "Point A")
-        
+
         fm = point_a.force_moment
         original_values = {
             "fx": fm.fx,

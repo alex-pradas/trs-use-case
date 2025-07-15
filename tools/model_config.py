@@ -16,7 +16,7 @@ load_dotenv()
 # Single model selection via environment variable
 # Supports any pydantic-ai compatible model string:
 # - anthropic:claude-3-5-sonnet-latest
-# - fireworks:accounts/fireworks/models/llama-v3p3-70b-instruct  
+# - fireworks:accounts/fireworks/models/llama-v3p3-70b-instruct
 # - openai:gpt-4o
 # - google-gla:gemini-1.5-flash
 MODEL_NAME = os.getenv("AI_MODEL", "anthropic:claude-3-5-sonnet-latest")
@@ -59,15 +59,15 @@ def get_model_id() -> str:
 def validate_model_config() -> tuple[bool, Optional[str]]:
     """
     Validate that the model is properly configured.
-    
+
     Returns:
         tuple: (is_valid, error_message)
     """
     if not MODEL_NAME:
         return False, "AI_MODEL environment variable not set"
-    
+
     provider = get_provider_name()
-    
+
     # Check for required API keys based on provider
     if provider == "anthropic":
         if not os.getenv("ANTHROPIC_API_KEY"):
@@ -83,7 +83,7 @@ def validate_model_config() -> tuple[bool, Optional[str]]:
             return False, "GOOGLE_API_KEY required for Google models"
     else:
         return False, f"Unknown provider: {provider}"
-    
+
     return True, None
 
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     print(f"Model: {get_model_name()}")
     print(f"Provider: {get_provider_name()}")
     print(f"Model ID: {get_model_id()}")
-    
+
     is_valid, error = validate_model_config()
     if is_valid:
         print("✅ Configuration is valid")

@@ -89,7 +89,9 @@ class TestCleanAgentIntegration:
 
         # Validate ANSYS files
         ansys_files = list(self.output_folder.glob("*.inp"))
-        assert len(ansys_files) == expected_load_cases, f"Expected {expected_load_cases} ANSYS files, got {len(ansys_files)}"
+        assert len(ansys_files) == expected_load_cases, (
+            f"Expected {expected_load_cases} ANSYS files, got {len(ansys_files)}"
+        )
 
         # Validate file content
         sample_file = ansys_files[0]
@@ -118,7 +120,7 @@ class TestCleanAgentIntegration:
         assert result.output, "Agent should return a response"
         assert "LoadSet" in result.output, "Response should mention LoadSet"
 
-    @pytest.mark.asyncio  
+    @pytest.mark.asyncio
     async def test_script_agent_generation(self):
         """Test script generation and execution agent."""
         is_valid, error = validate_model_config()
@@ -138,7 +140,9 @@ class TestCleanAgentIntegration:
 
         # Validate response
         assert result.output, "Agent should return a response"
-        assert "script" in result.output.lower(), "Response should mention script execution"
+        assert "script" in result.output.lower(), (
+            "Response should mention script execution"
+        )
 
     @pytest.mark.asyncio
     async def test_loadset_agent_error_handling(self):
@@ -163,35 +167,51 @@ class TestCleanAgentIntegration:
             pytest.skip(f"Model configuration error: {error}")
 
         current_model = get_model_name()
-        
+
         # Test basic functionality
         result = await loadset_agent.run(
             "Load 'solution/loads/new_loads.json' and tell me how many load cases it contains."
         )
 
         assert result.output, "Agent should work with current model"
-        assert "25" in result.output or "load cases" in result.output.lower(), "Should report load case count"
+        assert "25" in result.output or "load cases" in result.output.lower(), (
+            "Should report load case count"
+        )
 
     def test_direct_tool_access(self):
         """Test that agents have properly registered tools."""
         # Check that agents have tools registered
-        assert hasattr(loadset_agent, '_tools'), "LoadSet agent should have tools"
-        assert hasattr(python_agent, '_tools'), "Python agent should have tools"
-        assert hasattr(script_agent, '_tools'), "Script agent should have tools"
+        assert hasattr(loadset_agent, "_tools"), "LoadSet agent should have tools"
+        assert hasattr(python_agent, "_tools"), "Python agent should have tools"
+        assert hasattr(script_agent, "_tools"), "Script agent should have tools"
 
         # Check specific tools exist
-        loadset_tool_names = [tool.function.__name__ for tool in loadset_agent._tools.values()]
-        assert "load_from_json" in loadset_tool_names, "LoadSet agent should have load_from_json tool"
-        assert "convert_units" in loadset_tool_names, "LoadSet agent should have convert_units tool"
+        loadset_tool_names = [
+            tool.function.__name__ for tool in loadset_agent._tools.values()
+        ]
+        assert "load_from_json" in loadset_tool_names, (
+            "LoadSet agent should have load_from_json tool"
+        )
+        assert "convert_units" in loadset_tool_names, (
+            "LoadSet agent should have convert_units tool"
+        )
 
-        python_tool_names = [tool.function.__name__ for tool in python_agent._tools.values()]
-        assert "execute_code" in python_tool_names, "Python agent should have execute_code tool"
+        python_tool_names = [
+            tool.function.__name__ for tool in python_agent._tools.values()
+        ]
+        assert "execute_code" in python_tool_names, (
+            "Python agent should have execute_code tool"
+        )
 
-        script_tool_names = [tool.function.__name__ for tool in script_agent._tools.values()]
-        assert "execute_python_script" in script_tool_names, "Script agent should have execute_python_script tool"
+        script_tool_names = [
+            tool.function.__name__ for tool in script_agent._tools.values()
+        ]
+        assert "execute_python_script" in script_tool_names, (
+            "Script agent should have execute_python_script tool"
+        )
 
 
-@pytest.mark.asyncio 
+@pytest.mark.asyncio
 async def test_clean_vs_old_architecture_comparison():
     """Compare new clean architecture with old approach (if available)."""
     is_valid, error = validate_model_config()
@@ -200,17 +220,19 @@ async def test_clean_vs_old_architecture_comparison():
 
     # Test new clean architecture
     start_time = asyncio.get_event_loop().time()
-    
+
     result = await loadset_agent.run(
         "Load 'solution/loads/new_loads.json' and convert units to kN. Give me a summary."
     )
-    
+
     end_time = asyncio.get_event_loop().time()
     clean_duration = end_time - start_time
 
     # Validate result
     assert result.output, "Clean architecture should return response"
-    assert "kN" in result.output or "kilonewton" in result.output.lower(), "Should mention unit conversion"
+    assert "kN" in result.output or "kilonewton" in result.output.lower(), (
+        "Should mention unit conversion"
+    )
 
     print(f"✅ Clean architecture completed in {clean_duration:.2f} seconds")
     print("💪 Benefits demonstrated:")
@@ -226,30 +248,30 @@ if __name__ == "__main__":
         """Quick test to verify everything works."""
         print("🧪 Quick Clean Architecture Test")
         print("=" * 40)
-        
+
         is_valid, error = validate_model_config()
         if not is_valid:
             print(f"❌ Configuration error: {error}")
             return False
 
         print(f"✅ Using model: {get_model_name()}")
-        
+
         try:
             # Test LoadSet agent
             result = await loadset_agent.run(
                 "Load 'solution/loads/new_loads.json' and give me a quick summary."
             )
             print(f"✅ LoadSet agent: {len(result.output)} character response")
-            
-            # Test Python agent  
+
+            # Test Python agent
             result = await python_agent.run(
                 "Execute: print('Hello from clean Python agent!')"
             )
             print(f"✅ Python agent: {len(result.output)} character response")
-            
+
             print("🎉 Clean architecture working perfectly!")
             return True
-            
+
         except Exception as e:
             print(f"❌ Test failed: {e}")
             return False

@@ -11,25 +11,25 @@ from pathlib import Path
 
 class LoadSetScriptTemplates:
     """Collection of script templates for LoadSet operations."""
-    
+
     @staticmethod
     def basic_load_and_export(
         input_file: str,
         target_units: str = "kN",
         scale_factor: float = 1.0,
         output_format: str = "ansys",
-        output_stem: str = "processed_loads"
+        output_stem: str = "processed_loads",
     ) -> str:
         """
         Generate a basic load, convert, scale, and export script.
-        
+
         Args:
             input_file: Path to input JSON file
             target_units: Target units for conversion
             scale_factor: Factor to scale loads by
             output_format: Output format ("ansys", "json")
             output_stem: Name stem for output files
-            
+
         Returns:
             str: Complete Python script
         """
@@ -123,21 +123,19 @@ def main():
 if __name__ == "__main__":
     main()
 '''
-    
+
     @staticmethod
     def load_comparison_script(
-        file1: str,
-        file2: str,
-        output_stem: str = "comparison"
+        file1: str, file2: str, output_stem: str = "comparison"
     ) -> str:
         """
         Generate a script for comparing two LoadSets.
-        
+
         Args:
             file1: Path to first LoadSet JSON file
             file2: Path to second LoadSet JSON file
             output_stem: Name stem for output files
-            
+
         Returns:
             str: Complete Python script
         """
@@ -240,26 +238,26 @@ def main():
 if __name__ == "__main__":
     main()
 '''
-    
+
     @staticmethod
     def unit_conversion_analysis(
         input_file: str,
         target_units_list: List[str],
-        output_stem: str = "unit_analysis"
+        output_stem: str = "unit_analysis",
     ) -> str:
         """
         Generate a script for analyzing LoadSet in different units.
-        
+
         Args:
             input_file: Path to input LoadSet JSON file
             target_units_list: List of units to convert to
             output_stem: Name stem for output files
-            
+
         Returns:
             str: Complete Python script
         """
         units_str = ", ".join([f'"{u}"' for u in target_units_list])
-        
+
         return f'''
 # LoadSet Unit Conversion Analysis Script
 # Analyze LoadSet data in multiple unit systems
@@ -360,22 +358,22 @@ if __name__ == "__main__":
     def custom_script_template(
         operations: List[str],
         input_files: List[str],
-        output_stem: str = "custom_processing"
+        output_stem: str = "custom_processing",
     ) -> str:
         """
         Generate a custom script template based on operations list.
-        
+
         Args:
             operations: List of operations to perform
             input_files: List of input files
             output_stem: Name stem for output files
-            
+
         Returns:
             str: Complete Python script template
         """
         operations_code = "\\n".join([f"        # {op}" for op in operations])
         input_files_str = ", ".join([f'"{f}"' for f in input_files])
-        
+
         return f'''
 # Custom LoadSet Processing Script
 # Template for custom operations on LoadSet data
@@ -451,16 +449,16 @@ if __name__ == "__main__":
 def get_template_by_operation_type(operation_type: str, **kwargs) -> str:
     """
     Get a script template based on operation type.
-    
+
     Args:
         operation_type: Type of operation ("basic", "comparison", "unit_analysis", "custom")
         **kwargs: Template-specific arguments
-        
+
     Returns:
         str: Complete Python script
     """
     templates = LoadSetScriptTemplates()
-    
+
     if operation_type == "basic":
         return templates.basic_load_and_export(**kwargs)
     elif operation_type == "comparison":
@@ -476,39 +474,46 @@ def get_template_by_operation_type(operation_type: str, **kwargs) -> str:
 def analyze_instruction_for_template(instruction: str) -> Dict[str, any]:
     """
     Analyze an instruction and suggest a template type and parameters.
-    
+
     Args:
         instruction: Natural language instruction
-        
+
     Returns:
         Dict containing template suggestion
     """
     instruction_lower = instruction.lower()
-    
+
     # Check for comparison keywords
-    if any(word in instruction_lower for word in ["compare", "comparison", "versus", "vs", "difference"]):
+    if any(
+        word in instruction_lower
+        for word in ["compare", "comparison", "versus", "vs", "difference"]
+    ):
         return {
             "template_type": "comparison",
             "confidence": 0.8,
-            "suggested_params": {
-                "output_stem": "comparison"
-            }
+            "suggested_params": {"output_stem": "comparison"},
         }
-    
+
     # Check for unit analysis keywords
-    if any(word in instruction_lower for word in ["unit", "units", "convert", "conversion", "kn", "lbf", "klbf"]):
+    if any(
+        word in instruction_lower
+        for word in ["unit", "units", "convert", "conversion", "kn", "lbf", "klbf"]
+    ):
         if "different" in instruction_lower or "multiple" in instruction_lower:
             return {
                 "template_type": "unit_analysis",
                 "confidence": 0.7,
                 "suggested_params": {
                     "target_units_list": ["kN", "lbf", "klbf"],
-                    "output_stem": "unit_analysis"
-                }
+                    "output_stem": "unit_analysis",
+                },
             }
-    
+
     # Check for basic processing keywords
-    if any(word in instruction_lower for word in ["load", "scale", "export", "ansys", "factor"]):
+    if any(
+        word in instruction_lower
+        for word in ["load", "scale", "export", "ansys", "factor"]
+    ):
         return {
             "template_type": "basic",
             "confidence": 0.6,
@@ -516,16 +521,16 @@ def analyze_instruction_for_template(instruction: str) -> Dict[str, any]:
                 "target_units": "kN",
                 "scale_factor": 1.0,
                 "output_format": "ansys",
-                "output_stem": "processed_loads"
-            }
+                "output_stem": "processed_loads",
+            },
         }
-    
+
     # Default to custom template
     return {
         "template_type": "custom",
         "confidence": 0.3,
         "suggested_params": {
             "operations": ["Process LoadSet data", "Generate output files"],
-            "output_stem": "custom_processing"
-        }
+            "output_stem": "custom_processing",
+        },
     }
