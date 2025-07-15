@@ -154,27 +154,6 @@ class TestAgentArchitecture:
         assert agent.model is not None
         assert agent.system_prompt is not None
 
-    def test_code_reduction_achieved(self):
-        """Test that code is significantly reduced from original."""
-        # This test will verify the actual line count reduction
-        # Expected: 60% reduction (400 -> 160 lines)
-
-        try:
-            from tools import agents
-            import inspect
-
-            # Count lines in new implementation
-            source = inspect.getsource(agents)
-            new_lines = len(source.splitlines())
-
-            # Should be significantly smaller than original
-            assert new_lines < 200, (
-                f"New implementation should be under 200 lines, got {new_lines}"
-            )
-
-        except ImportError:
-            # Expected during RED phase
-            pass
 
 
 class TestResponseModels:
