@@ -346,15 +346,15 @@ class LoadSetMCPProvider:
             return {"success": False, "error": str(e)}
 
     def generate_comparison_charts(
-        self, output_dir: PathLike | None = None, format: str = "png", as_base64: bool = False
+        self, output_dir: PathLike | None = None, format: str = "png", as_images: bool = False
     ) -> dict:
         """
         Generate range bar charts comparing the LoadSets.
 
         Args:
-            output_dir: Directory to save charts (optional if as_base64=True)
+            output_dir: Directory to save charts (optional if as_images=True)
             format: Image format (png, jpg, etc.)
-            as_base64: If True, return FastMCP Image objects instead of saving files
+            as_images: If True, return FastMCP Image objects instead of saving files
 
         Returns:
             dict: Success message and chart information or FastMCP Image objects
@@ -366,8 +366,8 @@ class LoadSetMCPProvider:
             }
 
         try:
-            if as_base64:
-                # Generate charts as base64 strings first
+            if as_images:
+                # Generate charts as base64 strings first, then convert to Image objects
                 from pathlib import Path
 
                 charts = self._current_comparison.generate_range_charts(
@@ -378,7 +378,7 @@ class LoadSetMCPProvider:
                 image_objects = {}
                 for point_name, base64_string in charts.items():
                     # Decode base64 to bytes
-                    image_bytes = base64.b64decode(base64_string)
+                    image_bytes = base64.b64decode(str(base64_string))
                     # Create FastMCP Image object
                     image_objects[point_name] = Image(data=image_bytes, format=format)
                 
@@ -393,7 +393,7 @@ class LoadSetMCPProvider:
                 if output_dir is None:
                     return {
                         "success": False,
-                        "error": "output_dir required when as_base64=False",
+                        "error": "output_dir required when as_images=False",
                     }
 
                 charts = self._current_comparison.generate_range_charts(
