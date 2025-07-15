@@ -23,7 +23,8 @@ tools_path = project_root / "tools"
 if str(tools_path) not in sys.path:
     sys.path.insert(0, str(tools_path))
 
-from tools.agents import python_agent
+from tools.agents import create_python_agent
+from tools.dependencies import MCPServerProvider
 from tools.model_config import get_model_name, validate_model_config
 from tools.mcps.python_exec_mcp_server import create_mcp_server, PythonExecutorMCPProvider
 
@@ -46,15 +47,19 @@ class TestPythonExecutionCleanAgentIntegration:
         if not is_valid:
             pytest.skip(f"Model configuration error: {error}")
 
+        # Create agent and dependencies
+        agent = create_python_agent()
+        deps = MCPServerProvider()
+        
         # Test basic code execution
-        result = await python_agent.run("""
+        result = await agent.run("""
         Generate Python code to:
         1. Calculate the factorial of 5
         2. Create a list of the first 10 fibonacci numbers  
         3. Print both results
         
         Execute the code step by step.
-        """)
+        """, deps=deps)
 
         # Validate response
         assert result.output, "Agent should return a response"

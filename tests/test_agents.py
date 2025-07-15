@@ -1,8 +1,8 @@
 """
-TDD tests for simplified agent architecture following pydantic-ai best practices.
+TDD tests for agent architecture following pydantic-ai best practices.
 
-These tests define the expected behavior of the new simplified agent architecture
-before implementation (RED phase of TDD).
+These tests define the expected behavior of the pydantic-ai agent architecture
+using factory functions and dependency injection.
 """
 
 import pytest
@@ -12,8 +12,8 @@ from typing import Dict, Any, Optional
 from pydantic import BaseModel
 from pydantic_ai import Agent, RunContext
 
-# These imports should now work in GREEN phase
-from tools.agents_v2 import (
+# Import agent factory functions
+from tools.agents import (
     create_loadset_agent,
     create_python_agent, 
     create_script_agent,
@@ -27,8 +27,8 @@ from tools.response_models import (
 from tools.dependencies import MCPServerProvider
 
 
-class TestSimplifiedAgentArchitecture:
-    """Test the new simplified agent architecture."""
+class TestAgentArchitecture:
+    """Test the pydantic-ai agent architecture."""
     
     def test_response_models_exist(self):
         """Test that Pydantic response models are defined."""
