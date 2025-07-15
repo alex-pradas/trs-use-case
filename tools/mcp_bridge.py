@@ -183,18 +183,18 @@ def setup_default_servers() -> None:
     """
     try:
         # Import and register LoadSet MCP server
-        from mcps.loads_mcp_server import create_mcp_server, reset_global_state
+        from tools.mcps.loads_mcp_server import create_mcp_server, reset_global_state
         reset_global_state()
         loads_server = create_mcp_server()
         register_mcp_server("loads", loads_server)
         
         # Import and register Python execution MCP server
-        from mcps.python_exec_mcp_server import create_mcp_server as create_python_server
+        from tools.mcps.python_exec_mcp_server import create_mcp_server as create_python_server
         python_server = create_python_server()
         register_mcp_server("python", python_server)
         
         # Import and register Script execution MCP server
-        from mcps.script_exec_mcp_server import create_mcp_server as create_script_server
+        from tools.mcps.script_exec_mcp_server import create_mcp_server as create_script_server
         script_server = create_script_server()
         register_mcp_server("script", script_server)
         
