@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 
 
-from loads import LoadSet, Units, LoadCase, PointLoad, ForceMoment
+from tools.loads import LoadSet, Units, LoadCase, PointLoad, ForceMoment
 
 
 # Test imports from tools package to cover __init__.py

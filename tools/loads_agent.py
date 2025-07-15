@@ -15,7 +15,7 @@ mcp_loads = MCPServerStdio(
         "/Users/alex/repos/trs-use-case",
         "run",
         "python",
-        "tools/mcp_server.py",
+        "tools/mcps/loads_mcp_server.py",
     ],
 )
 
