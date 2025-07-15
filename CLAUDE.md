@@ -32,6 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Agent integration tests**: `uv run pytest tests/agents/test_ai_agent_integration.py -v`
 - **Python execution agent tests**: `uv run pytest tests/agents/test_python_exec_agent_integration.py -v`
 - **Script generation agent tests**: `uv run pytest tests/agents/test_script_agent_integration.py -v`
+- **Simplified architecture TDD tests**: `uv run pytest tests/test_simplified_agents_tdd.py -v`
 
 #### Specific Test Classes and Methods
 - **Run specific test class**: `uv run pytest tests/tools/test_loadset_enhanced.py::TestLoadSetReadJson -v`
@@ -42,15 +43,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **MCP tests (80)**: Mock MCP server tests for tool functionality in `tests/mcps/`
 - **Agent tests (30)**: Expensive LLM/AI agent tests requiring API keys in `tests/agents/` - run explicitly with `-m expensive`
 - **Visual tests (1)**: Chart generation tests in `tests/agents/` - run explicitly with `-m visuals`
-- **Total fast tests (137)**: Core + MCP tests that run by default
-- **Total tests (168)**: All tests including expensive and visual tests
+- **Simplified architecture tests (19)**: TDD tests for new simplified agent architecture
+- **Total fast tests (156)**: Core + MCP + TDD tests that run by default
+- **Total tests (187)**: All tests including expensive and visual tests
 
 ### Verification
 - **Verify setup**: `uv run python verify_setup.py`
 
-## Clean Agent Architecture (Recommended)
+## Simplified Agent Architecture (Recommended)
 
-This project now uses a **clean pydantic-ai architecture** that eliminates boilerplate and follows best practices.
+This project now uses a **simplified pydantic-ai architecture** that achieves a **57.2% code reduction** while following best practices and maintaining full functionality.
 
 ### Model Selection
 Set a single environment variable to choose your AI model:
@@ -70,34 +72,49 @@ export AI_MODEL="google-gla:gemini-1.5-flash"
 
 ### Simple Agent Usage
 ```python
-from tools.agents import loadset_agent, python_agent, script_agent
+from tools.agents_v2 import create_loadset_agent, create_python_agent, create_script_agent
+from tools.dependencies import MCPServerProvider
 
-# LoadSet processing - zero boilerplate!
-result = await loadset_agent.run(
-    "Load solution/loads/new_loads.json, convert to kN, scale by 1.5, export to ANSYS"
+# Create agent and dependencies once
+agent = create_loadset_agent()
+deps = MCPServerProvider()
+
+# LoadSet processing with dependency injection
+result = await agent.run(
+    "Load solution/loads/new_loads.json, convert to kN, scale by 1.5, export to ANSYS",
+    deps=deps
 )
 
 # Python code execution
+python_agent = create_python_agent()
 result = await python_agent.run(
-    "Load a LoadSet and calculate the maximum force component"
+    "Load a LoadSet and calculate the maximum force component",
+    deps=deps
 )
 
 # Script generation and execution
+script_agent = create_script_agent()
 result = await script_agent.run(
-    "Generate a script to analyze LoadSet data and create a summary report"
+    "Generate a script to analyze LoadSet data and create a summary report",
+    deps=deps
 )
 ```
 
-### Testing the Clean Architecture
-- **Test clean agents**: `uv run python test_clean_agent_integration.py`
-- **Simple agent test**: `uv run python test_simple_agent.py`
-- **Full demo**: `uv run python demo_clean_agents.py`
+### Testing the Simplified Architecture
+- **Test TDD implementation**: `uv run pytest tests/test_simplified_agents_tdd.py -v`
+- **Compare architectures**: `uv run python test_simplified_vs_original.py`
+- **All fast tests**: `uv run pytest tests/tools/ tests/mcps/ -v`
 
 ### Benefits
-- **90% less code**: No custom agent classes needed
-- **Provider agnostic**: Switch models with environment variable
-- **Follows pydantic-ai best practices**: Global agents with tool decorators
-- **Zero boilerplate**: Direct agent usage with `.run()` calls
+- **57.2% code reduction**: From 400+ lines to 171 lines
+- **Type-safe responses**: Pydantic models instead of raw dictionaries
+- **True dependency injection**: Using RunContext for MCP server access
+- **Centralized error handling**: No manual try-catch in tools
+- **Follows pydantic-ai best practices**: Direct patterns from documentation
+- **Zero abstraction overhead**: Direct MCP server access
+
+### Architecture Documentation
+See `SIMPLIFIED_ARCHITECTURE_GUIDE.md` for comprehensive documentation, migration guide, and best practices.
 
 ## FIREWORKS AI Integration (Legacy)
 
