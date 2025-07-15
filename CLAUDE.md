@@ -48,7 +48,58 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Verification
 - **Verify setup**: `uv run python verify_setup.py`
 
-## FIREWORKS AI Integration
+## Clean Agent Architecture (Recommended)
+
+This project now uses a **clean pydantic-ai architecture** that eliminates boilerplate and follows best practices.
+
+### Model Selection
+Set a single environment variable to choose your AI model:
+```bash
+# Use Anthropic Claude (default)
+export AI_MODEL="anthropic:claude-3-5-sonnet-latest"
+
+# Use FIREWORKS AI
+export AI_MODEL="fireworks:accounts/fireworks/models/llama-v3p3-70b-instruct"
+
+# Use OpenAI
+export AI_MODEL="openai:gpt-4o"
+
+# Use Google Gemini
+export AI_MODEL="google-gla:gemini-1.5-flash"
+```
+
+### Simple Agent Usage
+```python
+from tools.agents import loadset_agent, python_agent, script_agent
+
+# LoadSet processing - zero boilerplate!
+result = await loadset_agent.run(
+    "Load solution/loads/new_loads.json, convert to kN, scale by 1.5, export to ANSYS"
+)
+
+# Python code execution
+result = await python_agent.run(
+    "Load a LoadSet and calculate the maximum force component"
+)
+
+# Script generation and execution
+result = await script_agent.run(
+    "Generate a script to analyze LoadSet data and create a summary report"
+)
+```
+
+### Testing the Clean Architecture
+- **Test clean agents**: `uv run python test_clean_agent_integration.py`
+- **Simple agent test**: `uv run python test_simple_agent.py`
+- **Full demo**: `uv run python demo_clean_agents.py`
+
+### Benefits
+- **90% less code**: No custom agent classes needed
+- **Provider agnostic**: Switch models with environment variable
+- **Follows pydantic-ai best practices**: Global agents with tool decorators
+- **Zero boilerplate**: Direct agent usage with `.run()` calls
+
+## FIREWORKS AI Integration (Legacy)
 
 This project supports FIREWORKS AI as an alternative to Anthropic Claude models using pydantic-ai.
 

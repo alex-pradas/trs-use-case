@@ -416,8 +416,8 @@ class TestLoadSetComparisonWithRealData:
 
     def setup_method(self):
         """Set up real data LoadSets."""
-        self.old_loads_path = Path(__file__).parent.parent / "solution" / "loads" / "old_loads.json"
-        self.new_loads_path = Path(__file__).parent.parent / "solution" / "loads" / "new_loads.json"
+        self.old_loads_path = Path(__file__).parent.parent.parent / "solution" / "loads" / "old_loads.json"
+        self.new_loads_path = Path(__file__).parent.parent.parent / "solution" / "loads" / "new_loads.json"
 
     def test_load_real_data_files(self):
         """Test loading the real data files."""

@@ -206,7 +206,7 @@ with open("test.txt", "w") as f:
         result = self.provider.download_file("test.txt", encoding="text")
         
         assert result["success"] is True
-        assert result["content"] == "Hello World\\nLine 2"
+        assert result["content"] == "Hello World\nLine 2"
         assert result["encoding"] == "text"
         assert result["size"] > 0
     
@@ -226,7 +226,7 @@ with open("test.bin", "wb") as f:
         
         # Decode and verify content
         decoded = base64.b64decode(result["content"])
-        assert decoded == b"\\x00\\x01\\x02\\x03"
+        assert decoded == b"\x00\x01\x02\x03"
     
     def test_download_nonexistent_file(self):
         """Test downloading a file that doesn't exist."""
