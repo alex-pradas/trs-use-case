@@ -1,7 +1,7 @@
 """
-Integration test for AI agent with Python execution MCP server using Anthropic models.
+Integration test for AI agent with Python execution MCP server using clean architecture.
 
-This test validates that an AI agent can successfully interact with the Python execution 
+This test validates that the clean python_agent can successfully interact with the Python execution 
 MCP server to generate and execute Python code autonomously.
 """
 
@@ -18,19 +18,54 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+# Add tools directory for clean architecture
+tools_path = project_root / "tools"
+if str(tools_path) not in sys.path:
+    sys.path.insert(0, str(tools_path))
+
+from tools.agents import python_agent
+from tools.model_config import get_model_name, validate_model_config
 from tools.mcps.python_exec_mcp_server import create_mcp_server, PythonExecutorMCPProvider
 
 # Load environment variables from .env file
 load_dotenv()
 
 
-class PythonExecutionMCPTestAgent:
-    """
-    A Pydantic-AI agent client using Anthropic models for testing Python execution MCP server.
+# No more boilerplate agent classes needed with clean architecture!
 
-    This agent connects to the Python execution MCP server and uses Anthropic's Claude model
-    to test autonomous code generation and execution capabilities.
-    """
+
+@pytest.mark.expensive  
+class TestPythonExecutionCleanAgentIntegration:
+    """Test suite for clean Python execution agent integration."""
+
+    @pytest.mark.asyncio
+    async def test_clean_python_agent_basic_functionality(self):
+        """Test basic Python agent functionality with clean architecture."""
+        # Validate configuration
+        is_valid, error = validate_model_config()
+        if not is_valid:
+            pytest.skip(f"Model configuration error: {error}")
+
+        # Test basic code execution
+        result = await python_agent.run("""
+        Generate Python code to:
+        1. Calculate the factorial of 5
+        2. Create a list of the first 10 fibonacci numbers  
+        3. Print both results
+        
+        Execute the code step by step.
+        """)
+
+        # Validate response
+        assert result.output, "Agent should return a response"
+        assert "factorial" in result.output.lower() or "120" in result.output, "Should mention factorial calculation"
+        
+        print(f"✅ Clean Python agent test passed: {len(result.output)} character response")
+
+
+# Keep one old test class for comparison (can be removed after full migration)
+class TestPythonExecutionAgentIntegration:
+    """Original test class - to be migrated to clean architecture."""
 
     def __init__(self, server, disable_security=False):
         """Initialize the agent with a Python execution MCP server."""
