@@ -29,11 +29,18 @@ class TestMCPServerCreation:
         # Expected tools
         expected_tools = [
             "load_from_json",
+            "load_from_data",
             "convert_units",
             "scale_loads",
             "export_to_ansys",
             "get_load_summary",
             "list_load_cases",
+            "load_second_loadset",
+            "load_second_loadset_from_data",
+            "compare_loadsets",
+            "generate_comparison_charts",
+            "export_comparison_json",
+            "get_comparison_summary",
         ]
 
         # Get registered tools from the internal tool manager
@@ -395,3 +402,245 @@ class TestScaleLoadsTool:
         result = self.scale_tool(1.5)
         assert result["success"] is False
         assert "No LoadSet loaded" in result["error"]
+
+
+class TestDataBasedMethods:
+    """Test data-based LoadSet methods (load_from_data, load_second_loadset_from_data)."""
+
+    def setup_method(self):
+        """Set up test data for each test method."""
+        reset_global_state()
+        self.server = create_mcp_server()
+        self.load_from_data_tool = self.server._tool_manager._tools["load_from_data"].fn
+        self.load_second_from_data_tool = self.server._tool_manager._tools["load_second_loadset_from_data"].fn
+        self.compare_tool = self.server._tool_manager._tools["compare_loadsets"].fn
+        self.chart_tool = self.server._tool_manager._tools["generate_comparison_charts"].fn
+
+        # Create test LoadSet data
+        self.test_data_1 = {
+            "name": "Test LoadSet 1",
+            "version": 1,
+            "units": {"forces": "N", "moments": "Nm"},
+            "load_cases": [
+                {
+                    "name": "Test Case 1",
+                    "point_loads": [
+                        {
+                            "name": "Point A",
+                            "force_moment": {
+                                "fx": 100.0,
+                                "fy": 200.0,
+                                "fz": 300.0,
+                                "mx": 10.0,
+                                "my": 20.0,
+                                "mz": 30.0,
+                            },
+                        }
+                    ],
+                }
+            ],
+        }
+
+        self.test_data_2 = {
+            "name": "Test LoadSet 2",
+            "version": 1,
+            "units": {"forces": "N", "moments": "Nm"},
+            "load_cases": [
+                {
+                    "name": "Test Case 2",
+                    "point_loads": [
+                        {
+                            "name": "Point A",
+                            "force_moment": {
+                                "fx": 150.0,
+                                "fy": 250.0,
+                                "fz": 350.0,
+                                "mx": 15.0,
+                                "my": 25.0,
+                                "mz": 35.0,
+                            },
+                        }
+                    ],
+                }
+            ],
+        }
+
+    def teardown_method(self):
+        """Clean up after each test method."""
+        reset_global_state()
+
+    def test_load_from_data_success(self):
+        """Test successful loading from data."""
+        result = self.load_from_data_tool(self.test_data_1)
+        
+        assert result["success"] is True
+        assert result["message"] == "LoadSet loaded from data"
+        assert result["loadset_name"] == "Test LoadSet 1"
+        assert result["num_load_cases"] == 1
+        assert result["units"]["forces"] == "N"
+        assert result["units"]["moments"] == "Nm"
+
+    def test_load_from_data_invalid_data(self):
+        """Test loading from invalid data."""
+        invalid_data = {"invalid_field": "test", "missing_required": True}
+        result = self.load_from_data_tool(invalid_data)
+        
+        assert result["success"] is False
+        assert "error" in result
+
+    def test_load_from_data_empty_data(self):
+        """Test loading from empty data."""
+        result = self.load_from_data_tool({})
+        
+        assert result["success"] is False
+        assert "error" in result
+
+    def test_load_second_loadset_from_data_success(self):
+        """Test successful loading second loadset from data."""
+        result = self.load_second_from_data_tool(self.test_data_2)
+        
+        assert result["success"] is True
+        assert result["message"] == "Comparison LoadSet loaded from data"
+        assert result["loadset_name"] == "Test LoadSet 2"
+        assert result["num_load_cases"] == 1
+        assert result["units"]["forces"] == "N"
+        assert result["units"]["moments"] == "Nm"
+
+    def test_load_second_loadset_from_data_invalid_data(self):
+        """Test loading second loadset from invalid data."""
+        invalid_data = {"invalid_field": "test"}
+        result = self.load_second_from_data_tool(invalid_data)
+        
+        assert result["success"] is False
+        assert "error" in result
+
+    def test_complete_data_based_workflow(self):
+        """Test complete workflow using data-based methods."""
+        # Load first LoadSet from data
+        result1 = self.load_from_data_tool(self.test_data_1)
+        assert result1["success"] is True
+
+        # Load second LoadSet from data
+        result2 = self.load_second_from_data_tool(self.test_data_2)
+        assert result2["success"] is True
+
+        # Compare the LoadSets
+        comparison_result = self.compare_tool()
+        assert comparison_result["success"] is True
+        assert comparison_result["loadset1_name"] == "Test LoadSet 1"
+        assert comparison_result["loadset2_name"] == "Test LoadSet 2"
+        assert comparison_result["total_comparison_rows"] > 0
+
+        # Generate charts
+        chart_result = self.chart_tool(as_base64=True, format="png")
+        assert chart_result["success"] is True
+        assert "charts" in chart_result
+        assert len(chart_result["charts"]) > 0
+
+    def test_mixed_workflow_file_and_data(self):
+        """Test workflow mixing file-based and data-based methods."""
+        # Load first LoadSet from data
+        result1 = self.load_from_data_tool(self.test_data_1)
+        assert result1["success"] is True
+
+        # Load second LoadSet from file (create temporary file)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(self.test_data_2, f)
+            temp_file = f.name
+
+        try:
+            load_second_tool = self.server._tool_manager._tools["load_second_loadset"].fn
+            result2 = load_second_tool(temp_file)
+            assert result2["success"] is True
+
+            # Compare the LoadSets
+            comparison_result = self.compare_tool()
+            assert comparison_result["success"] is True
+
+        finally:
+            import os
+            os.unlink(temp_file)
+
+    def test_data_based_with_real_project_data(self):
+        """Test data-based methods with real project data."""
+        # Load real project data
+        new_loads_path = Path("solution/loads/new_loads.json")
+        old_loads_path = Path("solution/loads/old_loads.json")
+        
+        # Skip if files don't exist
+        if not new_loads_path.exists() or not old_loads_path.exists():
+            pytest.skip("Real project data files not found")
+
+        # Load the JSON data
+        with open(new_loads_path, 'r') as f:
+            new_loads_data = json.load(f)
+        
+        with open(old_loads_path, 'r') as f:
+            old_loads_data = json.load(f)
+
+        # Test load_from_data with real data
+        result1 = self.load_from_data_tool(new_loads_data)
+        assert result1["success"] is True
+        assert result1["loadset_name"] == "Aerospace Structural Load Cases"
+        assert result1["num_load_cases"] == 25
+
+        # Test load_second_loadset_from_data with real data
+        result2 = self.load_second_from_data_tool(old_loads_data)
+        assert result2["success"] is True
+        assert result2["loadset_name"] == "Aerospace Structural Load Cases"
+        assert result2["num_load_cases"] == 25
+
+        # Test comparison with real data
+        comparison_result = self.compare_tool()
+        assert comparison_result["success"] is True
+        assert comparison_result["total_comparison_rows"] > 0
+
+        # Test chart generation with real data
+        chart_result = self.chart_tool(as_base64=True, format="png")
+        assert chart_result["success"] is True
+        assert "charts" in chart_result
+        assert len(chart_result["charts"]) == 2  # Should have Point A and Point B
+
+    def test_data_validation_comprehensive(self):
+        """Test comprehensive data validation scenarios."""
+        # Test missing required fields
+        invalid_scenarios = [
+            {},  # Empty dict
+            {"name": "Test"},  # Missing version, units, load_cases
+            {"name": "Test", "version": 1},  # Missing units, load_cases
+            {"name": "Test", "version": 1, "units": {"forces": "N"}},  # Missing moments unit
+            {"name": "Test", "version": 1, "units": {"forces": "N", "moments": "Nm"}},  # Missing load_cases
+        ]
+
+        for i, invalid_data in enumerate(invalid_scenarios):
+            result = self.load_from_data_tool(invalid_data)
+            assert result["success"] is False, f"Scenario {i} should fail"
+            assert "error" in result, f"Scenario {i} should have error message"
+
+    def test_error_handling_consistency(self):
+        """Test that error handling is consistent between file and data methods."""
+        # Test with same invalid data structure
+        invalid_data = {"invalid": "structure"}
+        
+        # Test data-based method
+        data_result = self.load_from_data_tool(invalid_data)
+        assert data_result["success"] is False
+        assert "error" in data_result
+        
+        # Test file-based method with same invalid data
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(invalid_data, f)
+            temp_file = f.name
+
+        try:
+            file_tool = self.server._tool_manager._tools["load_from_json"].fn
+            file_result = file_tool(temp_file)
+            assert file_result["success"] is False
+            assert "error" in file_result
+            
+            # Both should fail (though error messages might be slightly different)
+            # The key is that both fail appropriately
+            
+        finally:
+            import os
+            os.unlink(temp_file)

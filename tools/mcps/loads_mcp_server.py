@@ -5,10 +5,13 @@ This module provides MCP tools for load data processing operations.
 """
 
 from fastmcp import FastMCP
+from fastmcp.utilities.types import Image
 from typing import Optional
 from os import PathLike
 import sys
 from pathlib import Path
+import base64
+import json
 
 # Add the tools directory to Python path so we can import loads
 tools_dir = Path(__file__).parent.parent  # Go up one level from mcps to tools
@@ -51,6 +54,34 @@ class LoadSetMCPProvider:
             return {
                 "success": True,
                 "message": f"LoadSet loaded from {file_path}",
+                "loadset_name": self._current_loadset.name,
+                "num_load_cases": len(self._current_loadset.load_cases),
+                "units": {
+                    "forces": self._current_loadset.units.forces,
+                    "moments": self._current_loadset.units.moments,
+                },
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def load_from_data(self, loadset_data: dict) -> dict:
+        """
+        Load a LoadSet from JSON data directly.
+
+        Args:
+            loadset_data: Dictionary containing LoadSet data (JSON object)
+
+        Returns:
+            dict: Success message and LoadSet summary
+
+        Raises:
+            ValueError: If data cannot be parsed as LoadSet
+        """
+        try:
+            self._current_loadset = LoadSet.model_validate(loadset_data)
+            return {
+                "success": True,
+                "message": "LoadSet loaded from data",
                 "loadset_name": self._current_loadset.name,
                 "num_load_cases": len(self._current_loadset.load_cases),
                 "units": {
@@ -244,6 +275,37 @@ class LoadSetMCPProvider:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    def load_second_loadset_from_data(self, loadset_data: dict) -> dict:
+        """
+        Load a second LoadSet from JSON data directly for comparison.
+
+        Args:
+            loadset_data: Dictionary containing LoadSet data (JSON object)
+
+        Returns:
+            dict: Success message and LoadSet summary
+
+        Raises:
+            ValueError: If data cannot be parsed as LoadSet
+        """
+        try:
+            self._comparison_loadset = LoadSet.model_validate(loadset_data)
+            # Reset any existing comparison when loading new comparison loadset
+            self._current_comparison = None
+
+            return {
+                "success": True,
+                "message": "Comparison LoadSet loaded from data",
+                "loadset_name": self._comparison_loadset.name,
+                "num_load_cases": len(self._comparison_loadset.load_cases),
+                "units": {
+                    "forces": self._comparison_loadset.units.forces,
+                    "moments": self._comparison_loadset.units.moments,
+                },
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
     def compare_loadsets(self) -> dict:
         """
         Compare the current LoadSet with the comparison LoadSet.
@@ -292,10 +354,10 @@ class LoadSetMCPProvider:
         Args:
             output_dir: Directory to save charts (optional if as_base64=True)
             format: Image format (png, jpg, etc.)
-            as_base64: If True, return base64-encoded images instead of saving files
+            as_base64: If True, return FastMCP Image objects instead of saving files
 
         Returns:
-            dict: Success message and chart information or base64 data
+            dict: Success message and chart information or FastMCP Image objects
         """
         if self._current_comparison is None:
             return {
@@ -305,17 +367,26 @@ class LoadSetMCPProvider:
 
         try:
             if as_base64:
-                # Generate charts as base64 strings
+                # Generate charts as base64 strings first
                 from pathlib import Path
 
                 charts = self._current_comparison.generate_range_charts(
                     output_dir=Path.cwd(), image_format=format, as_base64=True
                 )
+                
+                # Convert base64 strings to FastMCP Image objects
+                image_objects = {}
+                for point_name, base64_string in charts.items():
+                    # Decode base64 to bytes
+                    image_bytes = base64.b64decode(base64_string)
+                    # Create FastMCP Image object
+                    image_objects[point_name] = Image(data=image_bytes, format=format)
+                
                 return {
                     "success": True,
-                    "message": "Comparison charts generated as base64 data",
+                    "message": "Comparison charts generated as Image objects",
                     "format": format,
-                    "charts": charts,  # Dict with point names as keys, base64 strings as values
+                    "charts": image_objects,  # Dict with point names as keys, FastMCP Image objects as values
                 }
             else:
                 # Save charts to files
@@ -447,16 +518,55 @@ def create_mcp_server() -> FastMCP:
 
     # Register all methods as tools
     mcp.tool(provider.load_from_json)
+    mcp.tool(provider.load_from_data)
     mcp.tool(provider.convert_units)
     mcp.tool(provider.scale_loads)
     mcp.tool(provider.export_to_ansys)
     mcp.tool(provider.get_load_summary)
     mcp.tool(provider.list_load_cases)
     mcp.tool(provider.load_second_loadset)
+    mcp.tool(provider.load_second_loadset_from_data)
     mcp.tool(provider.compare_loadsets)
     mcp.tool(provider.generate_comparison_charts)
     mcp.tool(provider.export_comparison_json)
     mcp.tool(provider.get_comparison_summary)
+
+    # Register resource definitions for JSON load files
+    @mcp.resource("loadsets://new_loads.json")
+    def get_new_loads():
+        """
+        Get the new loads JSON file content.
+        
+        Returns:
+            dict: Contents of solution/loads/new_loads.json
+        """
+        try:
+            # Get the project root directory (two levels up from tools/mcps)
+            project_root = Path(__file__).parent.parent.parent
+            new_loads_path = project_root / "solution" / "loads" / "new_loads.json"
+            
+            with open(new_loads_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            return {"error": f"Failed to load new_loads.json: {str(e)}"}
+
+    @mcp.resource("loadsets://old_loads.json")
+    def get_old_loads():
+        """
+        Get the old loads JSON file content.
+        
+        Returns:
+            dict: Contents of solution/loads/old_loads.json
+        """
+        try:
+            # Get the project root directory (two levels up from tools/mcps)
+            project_root = Path(__file__).parent.parent.parent
+            old_loads_path = project_root / "solution" / "loads" / "old_loads.json"
+            
+            with open(old_loads_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            return {"error": f"Failed to load old_loads.json: {str(e)}"}
 
     return mcp
 
