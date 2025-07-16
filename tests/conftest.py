@@ -18,8 +18,9 @@ if str(project_root) not in sys.path:
 
 # Load environment variables and configure logfire for the test process
 load_dotenv()
+token = os.getenv("LOGFIRE_TOKEN")
 logfire.configure(
-    token=os.getenv("LOGFIRE_TOKEN"),
+    token=token,
     send_to_logfire=True,
     environment="test",
 )
