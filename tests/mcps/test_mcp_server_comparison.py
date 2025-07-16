@@ -202,44 +202,45 @@ class TestMCPServerComparison:
             assert file_path.endswith(".png"), f"Chart file {file_path} should be PNG"
 
     def test_generate_comparison_charts_as_image_objects(self):
-        """Test generating comparison charts as Image objects."""
+        """Test generating comparison charts as base64 strings."""
         # Load both LoadSets and compare
         self.call_tool("load_from_json", file_path="solution/loads/new_loads.json")
         self.call_tool("load_second_loadset", file_path="solution/loads/old_loads.json")
         self.call_tool("compare_loadsets")
 
-        # Generate charts as Image objects
+        # Generate charts as base64 strings
         result = self.call_tool(
             "generate_comparison_charts", format="png", as_images=True
         )
 
         assert result["success"] is True
-        assert "Comparison charts generated as Image objects" in result["message"]
+        assert "Comparison charts generated as base64 strings" in result["message"]
         assert "format" in result
         assert result["format"] == "png"
         assert "charts" in result
 
-        # Verify Image objects structure
+        # Verify base64 strings structure
         charts = result["charts"]
         assert len(charts) > 0
 
-        # Import the Image class to check isinstance
-        from fastmcp.utilities.types import Image
-
-        # Verify Image objects are present
-        for point_name, image_obj in charts.items():
-            assert isinstance(image_obj, Image), (
-                f"Chart data for {point_name} should be Image object"
+        # Verify base64 strings are present
+        for point_name, base64_string in charts.items():
+            assert isinstance(base64_string, str), (
+                f"Chart data for {point_name} should be base64 string"
             )
-            assert hasattr(image_obj, 'data'), (
-                f"Image object for {point_name} should have data attribute"
+            assert len(base64_string) > 0, (
+                f"Base64 string for {point_name} should be non-empty"
             )
-            assert image_obj.data is not None, (
-                f"Image object for {point_name} should have non-None data"
-            )
-            assert len(image_obj.data) > 0, (
-                f"Image object for {point_name} should have non-empty data"
-            )
+            
+            # Verify it's valid base64 by trying to decode it
+            import base64
+            try:
+                decoded_bytes = base64.b64decode(base64_string)
+                assert len(decoded_bytes) > 0, (
+                    f"Decoded image data for {point_name} should be non-empty"
+                )
+            except Exception as e:
+                assert False, f"Invalid base64 string for {point_name}: {e}"
 
     def test_generate_comparison_charts_no_comparison(self):
         """Test generating charts without comparison."""

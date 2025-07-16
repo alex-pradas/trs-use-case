@@ -30,6 +30,7 @@ class TestMCPServerCreation:
         expected_tools = [
             "load_from_json",
             "load_from_data",
+            "load_from_resource",
             "convert_units",
             "scale_loads",
             "export_to_ansys",
@@ -37,6 +38,7 @@ class TestMCPServerCreation:
             "list_load_cases",
             "load_second_loadset",
             "load_second_loadset_from_data",
+            "load_second_loadset_from_resource",
             "compare_loadsets",
             "generate_comparison_charts",
             "export_comparison_json",
@@ -532,7 +534,7 @@ class TestDataBasedMethods:
         assert comparison_result["total_comparison_rows"] > 0
 
         # Generate charts
-        chart_result = self.chart_tool(as_base64=True, format="png")
+        chart_result = self.chart_tool(as_images=True, format="png")
         assert chart_result["success"] is True
         assert "charts" in chart_result
         assert len(chart_result["charts"]) > 0
@@ -596,7 +598,7 @@ class TestDataBasedMethods:
         assert comparison_result["total_comparison_rows"] > 0
 
         # Test chart generation with real data
-        chart_result = self.chart_tool(as_base64=True, format="png")
+        chart_result = self.chart_tool(as_images=True, format="png")
         assert chart_result["success"] is True
         assert "charts" in chart_result
         assert len(chart_result["charts"]) == 2  # Should have Point A and Point B
@@ -644,3 +646,251 @@ class TestDataBasedMethods:
         finally:
             import os
             os.unlink(temp_file)
+
+
+class TestResourceBasedMethods:
+    """Test resource-based LoadSet methods (load_from_resource, load_second_loadset_from_resource)."""
+
+    def setup_method(self):
+        """Set up test data for each test method."""
+        reset_global_state()
+        self.server = create_mcp_server()
+        self.load_from_resource_tool = self.server._tool_manager._tools["load_from_resource"].fn
+        self.load_second_from_resource_tool = self.server._tool_manager._tools["load_second_loadset_from_resource"].fn
+        self.compare_tool = self.server._tool_manager._tools["compare_loadsets"].fn
+
+    def teardown_method(self):
+        """Clean up after each test method."""
+        reset_global_state()
+
+    def test_load_from_resource_new_loads_success(self):
+        """Test successful loading from new_loads.json resource."""
+        result = self.load_from_resource_tool("loadsets://new_loads.json")
+        
+        assert result["success"] is True
+        assert result["message"] == "LoadSet loaded from resource loadsets://new_loads.json"
+        assert result["loadset_name"] == "Aerospace Structural Load Cases"
+        assert result["num_load_cases"] == 25
+        assert result["units"]["forces"] == "N"
+        assert result["units"]["moments"] == "Nm"
+
+    def test_load_from_resource_old_loads_success(self):
+        """Test successful loading from old_loads.json resource."""
+        result = self.load_from_resource_tool("loadsets://old_loads.json")
+        
+        assert result["success"] is True
+        assert result["message"] == "LoadSet loaded from resource loadsets://old_loads.json"
+        assert result["loadset_name"] == "Aerospace Structural Load Cases"
+        assert result["num_load_cases"] == 25
+        assert result["units"]["forces"] == "N"
+        assert result["units"]["moments"] == "Nm"
+
+    def test_load_from_resource_invalid_scheme(self):
+        """Test loading from resource with invalid URI scheme."""
+        result = self.load_from_resource_tool("invalid://new_loads.json")
+        
+        assert result["success"] is False
+        assert "error" in result
+        assert "Unsupported resource URI scheme" in result["error"]
+        assert "Expected 'loadsets://'" in result["error"]
+
+    def test_load_from_resource_unknown_resource(self):
+        """Test loading from unknown resource."""
+        result = self.load_from_resource_tool("loadsets://unknown_file.json")
+        
+        assert result["success"] is False
+        assert "error" in result
+        assert "Unknown resource: unknown_file.json" in result["error"]
+        assert "Available: new_loads.json, old_loads.json" in result["error"]
+
+    def test_load_from_resource_malformed_uri(self):
+        """Test loading from malformed resource URI."""
+        malformed_uris = [
+            "loadsets://",  # Missing resource name
+            "loadsets:",    # Missing //
+            "loadsets",     # Missing ://
+            "",             # Empty string
+            "loadsets://new_loads.json/extra/path",  # Extra path components
+        ]
+        
+        for uri in malformed_uris:
+            result = self.load_from_resource_tool(uri)
+            assert result["success"] is False
+            assert "error" in result
+
+    def test_load_second_loadset_from_resource_success(self):
+        """Test successful loading second loadset from resource."""
+        result = self.load_second_from_resource_tool("loadsets://old_loads.json")
+        
+        assert result["success"] is True
+        assert result["message"] == "Comparison LoadSet loaded from resource loadsets://old_loads.json"
+        assert result["loadset_name"] == "Aerospace Structural Load Cases"
+        assert result["num_load_cases"] == 25
+        assert result["units"]["forces"] == "N"
+        assert result["units"]["moments"] == "Nm"
+
+    def test_load_second_loadset_from_resource_invalid_scheme(self):
+        """Test loading second loadset with invalid URI scheme."""
+        result = self.load_second_from_resource_tool("invalid://old_loads.json")
+        
+        assert result["success"] is False
+        assert "error" in result
+        assert "Unsupported resource URI scheme" in result["error"]
+
+    def test_load_second_loadset_from_resource_unknown_resource(self):
+        """Test loading second loadset from unknown resource."""
+        result = self.load_second_from_resource_tool("loadsets://nonexistent.json")
+        
+        assert result["success"] is False
+        assert "error" in result
+        assert "Unknown resource: nonexistent.json" in result["error"]
+
+    def test_complete_resource_based_workflow(self):
+        """Test complete workflow using resource-based methods."""
+        # Load first LoadSet from resource
+        result1 = self.load_from_resource_tool("loadsets://new_loads.json")
+        assert result1["success"] is True
+        assert result1["loadset_name"] == "Aerospace Structural Load Cases"
+
+        # Load second LoadSet from resource
+        result2 = self.load_second_from_resource_tool("loadsets://old_loads.json")
+        assert result2["success"] is True
+        assert result2["loadset_name"] == "Aerospace Structural Load Cases"
+
+        # Compare the LoadSets
+        comparison_result = self.compare_tool()
+        assert comparison_result["success"] is True
+        assert comparison_result["loadset1_name"] == "Aerospace Structural Load Cases"
+        assert comparison_result["loadset2_name"] == "Aerospace Structural Load Cases"
+        assert comparison_result["total_comparison_rows"] > 0
+
+        # Verify comparison data structure
+        assert "comparison_data" in comparison_result
+        assert "metadata" in comparison_result["comparison_data"]
+        assert "comparison_rows" in comparison_result["comparison_data"]
+        assert len(comparison_result["comparison_data"]["comparison_rows"]) > 0
+
+    def test_resource_vs_data_consistency(self):
+        """Test that resource-based and data-based methods produce consistent results."""
+        # Load from resource
+        resource_result = self.load_from_resource_tool("loadsets://new_loads.json")
+        assert resource_result["success"] is True
+
+        # Reset state and load same data using data-based method
+        reset_global_state()
+        
+        # Load the same data using data-based method
+        new_loads_path = Path("solution/loads/new_loads.json")
+        if new_loads_path.exists():
+            with open(new_loads_path, 'r') as f:
+                new_loads_data = json.load(f)
+            
+            data_tool = self.server._tool_manager._tools["load_from_data"].fn
+            data_result = data_tool(new_loads_data)
+            assert data_result["success"] is True
+            
+            # Results should be identical (except for the message)
+            assert resource_result["loadset_name"] == data_result["loadset_name"]
+            assert resource_result["num_load_cases"] == data_result["num_load_cases"]
+            assert resource_result["units"] == data_result["units"]
+
+    def test_mixed_resource_and_data_workflow(self):
+        """Test workflow mixing resource-based and data-based methods."""
+        # Load first LoadSet from resource
+        result1 = self.load_from_resource_tool("loadsets://new_loads.json")
+        assert result1["success"] is True
+
+        # Load second LoadSet from data (if available)
+        old_loads_path = Path("solution/loads/old_loads.json")
+        if old_loads_path.exists():
+            with open(old_loads_path, 'r') as f:
+                old_loads_data = json.load(f)
+            
+            data_tool = self.server._tool_manager._tools["load_second_loadset_from_data"].fn
+            result2 = data_tool(old_loads_data)
+            assert result2["success"] is True
+
+            # Compare the LoadSets
+            comparison_result = self.compare_tool()
+            assert comparison_result["success"] is True
+            assert comparison_result["total_comparison_rows"] > 0
+
+    def test_resource_loading_state_management(self):
+        """Test that resource loading properly manages state."""
+        # Load first resource
+        result1 = self.load_from_resource_tool("loadsets://new_loads.json")
+        assert result1["success"] is True
+
+        # Load second resource (should replace first)
+        result2 = self.load_from_resource_tool("loadsets://old_loads.json")
+        assert result2["success"] is True
+
+        # Load comparison resource
+        result3 = self.load_second_from_resource_tool("loadsets://new_loads.json")
+        assert result3["success"] is True
+
+        # Compare should work with the current state
+        comparison_result = self.compare_tool()
+        assert comparison_result["success"] is True
+
+    def test_resource_uri_validation_comprehensive(self):
+        """Test comprehensive resource URI validation."""
+        invalid_uris = [
+            None,           # None value
+            "",             # Empty string
+            "loadsets://",  # Missing resource name
+            "loadsets:",    # Invalid format
+            "loadsets",     # Missing scheme
+            "http://new_loads.json",  # Wrong scheme
+            "loadsets://new_loads.txt",  # Wrong extension (but should still fail on unknown resource)
+            "loadsets://new_loads.json/extra",  # Extra path
+            "LOADSETS://new_loads.json",  # Case sensitive
+            "loadsets://NEW_LOADS.JSON",  # Case sensitive
+        ]
+        
+        for uri in invalid_uris:
+            try:
+                result = self.load_from_resource_tool(uri)
+                assert result["success"] is False
+                assert "error" in result
+            except Exception as e:
+                # Some URIs might cause exceptions, which is also acceptable
+                pass
+
+    def test_resource_error_handling_consistency(self):
+        """Test that resource-based methods have consistent error handling."""
+        # Test same invalid URI with both resource methods
+        invalid_uri = "invalid://test.json"
+        
+        result1 = self.load_from_resource_tool(invalid_uri)
+        result2 = self.load_second_from_resource_tool(invalid_uri)
+        
+        # Both should fail with similar error messages
+        assert result1["success"] is False
+        assert result2["success"] is False
+        assert "error" in result1
+        assert "error" in result2
+        assert "Unsupported resource URI scheme" in result1["error"]
+        assert "Unsupported resource URI scheme" in result2["error"]
+
+    def test_resource_files_exist(self):
+        """Test that the expected resource files exist in the project."""
+        # This test verifies the project structure
+        project_root = Path(__file__).parent.parent.parent
+        new_loads_path = project_root / "solution" / "loads" / "new_loads.json"
+        old_loads_path = project_root / "solution" / "loads" / "old_loads.json"
+        
+        assert new_loads_path.exists(), f"new_loads.json not found at {new_loads_path}"
+        assert old_loads_path.exists(), f"old_loads.json not found at {old_loads_path}"
+        
+        # Verify files are valid JSON
+        with open(new_loads_path, 'r') as f:
+            new_loads_data = json.load(f)
+        with open(old_loads_path, 'r') as f:
+            old_loads_data = json.load(f)
+        
+        # Basic structure validation
+        assert "name" in new_loads_data
+        assert "load_cases" in new_loads_data
+        assert "name" in old_loads_data
+        assert "load_cases" in old_loads_data

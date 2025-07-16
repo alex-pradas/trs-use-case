@@ -5,12 +5,10 @@ This module provides MCP tools for load data processing operations.
 """
 
 from fastmcp import FastMCP
-from fastmcp.utilities.types import Image
 from typing import Optional
 from os import PathLike
 import sys
 from pathlib import Path
-import base64
 import json
 
 # Add the tools directory to Python path so we can import loads
@@ -89,6 +87,58 @@ class LoadSetMCPProvider:
                     "moments": self._current_loadset.units.moments,
                 },
             }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def load_from_resource(self, resource_uri: str) -> dict:
+        """
+        Load a LoadSet from a resource URI.
+
+        Args:
+            resource_uri: Resource URI (e.g., "loadsets://new_loads.json")
+
+        Returns:
+            dict: Success message and LoadSet summary
+
+        Raises:
+            ValueError: If resource cannot be loaded or parsed
+        """
+        try:
+            # Parse the resource URI to get the resource path
+            if resource_uri.startswith("loadsets://"):
+                resource_name = resource_uri.replace("loadsets://", "")
+                
+                # Get the project root directory (two levels up from tools/mcps)
+                project_root = Path(__file__).parent.parent.parent
+                
+                if resource_name == "new_loads.json":
+                    file_path = project_root / "solution" / "loads" / "new_loads.json"
+                elif resource_name == "old_loads.json":
+                    file_path = project_root / "solution" / "loads" / "old_loads.json"
+                else:
+                    return {
+                        "success": False,
+                        "error": f"Unknown resource: {resource_name}. Available: new_loads.json, old_loads.json",
+                    }
+                
+                # Load the LoadSet from the file
+                self._current_loadset = LoadSet.read_json(file_path)
+                
+                return {
+                    "success": True,
+                    "message": f"LoadSet loaded from resource {resource_uri}",
+                    "loadset_name": self._current_loadset.name,
+                    "num_load_cases": len(self._current_loadset.load_cases),
+                    "units": {
+                        "forces": self._current_loadset.units.forces,
+                        "moments": self._current_loadset.units.moments,
+                    },
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"Unsupported resource URI scheme. Expected 'loadsets://', got: {resource_uri}",
+                }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -306,6 +356,60 @@ class LoadSetMCPProvider:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    def load_second_loadset_from_resource(self, resource_uri: str) -> dict:
+        """
+        Load a second LoadSet from a resource URI for comparison.
+
+        Args:
+            resource_uri: Resource URI (e.g., "loadsets://old_loads.json")
+
+        Returns:
+            dict: Success message and LoadSet summary
+
+        Raises:
+            ValueError: If resource cannot be loaded or parsed
+        """
+        try:
+            # Parse the resource URI to get the resource path
+            if resource_uri.startswith("loadsets://"):
+                resource_name = resource_uri.replace("loadsets://", "")
+                
+                # Get the project root directory (two levels up from tools/mcps)
+                project_root = Path(__file__).parent.parent.parent
+                
+                if resource_name == "new_loads.json":
+                    file_path = project_root / "solution" / "loads" / "new_loads.json"
+                elif resource_name == "old_loads.json":
+                    file_path = project_root / "solution" / "loads" / "old_loads.json"
+                else:
+                    return {
+                        "success": False,
+                        "error": f"Unknown resource: {resource_name}. Available: new_loads.json, old_loads.json",
+                    }
+                
+                # Load the comparison LoadSet from the file
+                self._comparison_loadset = LoadSet.read_json(file_path)
+                # Reset any existing comparison when loading new comparison loadset
+                self._current_comparison = None
+                
+                return {
+                    "success": True,
+                    "message": f"Comparison LoadSet loaded from resource {resource_uri}",
+                    "loadset_name": self._comparison_loadset.name,
+                    "num_load_cases": len(self._comparison_loadset.load_cases),
+                    "units": {
+                        "forces": self._comparison_loadset.units.forces,
+                        "moments": self._comparison_loadset.units.moments,
+                    },
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"Unsupported resource URI scheme. Expected 'loadsets://', got: {resource_uri}",
+                }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
     def compare_loadsets(self) -> dict:
         """
         Compare the current LoadSet with the comparison LoadSet.
@@ -354,10 +458,10 @@ class LoadSetMCPProvider:
         Args:
             output_dir: Directory to save charts (optional if as_images=True)
             format: Image format (png, jpg, etc.)
-            as_images: If True, return FastMCP Image objects instead of saving files
+            as_images: If True, return base64-encoded image strings instead of saving files
 
         Returns:
-            dict: Success message and chart information or FastMCP Image objects
+            dict: Success message and chart information (base64 strings or file paths)
         """
         if self._current_comparison is None:
             return {
@@ -367,26 +471,19 @@ class LoadSetMCPProvider:
 
         try:
             if as_images:
-                # Generate charts as base64 strings first, then convert to Image objects
+                # Generate charts as base64 strings
                 from pathlib import Path
 
                 charts = self._current_comparison.generate_range_charts(
                     output_dir=Path.cwd(), image_format=format, as_base64=True
                 )
                 
-                # Convert base64 strings to FastMCP Image objects
-                image_objects = {}
-                for point_name, base64_string in charts.items():
-                    # Decode base64 to bytes
-                    image_bytes = base64.b64decode(str(base64_string))
-                    # Create FastMCP Image object
-                    image_objects[point_name] = Image(data=image_bytes, format=format)
-                
+                # Return base64 strings directly instead of Image objects
                 return {
                     "success": True,
-                    "message": "Comparison charts generated as Image objects",
+                    "message": "Comparison charts generated as base64 strings",
                     "format": format,
-                    "charts": image_objects,  # Dict with point names as keys, FastMCP Image objects as values
+                    "charts": charts,  # Dict with point names as keys, base64 strings as values
                 }
             else:
                 # Save charts to files
@@ -519,6 +616,7 @@ def create_mcp_server() -> FastMCP:
     # Register all methods as tools
     mcp.tool(provider.load_from_json)
     mcp.tool(provider.load_from_data)
+    mcp.tool(provider.load_from_resource)
     mcp.tool(provider.convert_units)
     mcp.tool(provider.scale_loads)
     mcp.tool(provider.export_to_ansys)
@@ -526,6 +624,7 @@ def create_mcp_server() -> FastMCP:
     mcp.tool(provider.list_load_cases)
     mcp.tool(provider.load_second_loadset)
     mcp.tool(provider.load_second_loadset_from_data)
+    mcp.tool(provider.load_second_loadset_from_resource)
     mcp.tool(provider.compare_loadsets)
     mcp.tool(provider.generate_comparison_charts)
     mcp.tool(provider.export_comparison_json)
