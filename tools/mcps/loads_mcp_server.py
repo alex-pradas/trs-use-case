@@ -602,6 +602,41 @@ class LoadSetMCPProvider:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    def envelope_loadset(self) -> dict:
+        """
+        Create an envelope LoadSet containing only load cases with extreme values.
+        
+        For each point and component (fx, fy, fz, mx, my, mz), selects load cases with:
+        - Maximum value (always included)
+        - Minimum value (only if negative)
+        
+        Load cases appearing multiple times are deduplicated in the result.
+
+        Returns:
+            dict: Success message and envelope statistics
+        """
+        if self._current_loadset is None:
+            return {
+                "success": False,
+                "error": "No LoadSet loaded. Use load_from_json first.",
+            }
+
+        try:
+            original_case_count = len(self._current_loadset.load_cases)
+            self._current_loadset = self._current_loadset.envelope()
+            envelope_case_count = len(self._current_loadset.load_cases)
+
+            return {
+                "success": True,
+                "message": "LoadSet envelope created successfully",
+                "original_load_cases": original_case_count,
+                "envelope_load_cases": envelope_case_count,
+                "reduction_ratio": round((original_case_count - envelope_case_count) / original_case_count * 100, 2) if original_case_count > 0 else 0,
+                "envelope_case_names": [lc.name for lc in self._current_loadset.load_cases],
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
 
 def create_mcp_server() -> FastMCP:
     """
@@ -629,6 +664,7 @@ def create_mcp_server() -> FastMCP:
     mcp.tool(provider.generate_comparison_charts)
     mcp.tool(provider.export_comparison_json)
     mcp.tool(provider.get_comparison_summary)
+    mcp.tool(provider.envelope_loadset)
 
     # Register resource definitions for JSON load files
     @mcp.resource("loadsets://new_loads.json")
