@@ -1,0 +1,137 @@
+{
+  "workflow": {
+    "name": "comprehensive_loadset_processing",
+    "description": "Comprehensive LoadSet processing workflow with conversion, scaling, comparison, and export",
+    "steps": [
+      {
+        "name": "load_primary_loadset",
+        "description": "Load the primary LoadSet from JSON file",
+        "depends_on": [],
+        "inputs": {
+          "loadset_file": "inputs/primary_loadset.json"
+        },
+        "outputs": {
+          "loadset": "primary_loadset.json"
+        },
+        "code_template": "        # Load LoadSet from JSON file\n        loadset_file = inputs[\"loadset_file\"]\n        \n        logger.info(f\"Loading LoadSet from: {loadset_file}\")\n        loadset = LoadSet.read_json(loadset_file)\n        \n        logger.info(f\"Loaded LoadSet: {loadset.name}\")\n        logger.info(f\"Number of load cases: {len(loadset.load_cases)}\")\n        logger.info(f\"Units: {loadset.units.forces}, {loadset.units.moments}\")\n        \n        # Prepare outputs\n        outputs = {\n            \"loadset\": loadset.to_dict()\n        }\n        \n        logger.info(\"Primary LoadSet loaded successfully\")",
+        "requirements": []
+      },
+      {
+        "name": "load_comparison_loadset",
+        "description": "Load the comparison LoadSet from JSON file",
+        "depends_on": [],
+        "inputs": {
+          "loadset_file": "inputs/comparison_loadset.json"
+        },
+        "outputs": {
+          "loadset": "comparison_loadset.json"
+        },
+        "code_template": "        # Load comparison LoadSet from JSON file\n        loadset_file = inputs[\"loadset_file\"]\n        \n        logger.info(f\"Loading comparison LoadSet from: {loadset_file}\")\n        loadset = LoadSet.read_json(loadset_file)\n        \n        logger.info(f\"Loaded comparison LoadSet: {loadset.name}\")\n        logger.info(f\"Number of load cases: {len(loadset.load_cases)}\")\n        logger.info(f\"Units: {loadset.units.forces}, {loadset.units.moments}\")\n        \n        # Prepare outputs\n        outputs = {\n            \"loadset\": loadset.to_dict()\n        }\n        \n        logger.info(\"Comparison LoadSet loaded successfully\")",
+        "requirements": []
+      },
+      {
+        "name": "convert_units",
+        "description": "Convert LoadSet to target units",
+        "depends_on": [
+          "load_primary_loadset"
+        ],
+        "inputs": {
+          "loadset": "../01_load_primary_loadset/outputs/primary_loadset.json",
+          "target_units": "inputs/target_units.txt"
+        },
+        "outputs": {
+          "converted_loadset": "converted_loadset.json"
+        },
+        "code_template": "        # Load LoadSet and target units\n        loadset_data = inputs[\"loadset\"]\n        \n        with open(inputs[\"target_units\"], \"r\") as f:\n            target_units = f.read().strip()\n        \n        logger.info(f\"Converting LoadSet to units: {target_units}\")\n        \n        # Convert LoadSet\n        loadset = LoadSet.from_dict(loadset_data)\n        converted_loadset = loadset.convert_to(target_units)\n        \n        logger.info(f\"Conversion complete. New units: {converted_loadset.units.forces}, {converted_loadset.units.moments}\")\n        \n        # Prepare outputs\n        outputs = {\n            \"converted_loadset\": converted_loadset.to_dict()\n        }\n        \n        logger.info(\"Unit conversion completed successfully\")",
+        "requirements": []
+      },
+      {
+        "name": "scale_loads",
+        "description": "Apply scaling factor to all loads",
+        "depends_on": [
+          "convert_units"
+        ],
+        "inputs": {
+          "loadset": "../03_convert_units/outputs/converted_loadset.json",
+          "scale_factor": "inputs/scale_factor.txt"
+        },
+        "outputs": {
+          "scaled_loadset": "scaled_loadset.json"
+        },
+        "code_template": "        # Load LoadSet and scale factor\n        loadset_data = inputs[\"loadset\"]\n        \n        with open(inputs[\"scale_factor\"], \"r\") as f:\n            scale_factor = float(f.read().strip())\n        \n        logger.info(f\"Scaling LoadSet by factor: {scale_factor}\")\n        \n        # Scale LoadSet\n        loadset = LoadSet.from_dict(loadset_data)\n        scaled_loadset = loadset.factor(scale_factor)\n        \n        logger.info(\"Scaling complete\")\n        \n        # Prepare outputs\n        outputs = {\n            \"scaled_loadset\": scaled_loadset.to_dict()\n        }\n        \n        logger.info(\"Load scaling completed successfully\")",
+        "requirements": []
+      },
+      {
+        "name": "compare_loadsets",
+        "description": "Compare the processed LoadSet with the comparison LoadSet",
+        "depends_on": [
+          "scale_loads",
+          "load_comparison_loadset"
+        ],
+        "inputs": {
+          "primary_loadset": "../04_scale_loads/outputs/scaled_loadset.json",
+          "comparison_loadset": "../02_load_comparison_loadset/outputs/comparison_loadset.json"
+        },
+        "outputs": {
+          "comparison": "comparison.json"
+        },
+        "code_template": "        # Load both LoadSets\n        primary_data = inputs[\"primary_loadset\"]\n        comparison_data = inputs[\"comparison_loadset\"]\n        \n        primary_loadset = LoadSet.from_dict(primary_data)\n        comparison_loadset = LoadSet.from_dict(comparison_data)\n        \n        logger.info(f\"Comparing LoadSets: {primary_loadset.name} vs {comparison_loadset.name}\")\n        \n        # Perform comparison\n        comparison = primary_loadset.compare_to(comparison_loadset)\n        \n        logger.info(f\"Comparison complete. Found {len(comparison.comparison_rows)} comparison rows\")\n        \n        # Prepare outputs\n        outputs = {\n            \"comparison\": comparison.to_dict()\n        }\n        \n        logger.info(\"LoadSet comparison completed successfully\")",
+        "requirements": []
+      },
+      {
+        "name": "generate_envelope",
+        "description": "Generate envelope LoadSet with extreme values",
+        "depends_on": [
+          "scale_loads"
+        ],
+        "inputs": {
+          "loadset": "../04_scale_loads/outputs/scaled_loadset.json"
+        },
+        "outputs": {
+          "envelope_loadset": "envelope_loadset.json"
+        },
+        "code_template": "        # Load LoadSet\n        loadset_data = inputs[\"loadset\"]\n        loadset = LoadSet.from_dict(loadset_data)\n        \n        logger.info(f\"Generating envelope for LoadSet: {loadset.name}\")\n        logger.info(f\"Original load cases: {len(loadset.load_cases)}\")\n        \n        # Generate envelope\n        envelope_loadset = loadset.envelope()\n        \n        logger.info(f\"Envelope load cases: {len(envelope_loadset.load_cases)}\")\n        reduction = ((len(loadset.load_cases) - len(envelope_loadset.load_cases)) / len(loadset.load_cases)) * 100\n        logger.info(f\"Reduction: {reduction:.1f}%\")\n        \n        # Prepare outputs\n        outputs = {\n            \"envelope_loadset\": envelope_loadset.to_dict()\n        }\n        \n        logger.info(\"Envelope generation completed successfully\")",
+        "requirements": []
+      },
+      {
+        "name": "export_to_ansys",
+        "description": "Export LoadSet to ANSYS input files",
+        "depends_on": [
+          "generate_envelope"
+        ],
+        "inputs": {
+          "loadset": "../06_generate_envelope/outputs/envelope_loadset.json"
+        },
+        "outputs": {
+          "ansys_files": "ansys_files/"
+        },
+        "code_template": "        # Load envelope LoadSet\n        loadset_data = inputs[\"loadset\"]\n        loadset = LoadSet.from_dict(loadset_data)\n        \n        logger.info(f\"Exporting LoadSet to ANSYS format: {loadset.name}\")\n        \n        # Create ANSYS output directory\n        ansys_dir = OUTPUT_DIR / \"ansys_files\"\n        ansys_dir.mkdir(exist_ok=True)\n        \n        # Export to ANSYS\n        loadset.to_ansys(ansys_dir, \"envelope_loads\")\n        \n        # List generated files\n        ansys_files = list(ansys_dir.glob(\"*.inp\"))\n        logger.info(f\"Generated {len(ansys_files)} ANSYS files\")\n        for file in ansys_files:\n            logger.info(f\"  - {file.name}\")\n        \n        # Prepare outputs\n        outputs = {\n            \"ansys_files\": str(ansys_dir)\n        }\n        \n        logger.info(\"ANSYS export completed successfully\")",
+        "requirements": []
+      },
+      {
+        "name": "generate_report",
+        "description": "Generate comprehensive processing report",
+        "depends_on": [
+          "compare_loadsets",
+          "export_to_ansys"
+        ],
+        "inputs": {
+          "comparison": "../05_compare_loadsets/outputs/comparison.json",
+          "ansys_files": "../07_export_to_ansys/outputs/ansys_files/"
+        },
+        "outputs": {
+          "report": "processing_report.txt",
+          "summary": "summary.json"
+        },
+        "code_template": "        # Load comparison results\n        comparison_data = inputs[\"comparison\"]\n        ansys_files_dir = Path(inputs[\"ansys_files\"])\n        \n        logger.info(\"Generating comprehensive processing report\")\n        \n        # Count ANSYS files\n        ansys_files = list(ansys_files_dir.glob(\"*.inp\"))\n        \n        # Generate report\n        report_lines = [\n            \"LoadSet Processing Report\",\n            \"=\" * 50,\n            \"\",\n            f\"Processing completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\",\n            \"\",\n            \"Summary:\",\n            f\"- Comparison rows generated: {len(comparison_data['comparison_rows'])}\",\n            f\"- ANSYS files generated: {len(ansys_files)}\",\n            \"\",\n            \"ANSYS Files:\",\n        ]\n        \n        for file in ansys_files:\n            report_lines.append(f\"  - {file.name}\")\n        \n        report_lines.extend([\n            \"\",\n            \"Comparison Summary:\",\n            f\"- LoadSet 1: {comparison_data['metadata']['loadset1']['name']}\",\n            f\"- LoadSet 2: {comparison_data['metadata']['loadset2']['name']}\",\n            f\"- Total comparison rows: {len(comparison_data['comparison_rows'])}\",\n        ])\n        \n        report_content = \"\\n\".join(report_lines)\n        \n        # Generate summary\n        summary = {\n            \"processing_date\": datetime.now().isoformat(),\n            \"comparison_rows\": len(comparison_data['comparison_rows']),\n            \"ansys_files_generated\": len(ansys_files),\n            \"loadset1_name\": comparison_data['metadata']['loadset1']['name'],\n            \"loadset2_name\": comparison_data['metadata']['loadset2']['name']\n        }\n        \n        # Prepare outputs\n        outputs = {\n            \"report\": report_content,\n            \"summary\": summary\n        }\n        \n        logger.info(\"Report generation completed successfully\")",
+        "requirements": []
+      }
+    ],
+    "metadata": {
+      "created_at": "2025-07-16T18:25:27.078510",
+      "version": "1.0.0"
+    }
+  },
+  "generated_at": "2025-07-16T18:25:27.078650",
+  "generator_version": "1.0.0"
+}

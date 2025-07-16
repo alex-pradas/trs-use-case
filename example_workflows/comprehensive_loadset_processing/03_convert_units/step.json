@@ -1,0 +1,20 @@
+{
+  "step": {
+    "name": "convert_units",
+    "description": "Convert LoadSet to target units",
+    "depends_on": [
+      "load_primary_loadset"
+    ],
+    "inputs": {
+      "loadset": "../01_load_primary_loadset/outputs/primary_loadset.json",
+      "target_units": "inputs/target_units.txt"
+    },
+    "outputs": {
+      "converted_loadset": "converted_loadset.json"
+    },
+    "code_template": "        # Load LoadSet and target units\n        loadset_data = inputs[\"loadset\"]\n        \n        with open(inputs[\"target_units\"], \"r\") as f:\n            target_units = f.read().strip()\n        \n        logger.info(f\"Converting LoadSet to units: {target_units}\")\n        \n        # Convert LoadSet\n        loadset = LoadSet.from_dict(loadset_data)\n        converted_loadset = loadset.convert_to(target_units)\n        \n        logger.info(f\"Conversion complete. New units: {converted_loadset.units.forces}, {converted_loadset.units.moments}\")\n        \n        # Prepare outputs\n        outputs = {\n            \"converted_loadset\": converted_loadset.to_dict()\n        }\n        \n        logger.info(\"Unit conversion completed successfully\")",
+    "requirements": []
+  },
+  "step_number": 3,
+  "generated_at": "2025-07-16T18:25:27.079585"
+}

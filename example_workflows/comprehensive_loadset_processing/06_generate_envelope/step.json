@@ -1,0 +1,19 @@
+{
+  "step": {
+    "name": "generate_envelope",
+    "description": "Generate envelope LoadSet with extreme values",
+    "depends_on": [
+      "scale_loads"
+    ],
+    "inputs": {
+      "loadset": "../04_scale_loads/outputs/scaled_loadset.json"
+    },
+    "outputs": {
+      "envelope_loadset": "envelope_loadset.json"
+    },
+    "code_template": "        # Load LoadSet\n        loadset_data = inputs[\"loadset\"]\n        loadset = LoadSet.from_dict(loadset_data)\n        \n        logger.info(f\"Generating envelope for LoadSet: {loadset.name}\")\n        logger.info(f\"Original load cases: {len(loadset.load_cases)}\")\n        \n        # Generate envelope\n        envelope_loadset = loadset.envelope()\n        \n        logger.info(f\"Envelope load cases: {len(envelope_loadset.load_cases)}\")\n        reduction = ((len(loadset.load_cases) - len(envelope_loadset.load_cases)) / len(loadset.load_cases)) * 100\n        logger.info(f\"Reduction: {reduction:.1f}%\")\n        \n        # Prepare outputs\n        outputs = {\n            \"envelope_loadset\": envelope_loadset.to_dict()\n        }\n        \n        logger.info(\"Envelope generation completed successfully\")",
+    "requirements": []
+  },
+  "step_number": 6,
+  "generated_at": "2025-07-16T18:25:27.080301"
+}

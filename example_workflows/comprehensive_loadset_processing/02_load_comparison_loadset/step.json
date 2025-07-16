@@ -1,0 +1,17 @@
+{
+  "step": {
+    "name": "load_comparison_loadset",
+    "description": "Load the comparison LoadSet from JSON file",
+    "depends_on": [],
+    "inputs": {
+      "loadset_file": "inputs/comparison_loadset.json"
+    },
+    "outputs": {
+      "loadset": "comparison_loadset.json"
+    },
+    "code_template": "        # Load comparison LoadSet from JSON file\n        loadset_file = inputs[\"loadset_file\"]\n        \n        logger.info(f\"Loading comparison LoadSet from: {loadset_file}\")\n        loadset = LoadSet.read_json(loadset_file)\n        \n        logger.info(f\"Loaded comparison LoadSet: {loadset.name}\")\n        logger.info(f\"Number of load cases: {len(loadset.load_cases)}\")\n        logger.info(f\"Units: {loadset.units.forces}, {loadset.units.moments}\")\n        \n        # Prepare outputs\n        outputs = {\n            \"loadset\": loadset.to_dict()\n        }\n        \n        logger.info(\"Comparison LoadSet loaded successfully\")",
+    "requirements": []
+  },
+  "step_number": 2,
+  "generated_at": "2025-07-16T18:25:27.079343"
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Sample LoadSet",
+  "version": 1,
+  "description": "Sample LoadSet for workflow testing",
+  "units": {
+    "forces": "N",
+    "moments": "Nm"
+  },
+  "load_cases": [
+    {
+      "name": "Case_1",
+      "description": "First load case",
+      "point_loads": [
+        {
+          "name": "Point_A",
+          "force_moment": {
+            "fx": 1000.0,
+            "fy": 1500.0,
+            "fz": 2000.0,
+            "mx": 100.0,
+            "my": 150.0,
+            "mz": 200.0
+          }
+        },
+        {
+          "name": "Point_B",
+          "force_moment": {
+            "fx": 800.0,
+            "fy": 1200.0,
+            "fz": 1600.0,
+            "mx": 80.0,
+            "my": 120.0,
+            "mz": 160.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "Case_2",
+      "description": "Second load case",
+      "point_loads": [
+        {
+          "name": "Point_A",
+          "force_moment": {
+            "fx": 1200.0,
+            "fy": 1800.0,
+            "fz": 2400.0,
+            "mx": 120.0,
+            "my": 180.0,
+            "mz": 240.0
+          }
+        },
+        {
+          "name": "Point_B",
+          "force_moment": {
+            "fx": 900.0,
+            "fy": 1350.0,
+            "fz": 1800.0,
+            "mx": 90.0,
+            "my": 135.0,
+            "mz": 180.0
+          }
+        }
+      ]
+    }
+  ]
+}

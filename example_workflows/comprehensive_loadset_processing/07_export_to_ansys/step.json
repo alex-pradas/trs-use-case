@@ -1,0 +1,19 @@
+{
+  "step": {
+    "name": "export_to_ansys",
+    "description": "Export LoadSet to ANSYS input files",
+    "depends_on": [
+      "generate_envelope"
+    ],
+    "inputs": {
+      "loadset": "../06_generate_envelope/outputs/envelope_loadset.json"
+    },
+    "outputs": {
+      "ansys_files": "ansys_files/"
+    },
+    "code_template": "        # Load envelope LoadSet\n        loadset_data = inputs[\"loadset\"]\n        loadset = LoadSet.from_dict(loadset_data)\n        \n        logger.info(f\"Exporting LoadSet to ANSYS format: {loadset.name}\")\n        \n        # Create ANSYS output directory\n        ansys_dir = OUTPUT_DIR / \"ansys_files\"\n        ansys_dir.mkdir(exist_ok=True)\n        \n        # Export to ANSYS\n        loadset.to_ansys(ansys_dir, \"envelope_loads\")\n        \n        # List generated files\n        ansys_files = list(ansys_dir.glob(\"*.inp\"))\n        logger.info(f\"Generated {len(ansys_files)} ANSYS files\")\n        for file in ansys_files:\n            logger.info(f\"  - {file.name}\")\n        \n        # Prepare outputs\n        outputs = {\n            \"ansys_files\": str(ansys_dir)\n        }\n        \n        logger.info(\"ANSYS export completed successfully\")",
+    "requirements": []
+  },
+  "step_number": 7,
+  "generated_at": "2025-07-16T18:25:27.080546"
+}

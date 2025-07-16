@@ -1,0 +1,22 @@
+{
+  "step": {
+    "name": "generate_report",
+    "description": "Generate comprehensive processing report",
+    "depends_on": [
+      "compare_loadsets",
+      "export_to_ansys"
+    ],
+    "inputs": {
+      "comparison": "../05_compare_loadsets/outputs/comparison.json",
+      "ansys_files": "../07_export_to_ansys/outputs/ansys_files/"
+    },
+    "outputs": {
+      "report": "processing_report.txt",
+      "summary": "summary.json"
+    },
+    "code_template": "        # Load comparison results\n        comparison_data = inputs[\"comparison\"]\n        ansys_files_dir = Path(inputs[\"ansys_files\"])\n        \n        logger.info(\"Generating comprehensive processing report\")\n        \n        # Count ANSYS files\n        ansys_files = list(ansys_files_dir.glob(\"*.inp\"))\n        \n        # Generate report\n        report_lines = [\n            \"LoadSet Processing Report\",\n            \"=\" * 50,\n            \"\",\n            f\"Processing completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\",\n            \"\",\n            \"Summary:\",\n            f\"- Comparison rows generated: {len(comparison_data['comparison_rows'])}\",\n            f\"- ANSYS files generated: {len(ansys_files)}\",\n            \"\",\n            \"ANSYS Files:\",\n        ]\n        \n        for file in ansys_files:\n            report_lines.append(f\"  - {file.name}\")\n        \n        report_lines.extend([\n            \"\",\n            \"Comparison Summary:\",\n            f\"- LoadSet 1: {comparison_data['metadata']['loadset1']['name']}\",\n            f\"- LoadSet 2: {comparison_data['metadata']['loadset2']['name']}\",\n            f\"- Total comparison rows: {len(comparison_data['comparison_rows'])}\",\n        ])\n        \n        report_content = \"\\n\".join(report_lines)\n        \n        # Generate summary\n        summary = {\n            \"processing_date\": datetime.now().isoformat(),\n            \"comparison_rows\": len(comparison_data['comparison_rows']),\n            \"ansys_files_generated\": len(ansys_files),\n            \"loadset1_name\": comparison_data['metadata']['loadset1']['name'],\n            \"loadset2_name\": comparison_data['metadata']['loadset2']['name']\n        }\n        \n        # Prepare outputs\n        outputs = {\n            \"report\": report_content,\n            \"summary\": summary\n        }\n        \n        logger.info(\"Report generation completed successfully\")",
+    "requirements": []
+  },
+  "step_number": 8,
+  "generated_at": "2025-07-16T18:25:27.080843"
+}

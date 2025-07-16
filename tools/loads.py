@@ -1055,3 +1055,40 @@ class LoadSet(BaseModel):
             units=Units(forces=self.units.forces, moments=self.units.moments),
             load_cases=envelope_load_cases,
         )
+    
+    def to_dict(self) -> dict:
+        """
+        Convert LoadSet to dictionary format.
+        
+        Returns:
+            dict: Dictionary representation of the LoadSet
+        """
+        return {
+            "name": self.name,
+            "description": self.description,
+            "version": self.version,
+            "units": {
+                "forces": self.units.forces,
+                "moments": self.units.moments
+            },
+            "load_cases": [case.model_dump() for case in self.load_cases]
+        }
+    
+    @classmethod
+    def from_dict(cls, data: dict) -> "LoadSet":
+        """
+        Create a LoadSet from dictionary data.
+        
+        Args:
+            data: Dictionary containing LoadSet data
+            
+        Returns:
+            LoadSet: New LoadSet instance
+            
+        Raises:
+            ValueError: If the data is invalid
+        """
+        try:
+            return cls.model_validate(data)
+        except Exception as e:
+            raise ValueError(f"Invalid LoadSet data: {e}")

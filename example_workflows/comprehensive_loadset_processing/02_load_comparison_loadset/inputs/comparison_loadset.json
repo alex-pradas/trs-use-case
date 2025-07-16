@@ -1,0 +1,39 @@
+{
+  "name": "Comparison LoadSet",
+  "version": 1,
+  "description": "Comparison LoadSet for workflow testing",
+  "units": {
+    "forces": "N",
+    "moments": "Nm"
+  },
+  "load_cases": [
+    {
+      "name": "Comp_Case_1",
+      "description": "First comparison case",
+      "point_loads": [
+        {
+          "name": "Point_A",
+          "force_moment": {
+            "fx": 1050.0,
+            "fy": 1575.0,
+            "fz": 2100.0,
+            "mx": 105.0,
+            "my": 157.5,
+            "mz": 210.0
+          }
+        },
+        {
+          "name": "Point_B",
+          "force_moment": {
+            "fx": 840.0,
+            "fy": 1260.0,
+            "fz": 1680.0,
+            "mx": 84.0,
+            "my": 126.0,
+            "mz": 168.0
+          }
+        }
+      ]
+    }
+  ]
+}

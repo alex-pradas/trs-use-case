@@ -1,0 +1,20 @@
+{
+  "step": {
+    "name": "scale_loads",
+    "description": "Apply scaling factor to all loads",
+    "depends_on": [
+      "convert_units"
+    ],
+    "inputs": {
+      "loadset": "../03_convert_units/outputs/converted_loadset.json",
+      "scale_factor": "inputs/scale_factor.txt"
+    },
+    "outputs": {
+      "scaled_loadset": "scaled_loadset.json"
+    },
+    "code_template": "        # Load LoadSet and scale factor\n        loadset_data = inputs[\"loadset\"]\n        \n        with open(inputs[\"scale_factor\"], \"r\") as f:\n            scale_factor = float(f.read().strip())\n        \n        logger.info(f\"Scaling LoadSet by factor: {scale_factor}\")\n        \n        # Scale LoadSet\n        loadset = LoadSet.from_dict(loadset_data)\n        scaled_loadset = loadset.factor(scale_factor)\n        \n        logger.info(\"Scaling complete\")\n        \n        # Prepare outputs\n        outputs = {\n            \"scaled_loadset\": scaled_loadset.to_dict()\n        }\n        \n        logger.info(\"Load scaling completed successfully\")",
+    "requirements": []
+  },
+  "step_number": 4,
+  "generated_at": "2025-07-16T18:25:27.079820"
+}
