@@ -21,7 +21,7 @@ mcp_loads = MCPServerStdio(
 
 
 loads_agent = Agent(
-    "anthropic:claude-4-sonnet-20250514",
+    "anthropic:claude-3-haiku-20240307",
     mcp_servers=[mcp_loads],
 )
 

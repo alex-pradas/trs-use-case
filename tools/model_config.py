@@ -19,7 +19,7 @@ load_dotenv()
 # - fireworks:accounts/fireworks/models/llama-v3p3-70b-instruct
 # - openai:gpt-4o
 # - google-gla:gemini-1.5-flash
-MODEL_NAME = os.getenv("AI_MODEL", "anthropic:claude-3-5-sonnet-latest")
+MODEL_NAME = os.getenv("AI_MODEL", "anthropic:claude-3-haiku-20240307")
 
 
 def get_model_name() -> str:
