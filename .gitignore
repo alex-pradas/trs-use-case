@@ -9,6 +9,7 @@ uv.lock
 # Python
 *.pyc
 __pycache__/
+*.egg-info/
 
 # Testing and Coverage
 .coverage
