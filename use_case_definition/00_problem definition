@@ -1,4 +1,4 @@
-# Problem Definition
+# Overall Problem Definition
 
 ## Introduction
 
@@ -24,14 +24,4 @@ The scope of the evaluation is limited to the static ultimate analysis of the TR
 
 ## Documents and Tools
 
-The engineer is expected to follow the following documents to guide the analysis.
-
-- Engineering Practice: Static Ultimate Analysis
-- Material Properties Document
-- Engineering Practice: Running FEM Simulations
-- Design Definition Document
-
-The following tools are available for the analysis:
-
-- FEA Software: ANSYS
-- Load processing tool:
+Use the tools provided by the schema

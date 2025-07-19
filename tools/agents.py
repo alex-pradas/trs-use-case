@@ -29,12 +29,14 @@ from tools.response_models import (
 )
 
 
-def create_loadset_agent() -> Agent[MCPServerProvider, str]:
+def create_loadset_agent(system_prompt: str | None = None) -> Agent[MCPServerProvider, str]:
     """Create a LoadSet processing agent with dependency injection."""
+    default_prompt = "You are an expert aerospace structural loads analyst with access to LoadSet processing tools. Use available tools for operations and provide clear explanations."
+    
     agent = Agent(
         get_model_name(),
         deps_type=MCPServerProvider,
-        system_prompt="You are an expert aerospace structural loads analyst with access to LoadSet processing tools. Use available tools for operations and provide clear explanations.",
+        system_prompt=system_prompt or default_prompt,
     )
 
     @agent.tool
@@ -45,6 +47,16 @@ def create_loadset_agent() -> Agent[MCPServerProvider, str]:
         result = ctx.deps.loads_server._tool_manager._tools["load_from_json"].fn(
             file_path=file_path
         )
+        
+        # Check if the MCP server returned an error
+        if not result.get("success", True):
+            return LoadSetResponse(
+                success=False,
+                message=result.get("error", "Failed to load LoadSet"),
+                data=result,
+                load_cases_count=None,
+            )
+        
         return LoadSetResponse(
             success=True,
             message=f"LoadSet loaded from {file_path}",
@@ -60,6 +72,17 @@ def create_loadset_agent() -> Agent[MCPServerProvider, str]:
         result = ctx.deps.loads_server._tool_manager._tools["convert_units"].fn(
             target_units=target_units
         )
+        
+        # Check if the MCP server returned an error
+        if not result.get("success", True):
+            return ConversionResponse(
+                success=False,
+                message=result.get("error", "Unit conversion failed"),
+                original_units={},
+                target_units={},
+                conversion_factor=1.0,
+            )
+        
         return ConversionResponse(
             success=True,
             message=f"Units converted to {target_units}",
@@ -76,6 +99,15 @@ def create_loadset_agent() -> Agent[MCPServerProvider, str]:
         result = ctx.deps.loads_server._tool_manager._tools["scale_loads"].fn(
             factor=factor
         )
+        
+        # Check if the MCP server returned an error
+        if not result.get("success", True):
+            return LoadSetResponse(
+                success=False,
+                message=result.get("error", "Failed to scale loads"),
+                data=result,
+            )
+        
         return LoadSetResponse(
             success=True, message=f"Loads scaled by factor {factor}", data=result
         )
@@ -88,6 +120,18 @@ def create_loadset_agent() -> Agent[MCPServerProvider, str]:
         result = ctx.deps.loads_server._tool_manager._tools["export_to_ansys"].fn(
             folder_path=folder_path, name_stem=name_stem
         )
+        
+        # Check if the MCP server returned an error
+        if not result.get("success", True):
+            return ExportResponse(
+                success=False,
+                message=result.get("error", "Failed to export to ANSYS format"),
+                files_created=[],
+                export_format="ANSYS",
+                output_location=folder_path,
+                file_count=0,
+            )
+        
         return ExportResponse(
             success=True,
             message="LoadSet exported to ANSYS format",
@@ -99,8 +143,19 @@ def create_loadset_agent() -> Agent[MCPServerProvider, str]:
 
     @agent.tool
     def compare_loadsets(ctx: RunContext[MCPServerProvider]) -> ComparisonResponse:
-        """Compare two LoadSets with detailed analysis."""
+        """Compare two LoadSets with detailed analysis. Requires to load the two loadsets first"""
         result = ctx.deps.loads_server._tool_manager._tools["compare_loadsets"].fn()
+        
+        # Check if the MCP server returned an error
+        if not result.get("success", True):
+            return ComparisonResponse(
+                success=False,
+                message=result.get("error", "Comparison failed"),
+                total_differences=0,
+                points_compared=0,
+                components_compared=[],
+            )
+        
         return ComparisonResponse(
             success=True,
             message="LoadSet comparison completed",

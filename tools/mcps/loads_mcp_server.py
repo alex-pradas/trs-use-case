@@ -49,6 +49,9 @@ class LoadSetMCPProvider:
         """
         try:
             self._current_loadset = LoadSet.read_json(file_path)
+            # Reset comparison state when loading new primary loadset
+            self._comparison_loadset = None
+            self._current_comparison = None
             return {
                 "success": True,
                 "message": f"LoadSet loaded from {file_path}",
@@ -77,6 +80,9 @@ class LoadSetMCPProvider:
         """
         try:
             self._current_loadset = LoadSet.model_validate(loadset_data)
+            # Reset comparison state when loading new primary loadset
+            self._comparison_loadset = None
+            self._current_comparison = None
             return {
                 "success": True,
                 "message": "LoadSet loaded from data",
@@ -123,6 +129,9 @@ class LoadSetMCPProvider:
                 
                 # Load the LoadSet from the file
                 self._current_loadset = LoadSet.read_json(file_path)
+                # Reset comparison state when loading new primary loadset
+                self._comparison_loadset = None
+                self._current_comparison = None
                 
                 return {
                     "success": True,
