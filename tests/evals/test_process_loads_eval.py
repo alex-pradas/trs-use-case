@@ -6,10 +6,8 @@ correctly calls the scale_loads tool with factor 1.5 as expected for ultimate lo
 """
 
 import pytest
-import asyncio
 import sys
 from pathlib import Path
-from typing import Any
 
 # Add project paths for imports
 project_root = Path(__file__).parent.parent.parent
@@ -23,19 +21,18 @@ if str(tools_path) not in sys.path:
 if str(solution_path) not in sys.path:
     sys.path.insert(0, str(solution_path))
 
-from tests.evals.eval_framework import AgentEvaluationSuite, EvalCase
-from tests.evals.tool_call_eval import (
+from tests.evals.eval_framework import AgentEvaluationSuite, EvalCase  # noqa: E402
+from tests.evals.tool_call_eval import (  # noqa: E402
     ScaleLoadsEvaluator,
     ToolCallEvaluator,
     ToolSequenceEvaluator,
 )
-from tools.agents import create_loadset_agent
-from tools.dependencies import get_default_mcp_provider
+from tools.agents import create_loadset_agent  # noqa: E402
 
 # Import the system prompt loading function from process_loads
 sys.path.insert(0, str(project_root / "solution" / "03_loads_processing"))
 try:
-    from process_loads import load_system_prompt
+    from process_loads import load_system_prompt  # noqa: E402
 except ImportError as e:
     print(f"Warning: Could not import load_system_prompt: {e}")
     print("Will use a default system prompt for testing.")
@@ -159,7 +156,7 @@ the files are here: solution/loads/new_loads.json
         eval_assert.assert_tool_called(result, "scale_loads", {"factor": 1.5})
 
         # Print detailed results for debugging
-        print(f"\n=== Evaluation Result ===")
+        print("\n=== Evaluation Result ===")
         print(f"Passed: {result.passed}")
         print(f"Score: {result.score}")
         print(f"Message: {result.message}")
@@ -202,7 +199,7 @@ the files are here: solution/loads/new_loads.json
             f"scale_loads not called with factor 1.5. Found factors: {[call.args.get('factor') for call in scale_calls]}"
         )
 
-        print(f"\n=== Comprehensive Evaluation ===")
+        print("\n=== Comprehensive Evaluation ===")
         print(f"Score: {result.score}")
         print(f"Details: {result.details}")
 
@@ -220,7 +217,7 @@ the files are here: solution/loads/new_loads.json
             deps=mcp_dependencies,
         )
 
-        print(f"\n=== Original Prompt Evaluation ===")
+        print("\n=== Original Prompt Evaluation ===")
         print(f"Prompt: {original_user_prompt_eval_case.prompt}")
         print(f"Passed: {result.passed}")
         print(f"Score: {result.score}")
@@ -258,7 +255,7 @@ the files are here: solution/loads/new_loads.json
             deps=mcp_dependencies,
         )
 
-        print(f"\n=== Tool Sequence Evaluation ===")
+        print("\n=== Tool Sequence Evaluation ===")
         print(f"Expected: {' → '.join(expected_sequence)}")
         print(f"Actual: {' → '.join([call.name for call in result.tool_calls])}")
         print(f"Passed: {result.passed}")

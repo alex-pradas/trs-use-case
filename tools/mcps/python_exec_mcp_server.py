@@ -25,9 +25,9 @@ if str(tools_dir) not in sys.path:
     sys.path.insert(0, str(tools_dir))
 
 try:
-    from IPython.core.interactiveshell import InteractiveShell
-    from IPython.core.magic import Magics, magics_class
-    from IPython.utils.capture import capture_output
+    from IPython.core.interactiveshell import InteractiveShell  # noqa: E402
+    from IPython.core.magic import Magics, magics_class  # noqa: E402
+    from IPython.utils.capture import capture_output  # noqa: E402
 
     IPYTHON_AVAILABLE = True
 except ImportError:

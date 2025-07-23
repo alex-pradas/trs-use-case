@@ -95,11 +95,11 @@ tools_dir = Path(r"{server_tools_dir}")
 sys.path.insert(0, str(tools_dir))
 
 try:
-    from loads import LoadSet, LoadCase, PointLoad, ForceMoment, ForceUnit
-    import numpy as np
-    import matplotlib
+    from loads import LoadSet, LoadCase, PointLoad, ForceMoment, ForceUnit  # noqa: E402
+    import numpy as np  # noqa: E402
+    import matplotlib  # noqa: E402
     matplotlib.use('Agg')  # Non-interactive backend
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # noqa: E402
 except ImportError as e:
     print(f"Import error: {{e}}")
     # Continue anyway

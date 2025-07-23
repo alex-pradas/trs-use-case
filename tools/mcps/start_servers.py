@@ -45,9 +45,9 @@ if str(tools_dir) not in sys.path:
     sys.path.insert(0, str(tools_dir))
 
 # Import the MCP server creation functions
-from mcps.loads_mcp_server import create_mcp_server as create_loads_server
-from mcps.python_exec_mcp_server import create_mcp_server as create_python_server
-from mcps.script_exec_mcp_server import create_mcp_server as create_script_server
+from mcps.loads_mcp_server import create_mcp_server as create_loads_server  # noqa: E402
+from mcps.python_exec_mcp_server import create_mcp_server as create_python_server  # noqa: E402
+from mcps.script_exec_mcp_server import create_mcp_server as create_script_server  # noqa: E402
 
 
 @dataclass

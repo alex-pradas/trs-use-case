@@ -16,7 +16,7 @@ if str(tools_dir) not in sys.path:
     sys.path.insert(0, str(tools_dir))
 
 # Import LoadSet and related classes
-from loads import LoadSet, ForceUnit, LoadSetCompare
+from loads import LoadSet, ForceUnit, LoadSetCompare  # noqa: E402
 
 
 class LoadSetMCPProvider:

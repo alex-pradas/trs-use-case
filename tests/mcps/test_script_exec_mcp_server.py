@@ -18,7 +18,7 @@ import time
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from tools.mcps.script_exec_mcp_server import (
+from tools.mcps.script_exec_mcp_server import (  # noqa: E402
     ScriptExecutorMCPProvider,
     ExecutionResult,
     FileInfo,

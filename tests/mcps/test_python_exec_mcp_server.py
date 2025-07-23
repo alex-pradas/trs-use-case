@@ -12,7 +12,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from tools.mcps.python_exec_mcp_server import (
+from tools.mcps.python_exec_mcp_server import (  # noqa: E402
     PythonExecutorMCPProvider,
     ExecutionResult,
     create_mcp_server,

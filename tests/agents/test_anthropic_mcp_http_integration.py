@@ -24,7 +24,7 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from tools.loads import LoadSet
+from tools.loads import LoadSet  # noqa: E402
 
 # Load environment variables from .env file
 load_dotenv()

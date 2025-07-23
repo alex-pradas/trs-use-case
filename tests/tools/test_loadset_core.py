@@ -36,7 +36,7 @@ def test_tools_package_imports():
         sys.path.insert(0, str(parent_dir))
 
     # This should work and cover the __init__.py imports
-    from tools import LoadSet, LoadCase, PointLoad, ForceMoment, Units
+    from tools import LoadSet, LoadCase, PointLoad, ForceMoment, Units  # noqa: E402
 
     assert LoadSet is not None
     assert LoadCase is not None

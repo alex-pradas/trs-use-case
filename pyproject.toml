@@ -61,3 +61,7 @@ dev = [
     "pytest-cov>=6.2.1",
     "pytest-xdist>=3.0.0",  # For parallel test execution
 ]
+
+# Ruff settings
+[tool.ruff]
+ignore = ["F541"]  # f strings without variables inside. Claude code likes to write multilines all with the f for consistency.
