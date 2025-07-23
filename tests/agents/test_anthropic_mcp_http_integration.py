@@ -13,7 +13,8 @@ import pytest
 import sys
 import subprocess
 from pathlib import Path
-from typing import Optional, Dict
+
+# No typing imports needed
 from dotenv import load_dotenv
 from pydantic_ai import Agent
 from pydantic_ai.mcp import MCPServerStreamableHTTP
@@ -90,7 +91,7 @@ class AnthropicMCPHTTPTestAgent:
                 self.server_process.wait()
 
 
-def extract_force_value(ansys_content: str, component: str) -> Optional[float]:
+def extract_force_value(ansys_content: str, component: str) -> float | None:
     """
     Extract a specific force/moment component value from ANSYS file content.
 
@@ -114,8 +115,8 @@ def extract_force_value(ansys_content: str, component: str) -> Optional[float]:
 
 
 def calculate_expected_values(
-    original_values: Dict[str, float], factor: float
-) -> Dict[str, float]:
+    original_values: dict[str, float], factor: float
+) -> dict[str, float]:
     """
     Calculate expected values after factoring by 1.5 and converting N→klbf, Nm→lbf-ft.
 

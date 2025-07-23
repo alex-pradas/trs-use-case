@@ -25,7 +25,7 @@ class TestMCPEnvelope:
     def setup_method(self):
         """Set up test environment."""
         self.provider = LoadSetMCPProvider()
-        
+
         # Create test LoadSet data with extreme values
         self.test_loadset_data = {
             "name": "MCP Test Envelope LoadSet",
@@ -58,7 +58,7 @@ class TestMCPEnvelope:
                             "name": "Point_A",
                             "force_moment": {
                                 "fx": -500.0,  # MIN for Point_A fx (negative)
-                                "fy": 200.0,   # MAX for Point_A fy
+                                "fy": 200.0,  # MAX for Point_A fy
                                 "fz": 75.0,
                                 "mx": 15.0,
                                 "my": 25.0,
@@ -75,9 +75,9 @@ class TestMCPEnvelope:
                             "name": "Point_A",
                             "force_moment": {
                                 "fx": 200.0,
-                                "fy": 80.0,   # MIN for Point_A fy (positive, won't be included as min)
+                                "fy": 80.0,  # MIN for Point_A fy (positive, won't be included as min)
                                 "fz": 800.0,  # MAX for Point_A fz
-                                "mx": -100.0, # MIN for Point_A mx (negative)
+                                "mx": -100.0,  # MIN for Point_A mx (negative)
                                 "my": 10.0,
                                 "mz": 200.0,  # MAX for Point_A mz
                             },
@@ -94,8 +94,8 @@ class TestMCPEnvelope:
                                 "fx": 300.0,  # Between min and max
                                 "fy": 150.0,  # Between min and max
                                 "fz": 100.0,  # Between min and max
-                                "mx": 12.0,   # Between min and max
-                                "my": 15.0,   # Between min and max
+                                "mx": 12.0,  # Between min and max
+                                "my": 15.0,  # Between min and max
                                 "mz": 100.0,  # Between min and max
                             },
                         },
@@ -117,16 +117,18 @@ class TestMCPEnvelope:
         assert envelope_result["success"] is True
         assert "message" in envelope_result
         assert "LoadSet envelope created successfully" in envelope_result["message"]
-        
+
         # Check statistics
         assert envelope_result["original_load_cases"] == 4
-        assert envelope_result["envelope_load_cases"] == 3  # Should exclude No_Extremes_Case
+        assert (
+            envelope_result["envelope_load_cases"] == 3
+        )  # Should exclude No_Extremes_Case
         assert envelope_result["reduction_ratio"] == 25.0  # (4-3)/4 * 100 = 25%
-        
+
         # Check envelope case names
         envelope_case_names = set(envelope_result["envelope_case_names"])
         assert "Max_Fx_Case" in envelope_case_names
-        assert "Min_Fx_Case" in envelope_case_names  
+        assert "Min_Fx_Case" in envelope_case_names
         assert "Max_Fz_Case" in envelope_case_names
         assert "No_Extremes_Case" not in envelope_case_names
 
@@ -217,7 +219,11 @@ class TestMCPEnvelope:
                     "point_loads": [
                         {
                             "name": "Point_A",
-                            "force_moment": {"fx": 50.0, "fy": 400.0, "fz": 150.0},  # fy is max
+                            "force_moment": {
+                                "fx": 50.0,
+                                "fy": 400.0,
+                                "fz": 150.0,
+                            },  # fy is max
                         },
                     ],
                 },
@@ -226,7 +232,11 @@ class TestMCPEnvelope:
                     "point_loads": [
                         {
                             "name": "Point_A",
-                            "force_moment": {"fx": 150.0, "fy": 100.0, "fz": 500.0},  # fx is max, fz is max
+                            "force_moment": {
+                                "fx": 150.0,
+                                "fy": 100.0,
+                                "fz": 500.0,
+                            },  # fx is max, fz is max
                         },
                     ],
                 },
@@ -267,7 +277,7 @@ class TestMCPEnvelope:
         # List load cases to verify the correct ones remain
         case_list = self.provider.list_load_cases()
         case_names = {case["name"] for case in case_list["load_cases"]}
-        
+
         assert "Max_Fx_Case" in case_names
         assert "Min_Fx_Case" in case_names
         assert "Max_Fz_Case" in case_names

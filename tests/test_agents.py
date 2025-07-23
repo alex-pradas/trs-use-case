@@ -8,7 +8,7 @@ using factory functions and dependency injection.
 import pytest
 import asyncio
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any
 from pydantic import BaseModel
 from pydantic_ai import Agent, RunContext
 
@@ -153,7 +153,6 @@ class TestAgentArchitecture:
         # Agent should be properly configured with minimal setup
         assert agent.model is not None
         assert agent.system_prompt is not None
-
 
 
 class TestResponseModels:

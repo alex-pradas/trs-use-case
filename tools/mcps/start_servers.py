@@ -28,7 +28,7 @@ import signal
 import time
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Callable, Any
+from typing import Callable, Any
 from dataclasses import dataclass
 
 # Set up logging
@@ -59,7 +59,7 @@ class ServerConfig:
     create_func: Callable
     default_port: int
     description: str
-    startup_args: Dict[str, Any] = None
+    startup_args: dict[str, Any] = None
 
 
 # Server configurations
@@ -89,7 +89,7 @@ SERVER_CONFIGS = {
 
 
 def run_server(
-    server_config: ServerConfig, transport: str = "http", port: Optional[int] = None
+    server_config: ServerConfig, transport: str = "http", port: int | None = None
 ) -> None:
     """
     Run a single MCP server in a separate process.
@@ -127,7 +127,7 @@ class MCPServerManager:
 
     def __init__(self, transport: str = "http"):
         self.transport = transport
-        self.processes: Dict[str, multiprocessing.Process] = {}
+        self.processes: dict[str, multiprocessing.Process] = {}
         self.running = False
 
         # Set up signal handling
@@ -140,7 +140,7 @@ class MCPServerManager:
         self.stop_all_servers()
         sys.exit(0)
 
-    def start_server(self, server_key: str, port: Optional[int] = None) -> bool:
+    def start_server(self, server_key: str, port: int | None = None) -> bool:
         """
         Start a single server.
 
@@ -224,7 +224,7 @@ class MCPServerManager:
             logger.error(f"Error stopping {config.name}: {e}")
             return False
 
-    def start_servers(self, server_keys: List[str]) -> bool:
+    def start_servers(self, server_keys: list[str]) -> bool:
         """
         Start multiple servers.
 
@@ -344,7 +344,7 @@ Examples:
     return parser.parse_args()
 
 
-def validate_server_keys(server_keys: List[str]) -> List[str]:
+def validate_server_keys(server_keys: list[str]) -> list[str]:
     """
     Validate and return valid server keys.
 

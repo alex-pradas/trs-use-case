@@ -10,7 +10,7 @@ import asyncio
 import os
 import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 from dotenv import load_dotenv
 
 # Add the project root to Python path so we can import from tools
@@ -187,7 +187,7 @@ class TestPythonExecutionAgentIntegration:
                 execution_timeout=execution_timeout,
             )["tool_result"]
 
-    async def solve_programming_challenge(self, challenge: str) -> Dict[str, Any]:
+    async def solve_programming_challenge(self, challenge: str) -> dict[str, Any]:
         """
         Ask the agent to solve a programming challenge using the execution environment.
 
@@ -224,7 +224,7 @@ class TestPythonExecutionAgentIntegration:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    async def test_iterative_development(self) -> Dict[str, Any]:
+    async def test_iterative_development(self) -> dict[str, Any]:
         """
         Test the agent's ability to do iterative development with persistent variables.
 
@@ -268,7 +268,7 @@ class TestPythonExecutionAgentIntegration:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def call_tool_directly(self, tool_name: str, **kwargs) -> Dict[str, Any]:
+    def call_tool_directly(self, tool_name: str, **kwargs) -> dict[str, Any]:
         """
         Call an MCP tool directly without the AI agent.
 

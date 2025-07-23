@@ -13,12 +13,17 @@ import json
 import os
 from pathlib import Path
 
-from tools.mcps.loads_mcp_server import create_mcp_server, reset_global_state, LoadSetMCPProvider
+from tools.mcps.loads_mcp_server import (
+    create_mcp_server,
+    reset_global_state,
+    LoadSetMCPProvider,
+)
 
 
 # =============================================================================
 # CORE SERVER FUNCTIONALITY TESTS
 # =============================================================================
+
 
 class TestMCPServerCreation:
     """Test MCP server creation and configuration."""
@@ -422,9 +427,13 @@ class TestDataBasedMethods:
         reset_global_state()
         self.server = create_mcp_server()
         self.load_from_data_tool = self.server._tool_manager._tools["load_from_data"].fn
-        self.load_second_from_data_tool = self.server._tool_manager._tools["load_second_loadset_from_data"].fn
+        self.load_second_from_data_tool = self.server._tool_manager._tools[
+            "load_second_loadset_from_data"
+        ].fn
         self.compare_tool = self.server._tool_manager._tools["compare_loadsets"].fn
-        self.chart_tool = self.server._tool_manager._tools["generate_comparison_charts"].fn
+        self.chart_tool = self.server._tool_manager._tools[
+            "generate_comparison_charts"
+        ].fn
 
         # Create test LoadSet data
         self.test_data_1 = {
@@ -482,7 +491,7 @@ class TestDataBasedMethods:
     def test_load_from_data_success(self):
         """Test successful loading from data."""
         result = self.load_from_data_tool(self.test_data_1)
-        
+
         assert result["success"] is True
         assert result["message"] == "LoadSet loaded from data"
         assert result["loadset_name"] == "Test LoadSet 1"
@@ -494,21 +503,21 @@ class TestDataBasedMethods:
         """Test loading from invalid data."""
         invalid_data = {"invalid_field": "test", "missing_required": True}
         result = self.load_from_data_tool(invalid_data)
-        
+
         assert result["success"] is False
         assert "error" in result
 
     def test_load_from_data_empty_data(self):
         """Test loading from empty data."""
         result = self.load_from_data_tool({})
-        
+
         assert result["success"] is False
         assert "error" in result
 
     def test_load_second_loadset_from_data_success(self):
         """Test successful loading second loadset from data."""
         result = self.load_second_from_data_tool(self.test_data_2)
-        
+
         assert result["success"] is True
         assert result["message"] == "Comparison LoadSet loaded from data"
         assert result["loadset_name"] == "Test LoadSet 2"
@@ -520,7 +529,7 @@ class TestDataBasedMethods:
         """Test loading second loadset from invalid data."""
         invalid_data = {"invalid_field": "test"}
         result = self.load_second_from_data_tool(invalid_data)
-        
+
         assert result["success"] is False
         assert "error" in result
 
@@ -559,7 +568,9 @@ class TestDataBasedMethods:
             temp_file = f.name
 
         try:
-            load_second_tool = self.server._tool_manager._tools["load_second_loadset"].fn
+            load_second_tool = self.server._tool_manager._tools[
+                "load_second_loadset"
+            ].fn
             result2 = load_second_tool(temp_file)
             assert result2["success"] is True
 
@@ -569,6 +580,7 @@ class TestDataBasedMethods:
 
         finally:
             import os
+
             os.unlink(temp_file)
 
     def test_data_based_with_real_project_data(self):
@@ -576,16 +588,16 @@ class TestDataBasedMethods:
         # Load real project data
         new_loads_path = Path("solution/loads/new_loads.json")
         old_loads_path = Path("solution/loads/old_loads.json")
-        
+
         # Skip if files don't exist
         if not new_loads_path.exists() or not old_loads_path.exists():
             pytest.skip("Real project data files not found")
 
         # Load the JSON data
-        with open(new_loads_path, 'r') as f:
+        with open(new_loads_path, "r") as f:
             new_loads_data = json.load(f)
-        
-        with open(old_loads_path, 'r') as f:
+
+        with open(old_loads_path, "r") as f:
             old_loads_data = json.load(f)
 
         # Test load_from_data with real data
@@ -618,8 +630,16 @@ class TestDataBasedMethods:
             {},  # Empty dict
             {"name": "Test"},  # Missing version, units, load_cases
             {"name": "Test", "version": 1},  # Missing units, load_cases
-            {"name": "Test", "version": 1, "units": {"forces": "N"}},  # Missing moments unit
-            {"name": "Test", "version": 1, "units": {"forces": "N", "moments": "Nm"}},  # Missing load_cases
+            {
+                "name": "Test",
+                "version": 1,
+                "units": {"forces": "N"},
+            },  # Missing moments unit
+            {
+                "name": "Test",
+                "version": 1,
+                "units": {"forces": "N", "moments": "Nm"},
+            },  # Missing load_cases
         ]
 
         for i, invalid_data in enumerate(invalid_scenarios):
@@ -631,12 +651,12 @@ class TestDataBasedMethods:
         """Test that error handling is consistent between file and data methods."""
         # Test with same invalid data structure
         invalid_data = {"invalid": "structure"}
-        
+
         # Test data-based method
         data_result = self.load_from_data_tool(invalid_data)
         assert data_result["success"] is False
         assert "error" in data_result
-        
+
         # Test file-based method with same invalid data
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(invalid_data, f)
@@ -647,12 +667,13 @@ class TestDataBasedMethods:
             file_result = file_tool(temp_file)
             assert file_result["success"] is False
             assert "error" in file_result
-            
+
             # Both should fail (though error messages might be slightly different)
             # The key is that both fail appropriately
-            
+
         finally:
             import os
+
             os.unlink(temp_file)
 
 
@@ -663,8 +684,12 @@ class TestResourceBasedMethods:
         """Set up test data for each test method."""
         reset_global_state()
         self.server = create_mcp_server()
-        self.load_from_resource_tool = self.server._tool_manager._tools["load_from_resource"].fn
-        self.load_second_from_resource_tool = self.server._tool_manager._tools["load_second_loadset_from_resource"].fn
+        self.load_from_resource_tool = self.server._tool_manager._tools[
+            "load_from_resource"
+        ].fn
+        self.load_second_from_resource_tool = self.server._tool_manager._tools[
+            "load_second_loadset_from_resource"
+        ].fn
         self.compare_tool = self.server._tool_manager._tools["compare_loadsets"].fn
 
     def teardown_method(self):
@@ -674,9 +699,12 @@ class TestResourceBasedMethods:
     def test_load_from_resource_new_loads_success(self):
         """Test successful loading from new_loads.json resource."""
         result = self.load_from_resource_tool("loadsets://new_loads.json")
-        
+
         assert result["success"] is True
-        assert result["message"] == "LoadSet loaded from resource loadsets://new_loads.json"
+        assert (
+            result["message"]
+            == "LoadSet loaded from resource loadsets://new_loads.json"
+        )
         assert result["loadset_name"] == "Aerospace Structural Load Cases"
         assert result["num_load_cases"] == 25
         assert result["units"]["forces"] == "N"
@@ -685,9 +713,12 @@ class TestResourceBasedMethods:
     def test_load_from_resource_old_loads_success(self):
         """Test successful loading from old_loads.json resource."""
         result = self.load_from_resource_tool("loadsets://old_loads.json")
-        
+
         assert result["success"] is True
-        assert result["message"] == "LoadSet loaded from resource loadsets://old_loads.json"
+        assert (
+            result["message"]
+            == "LoadSet loaded from resource loadsets://old_loads.json"
+        )
         assert result["loadset_name"] == "Aerospace Structural Load Cases"
         assert result["num_load_cases"] == 25
         assert result["units"]["forces"] == "N"
@@ -696,7 +727,7 @@ class TestResourceBasedMethods:
     def test_load_from_resource_invalid_scheme(self):
         """Test loading from resource with invalid URI scheme."""
         result = self.load_from_resource_tool("invalid://new_loads.json")
-        
+
         assert result["success"] is False
         assert "error" in result
         assert "Unsupported resource URI scheme" in result["error"]
@@ -705,7 +736,7 @@ class TestResourceBasedMethods:
     def test_load_from_resource_unknown_resource(self):
         """Test loading from unknown resource."""
         result = self.load_from_resource_tool("loadsets://unknown_file.json")
-        
+
         assert result["success"] is False
         assert "error" in result
         assert "Unknown resource: unknown_file.json" in result["error"]
@@ -715,12 +746,12 @@ class TestResourceBasedMethods:
         """Test loading from malformed resource URI."""
         malformed_uris = [
             "loadsets://",  # Missing resource name
-            "loadsets:",    # Missing //
-            "loadsets",     # Missing ://
-            "",             # Empty string
+            "loadsets:",  # Missing //
+            "loadsets",  # Missing ://
+            "",  # Empty string
             "loadsets://new_loads.json/extra/path",  # Extra path components
         ]
-        
+
         for uri in malformed_uris:
             result = self.load_from_resource_tool(uri)
             assert result["success"] is False
@@ -729,9 +760,12 @@ class TestResourceBasedMethods:
     def test_load_second_loadset_from_resource_success(self):
         """Test successful loading second loadset from resource."""
         result = self.load_second_from_resource_tool("loadsets://old_loads.json")
-        
+
         assert result["success"] is True
-        assert result["message"] == "Comparison LoadSet loaded from resource loadsets://old_loads.json"
+        assert (
+            result["message"]
+            == "Comparison LoadSet loaded from resource loadsets://old_loads.json"
+        )
         assert result["loadset_name"] == "Aerospace Structural Load Cases"
         assert result["num_load_cases"] == 25
         assert result["units"]["forces"] == "N"
@@ -740,7 +774,7 @@ class TestResourceBasedMethods:
     def test_load_second_loadset_from_resource_invalid_scheme(self):
         """Test loading second loadset with invalid URI scheme."""
         result = self.load_second_from_resource_tool("invalid://old_loads.json")
-        
+
         assert result["success"] is False
         assert "error" in result
         assert "Unsupported resource URI scheme" in result["error"]
@@ -748,7 +782,7 @@ class TestResourceBasedMethods:
     def test_load_second_loadset_from_resource_unknown_resource(self):
         """Test loading second loadset from unknown resource."""
         result = self.load_second_from_resource_tool("loadsets://nonexistent.json")
-        
+
         assert result["success"] is False
         assert "error" in result
         assert "Unknown resource: nonexistent.json" in result["error"]
@@ -786,17 +820,17 @@ class TestResourceBasedMethods:
 
         # Reset state and load same data using data-based method
         reset_global_state()
-        
+
         # Load the same data using data-based method
         new_loads_path = Path("solution/loads/new_loads.json")
         if new_loads_path.exists():
-            with open(new_loads_path, 'r') as f:
+            with open(new_loads_path, "r") as f:
                 new_loads_data = json.load(f)
-            
+
             data_tool = self.server._tool_manager._tools["load_from_data"].fn
             data_result = data_tool(new_loads_data)
             assert data_result["success"] is True
-            
+
             # Results should be identical (except for the message)
             assert resource_result["loadset_name"] == data_result["loadset_name"]
             assert resource_result["num_load_cases"] == data_result["num_load_cases"]
@@ -811,10 +845,12 @@ class TestResourceBasedMethods:
         # Load second LoadSet from data (if available)
         old_loads_path = Path("solution/loads/old_loads.json")
         if old_loads_path.exists():
-            with open(old_loads_path, 'r') as f:
+            with open(old_loads_path, "r") as f:
                 old_loads_data = json.load(f)
-            
-            data_tool = self.server._tool_manager._tools["load_second_loadset_from_data"].fn
+
+            data_tool = self.server._tool_manager._tools[
+                "load_second_loadset_from_data"
+            ].fn
             result2 = data_tool(old_loads_data)
             assert result2["success"] is True
 
@@ -844,18 +880,18 @@ class TestResourceBasedMethods:
     def test_resource_uri_validation_comprehensive(self):
         """Test comprehensive resource URI validation."""
         invalid_uris = [
-            None,           # None value
-            "",             # Empty string
+            None,  # None value
+            "",  # Empty string
             "loadsets://",  # Missing resource name
-            "loadsets:",    # Invalid format
-            "loadsets",     # Missing scheme
+            "loadsets:",  # Invalid format
+            "loadsets",  # Missing scheme
             "http://new_loads.json",  # Wrong scheme
             "loadsets://new_loads.txt",  # Wrong extension (but should still fail on unknown resource)
             "loadsets://new_loads.json/extra",  # Extra path
             "LOADSETS://new_loads.json",  # Case sensitive
             "loadsets://NEW_LOADS.JSON",  # Case sensitive
         ]
-        
+
         for uri in invalid_uris:
             try:
                 result = self.load_from_resource_tool(uri)
@@ -869,10 +905,10 @@ class TestResourceBasedMethods:
         """Test that resource-based methods have consistent error handling."""
         # Test same invalid URI with both resource methods
         invalid_uri = "invalid://test.json"
-        
+
         result1 = self.load_from_resource_tool(invalid_uri)
         result2 = self.load_second_from_resource_tool(invalid_uri)
-        
+
         # Both should fail with similar error messages
         assert result1["success"] is False
         assert result2["success"] is False
@@ -887,16 +923,16 @@ class TestResourceBasedMethods:
         project_root = Path(__file__).parent.parent.parent
         new_loads_path = project_root / "solution" / "loads" / "new_loads.json"
         old_loads_path = project_root / "solution" / "loads" / "old_loads.json"
-        
+
         assert new_loads_path.exists(), f"new_loads.json not found at {new_loads_path}"
         assert old_loads_path.exists(), f"old_loads.json not found at {old_loads_path}"
-        
+
         # Verify files are valid JSON
-        with open(new_loads_path, 'r') as f:
+        with open(new_loads_path, "r") as f:
             new_loads_data = json.load(f)
-        with open(old_loads_path, 'r') as f:
+        with open(old_loads_path, "r") as f:
             old_loads_data = json.load(f)
-        
+
         # Basic structure validation
         assert "name" in new_loads_data
         assert "load_cases" in new_loads_data
@@ -907,6 +943,7 @@ class TestResourceBasedMethods:
 # =============================================================================
 # COMPARISON FUNCTIONALITY TESTS
 # =============================================================================
+
 
 class TestMCPServerComparison:
     """Test class for MCP server comparison functionality."""
@@ -1127,9 +1164,10 @@ class TestMCPServerComparison:
             assert len(base64_string) > 0, (
                 f"Base64 string for {point_name} should be non-empty"
             )
-            
+
             # Verify it's valid base64 by trying to decode it
             import base64
+
             try:
                 decoded_bytes = base64.b64decode(base64_string)
                 assert len(decoded_bytes) > 0, (
@@ -1244,13 +1282,14 @@ class TestMCPServerComparisonToolList:
 # ENVELOPE FUNCTIONALITY TESTS
 # =============================================================================
 
+
 class TestMCPEnvelope:
     """Test MCP envelope functionality."""
 
     def setup_method(self):
         """Set up test environment."""
         self.provider = LoadSetMCPProvider()
-        
+
         # Create test LoadSet data with extreme values
         self.test_loadset_data = {
             "name": "MCP Test Envelope LoadSet",
@@ -1283,7 +1322,7 @@ class TestMCPEnvelope:
                             "name": "Point_A",
                             "force_moment": {
                                 "fx": -500.0,  # MIN for Point_A fx (negative)
-                                "fy": 200.0,   # MAX for Point_A fy
+                                "fy": 200.0,  # MAX for Point_A fy
                                 "fz": 75.0,
                                 "mx": 15.0,
                                 "my": 25.0,
@@ -1300,9 +1339,9 @@ class TestMCPEnvelope:
                             "name": "Point_A",
                             "force_moment": {
                                 "fx": 200.0,
-                                "fy": 80.0,   # MIN for Point_A fy (positive, won't be included as min)
+                                "fy": 80.0,  # MIN for Point_A fy (positive, won't be included as min)
                                 "fz": 800.0,  # MAX for Point_A fz
-                                "mx": -100.0, # MIN for Point_A mx (negative)
+                                "mx": -100.0,  # MIN for Point_A mx (negative)
                                 "my": 10.0,
                                 "mz": 200.0,  # MAX for Point_A mz
                             },
@@ -1319,8 +1358,8 @@ class TestMCPEnvelope:
                                 "fx": 300.0,  # Between min and max
                                 "fy": 150.0,  # Between min and max
                                 "fz": 100.0,  # Between min and max
-                                "mx": 12.0,   # Between min and max
-                                "my": 15.0,   # Between min and max
+                                "mx": 12.0,  # Between min and max
+                                "my": 15.0,  # Between min and max
                                 "mz": 100.0,  # Between min and max
                             },
                         },
@@ -1342,16 +1381,18 @@ class TestMCPEnvelope:
         assert envelope_result["success"] is True
         assert "message" in envelope_result
         assert "LoadSet envelope created successfully" in envelope_result["message"]
-        
+
         # Check statistics
         assert envelope_result["original_load_cases"] == 4
-        assert envelope_result["envelope_load_cases"] == 3  # Should exclude No_Extremes_Case
+        assert (
+            envelope_result["envelope_load_cases"] == 3
+        )  # Should exclude No_Extremes_Case
         assert envelope_result["reduction_ratio"] == 25.0  # (4-3)/4 * 100 = 25%
-        
+
         # Check envelope case names
         envelope_case_names = set(envelope_result["envelope_case_names"])
         assert "Max_Fx_Case" in envelope_case_names
-        assert "Min_Fx_Case" in envelope_case_names  
+        assert "Min_Fx_Case" in envelope_case_names
         assert "Max_Fz_Case" in envelope_case_names
         assert "No_Extremes_Case" not in envelope_case_names
 
@@ -1442,7 +1483,11 @@ class TestMCPEnvelope:
                     "point_loads": [
                         {
                             "name": "Point_A",
-                            "force_moment": {"fx": 50.0, "fy": 400.0, "fz": 150.0},  # fy is max
+                            "force_moment": {
+                                "fx": 50.0,
+                                "fy": 400.0,
+                                "fz": 150.0,
+                            },  # fy is max
                         },
                     ],
                 },
@@ -1451,7 +1496,11 @@ class TestMCPEnvelope:
                     "point_loads": [
                         {
                             "name": "Point_A",
-                            "force_moment": {"fx": 150.0, "fy": 100.0, "fz": 500.0},  # fx is max, fz is max
+                            "force_moment": {
+                                "fx": 150.0,
+                                "fy": 100.0,
+                                "fz": 500.0,
+                            },  # fx is max, fz is max
                         },
                     ],
                 },
@@ -1492,7 +1541,7 @@ class TestMCPEnvelope:
         # List load cases to verify the correct ones remain
         case_list = self.provider.list_load_cases()
         case_names = {case["name"] for case in case_list["load_cases"]}
-        
+
         assert "Max_Fx_Case" in case_names
         assert "Min_Fx_Case" in case_names
         assert "Max_Fz_Case" in case_names

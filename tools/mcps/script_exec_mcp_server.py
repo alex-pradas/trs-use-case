@@ -6,7 +6,7 @@ and transferring output files between agent and execution environment.
 """
 
 from fastmcp import FastMCP
-from typing import Optional, Dict, Any, List
+from typing import Any
 import sys
 import subprocess
 import json
@@ -36,11 +36,11 @@ class ExecutionResult:
     stderr: str
     error: str
     execution_time: float
-    output_files: List[str]
+    output_files: list[str]
     workspace_path: str
     script_hash: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return asdict(self)
 
@@ -61,7 +61,7 @@ class ScriptExecutorMCPProvider:
     """Provider class for Python script execution with file I/O capabilities."""
 
     def __init__(
-        self, base_workspace_dir: Optional[Path] = None, execution_timeout: int = 300
+        self, base_workspace_dir: Path | None = None, execution_timeout: int = 300
     ):
         """
         Initialize the script executor.
@@ -74,8 +74,8 @@ class ScriptExecutorMCPProvider:
             base_workspace_dir or Path(tempfile.gettempdir()) / "script_exec_workspaces"
         )
         self.execution_timeout = execution_timeout
-        self.current_workspace: Optional[Path] = None
-        self.last_execution: Optional[ExecutionResult] = None
+        self.current_workspace: Path | None = None
+        self.last_execution: ExecutionResult | None = None
 
         # Ensure base directory exists
         self.base_workspace_dir.mkdir(parents=True, exist_ok=True)
@@ -135,7 +135,7 @@ except ImportError as e:
         """Calculate hash of script content."""
         return hashlib.sha256(script_content.encode()).hexdigest()[:16]
 
-    def _find_output_files(self, workspace_path: Path, initial_files: set) -> List[str]:
+    def _find_output_files(self, workspace_path: Path, initial_files: set) -> list[str]:
         """Find new files created during execution."""
         output_files = []
         try:
@@ -430,7 +430,7 @@ except ImportError as e:
 
 
 def create_mcp_server(
-    base_workspace_dir: Optional[Path] = None, execution_timeout: int = 300
+    base_workspace_dir: Path | None = None, execution_timeout: int = 300
 ) -> FastMCP:
     """
     Create and configure the FastMCP server for script execution.

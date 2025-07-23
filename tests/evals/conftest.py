@@ -10,7 +10,7 @@ import asyncio
 import tempfile
 import shutil
 from pathlib import Path
-from typing import Generator, Dict, Any
+from typing import Generator, Any
 import sys
 import os
 from dotenv import load_dotenv
@@ -45,7 +45,7 @@ def temp_output_dir() -> Generator[Path, None, None]:
     """Create a temporary directory for evaluation outputs."""
     temp_dir = tempfile.mkdtemp(prefix="eval_output_")
     output_path = Path(temp_dir)
-    
+
     try:
         yield output_path
     finally:
@@ -104,7 +104,7 @@ def test_data_paths():
     return {
         "new_loads": "solution/loads/new_loads.json",
         "old_loads": "solution/loads/old_loads.json",
-        "output_dir": "solution/output/"
+        "output_dir": "solution/output/",
     }
 
 
@@ -125,7 +125,7 @@ def evaluation_config():
         "max_retries": 2,
         "expected_score_threshold": 0.8,
         "capture_tool_calls": True,
-        "save_detailed_logs": True
+        "save_detailed_logs": True,
     }
 
 
@@ -133,38 +133,45 @@ def evaluation_config():
 def sample_eval_cases():
     """Provide sample evaluation cases for testing."""
     from tests.evals.eval_framework import EvalCase
-    
+
     return [
         EvalCase(
             name="basic_load_processing",
             prompt="Load the file solution/loads/new_loads.json and process it.",
             expected_tool_calls=[
-                {"name": "load_from_json", "args": {"file_path": "solution/loads/new_loads.json"}}
+                {
+                    "name": "load_from_json",
+                    "args": {"file_path": "solution/loads/new_loads.json"},
+                }
             ],
-            description="Test basic load file loading"
+            description="Test basic load file loading",
         ),
-        
         EvalCase(
             name="ultimate_load_processing",
             prompt="Load solution/loads/new_loads.json and apply ultimate load factor of 1.5.",
             expected_tool_calls=[
-                {"name": "load_from_json", "args": {"file_path": "solution/loads/new_loads.json"}},
-                {"name": "scale_loads", "args": {"factor": 1.5}}
+                {
+                    "name": "load_from_json",
+                    "args": {"file_path": "solution/loads/new_loads.json"},
+                },
+                {"name": "scale_loads", "args": {"factor": 1.5}},
             ],
-            description="Test ultimate load processing with safety factor"
+            description="Test ultimate load processing with safety factor",
         ),
-        
         EvalCase(
             name="full_workflow",
             prompt="Process loads from solution/loads/new_loads.json with ultimate factor 1.5, convert to klbf, and export to ANSYS.",
             expected_tool_calls=[
-                {"name": "load_from_json", "args": {"file_path": "solution/loads/new_loads.json"}},
+                {
+                    "name": "load_from_json",
+                    "args": {"file_path": "solution/loads/new_loads.json"},
+                },
                 {"name": "scale_loads", "args": {"factor": 1.5}},
                 {"name": "convert_units", "args": {"target_units": "klbf"}},
-                {"name": "export_to_ansys", "args": {}}
+                {"name": "export_to_ansys", "args": {}},
             ],
-            description="Test complete load processing workflow"
-        )
+            description="Test complete load processing workflow",
+        ),
     ]
 
 
@@ -176,31 +183,40 @@ def evaluation_report_path(temp_output_dir):
 
 class EvaluationAssertion:
     """Helper class for making assertions on evaluation results."""
-    
+
     @staticmethod
-    def assert_tool_called(result, tool_name: str, expected_args: Dict[str, Any] = None):
+    def assert_tool_called(
+        result, tool_name: str, expected_args: dict[str, Any] = None
+    ):
         """Assert that a specific tool was called."""
         tool_calls = [call for call in result.tool_calls if call.name == tool_name]
         assert tool_calls, f"Tool '{tool_name}' was not called"
-        
+
         if expected_args:
             matching_calls = [
-                call for call in tool_calls 
+                call
+                for call in tool_calls
                 if all(call.args.get(k) == v for k, v in expected_args.items())
             ]
-            assert matching_calls, f"Tool '{tool_name}' was not called with expected args {expected_args}"
-    
+            assert matching_calls, (
+                f"Tool '{tool_name}' was not called with expected args {expected_args}"
+            )
+
     @staticmethod
     def assert_evaluation_passed(result, min_score: float = 0.8):
         """Assert that an evaluation passed with minimum score."""
         assert result.passed, f"Evaluation failed: {result.message}"
-        assert result.score >= min_score, f"Score {result.score} below minimum {min_score}"
-    
+        assert result.score >= min_score, (
+            f"Score {result.score} below minimum {min_score}"
+        )
+
     @staticmethod
     def assert_no_errors(result):
         """Assert that no errors occurred during evaluation."""
         error_calls = [call for call in result.tool_calls if call.error]
-        assert not error_calls, f"Tool calls had errors: {[call.error for call in error_calls]}"
+        assert not error_calls, (
+            f"Tool calls had errors: {[call.error for call in error_calls]}"
+        )
 
 
 @pytest.fixture
@@ -213,8 +229,12 @@ def eval_assert():
 def pytest_configure(config):
     """Configure pytest markers for evaluation tests."""
     config.addinivalue_line("markers", "eval: mark test as an evaluation test")
-    config.addinivalue_line("markers", "tool_call_eval: mark test as a tool call evaluation")
-    config.addinivalue_line("markers", "expensive: mark test as expensive (requires AI model calls)")
+    config.addinivalue_line(
+        "markers", "tool_call_eval: mark test as a tool call evaluation"
+    )
+    config.addinivalue_line(
+        "markers", "expensive: mark test as expensive (requires AI model calls)"
+    )
     config.addinivalue_line("markers", "integration: mark test as integration test")
 
 
@@ -222,7 +242,7 @@ def pytest_configure(config):
 def pytest_collection_modifyitems(config, items):
     """Modify test collection to skip evaluations if model not configured."""
     is_valid, error = validate_model_config()
-    
+
     if not is_valid:
         skip_eval = pytest.mark.skip(reason=f"Model configuration error: {error}")
         for item in items:

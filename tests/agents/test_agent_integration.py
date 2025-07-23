@@ -15,7 +15,7 @@ import shutil
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 from dotenv import load_dotenv
 
 # Add the project root to Python path so we can import from tools
@@ -36,7 +36,9 @@ from tools.mcps.python_exec_mcp_server import (
     create_mcp_server as create_python_mcp_server,
     PythonExecutorMCPProvider,
 )
-from tools.mcps.script_exec_mcp_server import create_mcp_server as create_script_mcp_server
+from tools.mcps.script_exec_mcp_server import (
+    create_mcp_server as create_script_mcp_server,
+)
 from tools.loads import LoadSet
 
 # Load environment variables from .env file
@@ -47,9 +49,10 @@ load_dotenv()
 # SHARED TEST UTILITIES
 # =============================================================================
 
+
 class AgentTestBase:
     """Base class for agent integration tests with common utilities."""
-    
+
     def setup_method(self):
         """Set up test environment."""
         # Reset global state before each test
@@ -121,6 +124,7 @@ class AgentTestBase:
 # =============================================================================
 # LOADSET AGENT INTEGRATION TESTS
 # =============================================================================
+
 
 @pytest.mark.expensive
 class TestLoadSetAgentIntegration(AgentTestBase):
@@ -258,6 +262,7 @@ class TestLoadSetAgentIntegration(AgentTestBase):
 # PYTHON EXECUTION AGENT INTEGRATION TESTS
 # =============================================================================
 
+
 @pytest.mark.expensive
 class TestPythonExecutionAgentIntegration:
     """Test suite for Python execution agent integration."""
@@ -308,9 +313,7 @@ class TestPythonExecutionAgentIntegration:
             "Should mention factorial calculation"
         )
 
-        print(
-            f"✅ Python agent test passed: {len(result.output)} character response"
-        )
+        print(f"✅ Python agent test passed: {len(result.output)} character response")
 
     @pytest.mark.asyncio
     async def test_python_agent_iterative_development(self):
@@ -432,9 +435,9 @@ class TestPythonExecutionAgentIntegration:
         )
 
         assert result.output, "Error handling should return a response"
-        assert "error" in result.output.lower() or "exception" in result.output.lower(), (
-            "Should mention error handling"
-        )
+        assert (
+            "error" in result.output.lower() or "exception" in result.output.lower()
+        ), "Should mention error handling"
 
     def test_python_agent_tool_availability(self):
         """Test that Python agent has properly registered tools."""
@@ -455,7 +458,9 @@ class TestPythonExecutionAgentIntegration:
         # Test execute_code tool
         result = self.provider.execute_code("print('Direct tool test')")
         assert result["success"], f"execute_code failed: {result.get('error')}"
-        assert "Direct tool test" in result["output"], "Output should contain expected text"
+        assert "Direct tool test" in result["output"], (
+            "Output should contain expected text"
+        )
 
         # Test get_variables tool
         result = self.provider.get_variables()
@@ -468,8 +473,9 @@ class TestPythonExecutionAgentIntegration:
 
 
 # =============================================================================
-# SCRIPT EXECUTION AGENT INTEGRATION TESTS  
+# SCRIPT EXECUTION AGENT INTEGRATION TESTS
 # =============================================================================
+
 
 @pytest.mark.expensive
 class TestScriptExecutionAgentIntegration(AgentTestBase):
@@ -520,6 +526,7 @@ class TestScriptExecutionAgentIntegration(AgentTestBase):
 # CROSS-AGENT INTEGRATION TESTS
 # =============================================================================
 
+
 def test_all_agents_available():
     """Test that all agent types can be created."""
     loadset_agent = create_loadset_agent()
@@ -532,7 +539,7 @@ def test_all_agents_available():
 
     # All agents should have the correct structure
     for agent in [loadset_agent, python_agent, script_agent]:
-        assert hasattr(agent, 'model'), "Agent should have a model"
+        assert hasattr(agent, "model"), "Agent should have a model"
         # The agent should be properly initialized
         assert agent is not None
 

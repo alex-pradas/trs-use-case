@@ -1005,52 +1005,52 @@ class LoadSet(BaseModel):
     def envelope(self) -> "LoadSet":
         """
         Create an envelope LoadSet containing only load cases with extreme values.
-        
+
         For each point and component (fx, fy, fz, mx, my, mz), selects load cases with:
         - Maximum value (always included)
         - Minimum value (only if negative)
-        
-        Load cases appearing multiple times (having extremes in multiple components) 
+
+        Load cases appearing multiple times (having extremes in multiple components)
         are deduplicated in the result.
-        
+
         Returns:
             LoadSet: New LoadSet with envelope load cases only
-            
+
         Raises:
             ValueError: If LoadSet has no load cases
         """
         if not self.load_cases:
             raise ValueError("Cannot create envelope of empty LoadSet")
-            
+
         # Get extreme values for all points and components
         extremes = self.get_point_extremes()
-        
+
         # Collect unique load case names that have extreme values
         envelope_case_names = set()
-        
+
         for point_name, point_data in extremes.items():
             for component, comp_data in point_data.items():
                 # Always include max value load case
                 max_case = comp_data["max"]["loadcase"]
                 envelope_case_names.add(max_case)
-                
+
                 # Include min value load case only if it's negative
-                min_value = comp_data["min"]["value"] 
+                min_value = comp_data["min"]["value"]
                 if min_value < 0:
                     min_case = comp_data["min"]["loadcase"]
                     envelope_case_names.add(min_case)
-        
+
         # Filter original load cases to include only envelope cases
         envelope_load_cases = []
         for load_case in self.load_cases:
             case_name = load_case.name or "Unnamed"
             if case_name in envelope_case_names:
                 envelope_load_cases.append(load_case)
-        
+
         # Create new LoadSet with envelope load cases
         return LoadSet(
             name=self.name,
-            description=self.description, 
+            description=self.description,
             version=self.version,
             units=Units(forces=self.units.forces, moments=self.units.moments),
             load_cases=envelope_load_cases,

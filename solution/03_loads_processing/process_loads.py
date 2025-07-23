@@ -77,7 +77,6 @@ DO NOT ASK QUESTIONS. USE THE PROVIDED TOOLS TO PROCESS LOADS AND GENERATE OUTPU
     return system_prompt
 
 
-
 USER_PROMPT = """\
 I need to process some loads for ANSYS analysis.
 the files are here: /Users/alex/repos/trs-use-case/solution/loads/new_loads.json
@@ -89,7 +88,6 @@ def main() -> None:
     """Main function to run the load processing workflow."""
     # Load custom system prompt
     system_prompt = load_system_prompt()
-
 
     # start the server if not already running (this does not work because it starts it but the process stops there! I need a subprocess to run it in the background)
     # from tools.mcps.loads_mcp_server import create_mcp_server
@@ -109,8 +107,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     import logfire
-
-    
 
     logfire.configure()
     logfire.instrument_pydantic_ai()

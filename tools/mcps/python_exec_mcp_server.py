@@ -6,7 +6,7 @@ IPython-based environment, allowing iterative development workflows.
 """
 
 from fastmcp import FastMCP
-from typing import Optional, Dict, Any, List
+from typing import Any
 import sys
 import io
 import traceback
@@ -46,8 +46,8 @@ class ExecutionResult:
         stderr: str = "",
         error: str = "",
         execution_time: float = 0.0,
-        plots: List[str] = None,
-        display_data: List[Dict] = None,
+        plots: list[str] = None,
+        display_data: list[dict] = None,
     ):
         self.success = success
         self.result = result
@@ -58,7 +58,7 @@ class ExecutionResult:
         self.plots = plots or []
         self.display_data = display_data or []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "success": self.success,
@@ -143,8 +143,8 @@ class PythonExecutorMCPProvider:
     }
 
     def __init__(self, enable_security: bool = True, execution_timeout: int = 30):
-        self._shell: Optional[InteractiveShell] = None
-        self._execution_history: List[Dict[str, Any]] = []
+        self._shell: InteractiveShell | None = None
+        self._execution_history: list[dict[str, Any]] = []
         self._execution_count = 0
         self._enable_security = enable_security
         self._execution_timeout = execution_timeout
@@ -210,7 +210,7 @@ class PythonExecutorMCPProvider:
 
         return True, ""
 
-    def _capture_plots(self) -> List[str]:
+    def _capture_plots(self) -> list[str]:
         """Capture matplotlib plots as base64 encoded PNG images."""
         plots = []
         try:

@@ -231,9 +231,10 @@ class TestMCPServerComparison:
             assert len(base64_string) > 0, (
                 f"Base64 string for {point_name} should be non-empty"
             )
-            
+
             # Verify it's valid base64 by trying to decode it
             import base64
+
             try:
                 decoded_bytes = base64.b64decode(base64_string)
                 assert len(decoded_bytes) > 0, (

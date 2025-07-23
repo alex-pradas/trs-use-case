@@ -5,7 +5,6 @@ This module provides typed dependencies for MCP servers, following pydantic-ai
 best practices for dependency injection.
 """
 
-from typing import Optional
 from dataclasses import dataclass
 from pathlib import Path
 import tempfile
@@ -27,7 +26,7 @@ class MCPServerProvider:
     loads_timeout: int = 30
     python_timeout: int = 30
     script_timeout: int = 60
-    base_workspace_dir: Optional[Path] = None
+    base_workspace_dir: Path | None = None
 
     def __post_init__(self):
         """Initialize MCP servers after dataclass creation."""
@@ -81,7 +80,7 @@ class MCPServerProvider:
 
 
 # Global default provider instance
-_default_provider: Optional[MCPServerProvider] = None
+_default_provider: MCPServerProvider | None = None
 
 
 def get_default_mcp_provider() -> MCPServerProvider:

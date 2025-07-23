@@ -5,7 +5,6 @@ This module provides MCP tools for load data processing operations.
 """
 
 from fastmcp import FastMCP
-from typing import Optional
 from os import PathLike
 import sys
 from pathlib import Path
@@ -24,9 +23,9 @@ class LoadSetMCPProvider:
     """Provider class for LoadSet MCP operations with encapsulated state."""
 
     def __init__(self):
-        self._current_loadset: Optional[LoadSet] = None
-        self._comparison_loadset: Optional[LoadSet] = None
-        self._current_comparison: Optional[LoadSetCompare] = None
+        self._current_loadset: LoadSet | None = None
+        self._comparison_loadset: LoadSet | None = None
+        self._current_comparison: LoadSetCompare | None = None
 
     def reset_state(self):
         """Reset the LoadSet state."""
@@ -107,10 +106,10 @@ class LoadSetMCPProvider:
             # Parse the resource URI to get the resource path
             if resource_uri.startswith("loadsets://"):
                 resource_name = resource_uri.replace("loadsets://", "")
-                
+
                 # Get the project root directory (two levels up from tools/mcps)
                 project_root = Path(__file__).parent.parent.parent
-                
+
                 if resource_name == "new_loads.json":
                     file_path = project_root / "solution" / "loads" / "new_loads.json"
                 elif resource_name == "old_loads.json":
@@ -120,10 +119,10 @@ class LoadSetMCPProvider:
                         "success": False,
                         "error": f"Unknown resource: {resource_name}. Available: new_loads.json, old_loads.json",
                     }
-                
+
                 # Load the LoadSet from the file
                 self._current_loadset = LoadSet.read_json(file_path)
-                
+
                 return {
                     "success": True,
                     "message": f"LoadSet loaded from resource {resource_uri}",
@@ -373,10 +372,10 @@ class LoadSetMCPProvider:
             # Parse the resource URI to get the resource path
             if resource_uri.startswith("loadsets://"):
                 resource_name = resource_uri.replace("loadsets://", "")
-                
+
                 # Get the project root directory (two levels up from tools/mcps)
                 project_root = Path(__file__).parent.parent.parent
-                
+
                 if resource_name == "new_loads.json":
                     file_path = project_root / "solution" / "loads" / "new_loads.json"
                 elif resource_name == "old_loads.json":
@@ -386,12 +385,12 @@ class LoadSetMCPProvider:
                         "success": False,
                         "error": f"Unknown resource: {resource_name}. Available: new_loads.json, old_loads.json",
                     }
-                
+
                 # Load the comparison LoadSet from the file
                 self._comparison_loadset = LoadSet.read_json(file_path)
                 # Reset any existing comparison when loading new comparison loadset
                 self._current_comparison = None
-                
+
                 return {
                     "success": True,
                     "message": f"Comparison LoadSet loaded from resource {resource_uri}",
@@ -450,7 +449,10 @@ class LoadSetMCPProvider:
             return {"success": False, "error": str(e)}
 
     def generate_comparison_charts(
-        self, output_dir: PathLike | None = None, format: str = "png", as_images: bool = False
+        self,
+        output_dir: PathLike | None = None,
+        format: str = "png",
+        as_images: bool = False,
     ) -> dict:
         """
         Generate range bar charts comparing the LoadSets.
@@ -477,7 +479,7 @@ class LoadSetMCPProvider:
                 charts = self._current_comparison.generate_range_charts(
                     output_dir=Path.cwd(), image_format=format, as_base64=True
                 )
-                
+
                 # Return base64 strings directly instead of Image objects
                 return {
                     "success": True,
@@ -605,11 +607,11 @@ class LoadSetMCPProvider:
     def envelope_loadset(self) -> dict:
         """
         Create an envelope LoadSet containing only load cases with extreme values.
-        
+
         For each point and component (fx, fy, fz, mx, my, mz), selects load cases with:
         - Maximum value (always included)
         - Minimum value (only if negative)
-        
+
         Load cases appearing multiple times are deduplicated in the result.
 
         Returns:
@@ -631,8 +633,17 @@ class LoadSetMCPProvider:
                 "message": "LoadSet envelope created successfully",
                 "original_load_cases": original_case_count,
                 "envelope_load_cases": envelope_case_count,
-                "reduction_ratio": round((original_case_count - envelope_case_count) / original_case_count * 100, 2) if original_case_count > 0 else 0,
-                "envelope_case_names": [lc.name for lc in self._current_loadset.load_cases],
+                "reduction_ratio": round(
+                    (original_case_count - envelope_case_count)
+                    / original_case_count
+                    * 100,
+                    2,
+                )
+                if original_case_count > 0
+                else 0,
+                "envelope_case_names": [
+                    lc.name for lc in self._current_loadset.load_cases
+                ],
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -671,7 +682,7 @@ def create_mcp_server() -> FastMCP:
     def get_new_loads():
         """
         Get the new loads JSON file content.
-        
+
         Returns:
             dict: Contents of solution/loads/new_loads.json
         """
@@ -679,8 +690,8 @@ def create_mcp_server() -> FastMCP:
             # Get the project root directory (two levels up from tools/mcps)
             project_root = Path(__file__).parent.parent.parent
             new_loads_path = project_root / "solution" / "loads" / "new_loads.json"
-            
-            with open(new_loads_path, 'r', encoding='utf-8') as f:
+
+            with open(new_loads_path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             return {"error": f"Failed to load new_loads.json: {str(e)}"}
@@ -689,7 +700,7 @@ def create_mcp_server() -> FastMCP:
     def get_old_loads():
         """
         Get the old loads JSON file content.
-        
+
         Returns:
             dict: Contents of solution/loads/old_loads.json
         """
@@ -697,8 +708,8 @@ def create_mcp_server() -> FastMCP:
             # Get the project root directory (two levels up from tools/mcps)
             project_root = Path(__file__).parent.parent.parent
             old_loads_path = project_root / "solution" / "loads" / "old_loads.json"
-            
-            with open(old_loads_path, 'r', encoding='utf-8') as f:
+
+            with open(old_loads_path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             return {"error": f"Failed to load old_loads.json: {str(e)}"}

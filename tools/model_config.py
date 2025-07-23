@@ -6,7 +6,6 @@ across all agents, following pydantic-ai best practices.
 """
 
 import os
-from typing import Optional
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -56,7 +55,7 @@ def get_model_id() -> str:
     return MODEL_NAME
 
 
-def validate_model_config() -> tuple[bool, Optional[str]]:
+def validate_model_config() -> tuple[bool, str | None]:
     """
     Validate that the model is properly configured.
 

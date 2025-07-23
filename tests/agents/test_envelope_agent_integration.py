@@ -108,9 +108,11 @@ class TestEnvelopeAgentIntegration:
         # Validate ANSYS files were created (envelope should have fewer cases)
         ansys_files = list(self.output_folder.glob("envelope_loads_*.inp"))
         envelope_count = len(ansys_files)
-        
+
         assert envelope_count > 0, "No envelope ANSYS files were generated"
-        assert envelope_count <= original_count, "Envelope should have same or fewer load cases"
+        assert envelope_count <= original_count, (
+            "Envelope should have same or fewer load cases"
+        )
 
         # Test that we can read one of the generated files
         sample_file = ansys_files[0]
@@ -147,16 +149,25 @@ class TestEnvelopeAgentIntegration:
         # Validate agent understanding
         assert result.output, "Agent should return a response"
         response_lower = result.output.lower()
-        
+
         # Check that agent mentions key envelope concepts
         assert "envelope" in response_lower, "Should mention envelope"
-        assert "extreme" in response_lower or "maximum" in response_lower or "minimum" in response_lower, "Should mention extreme values"
-        assert "reduce" in response_lower or "fewer" in response_lower, "Should mention reduction"
-        
+        assert (
+            "extreme" in response_lower
+            or "maximum" in response_lower
+            or "minimum" in response_lower
+        ), "Should mention extreme values"
+        assert "reduce" in response_lower or "fewer" in response_lower, (
+            "Should mention reduction"
+        )
+
         # Should mention numbers indicating the reduction
         import re
-        numbers = re.findall(r'\d+', result.output)
-        assert len(numbers) >= 2, "Should mention specific numbers for before/after load case counts"
+
+        numbers = re.findall(r"\d+", result.output)
+        assert len(numbers) >= 2, (
+            "Should mention specific numbers for before/after load case counts"
+        )
 
     @pytest.mark.asyncio
     async def test_agent_envelope_comparison(self):
@@ -191,10 +202,16 @@ class TestEnvelopeAgentIntegration:
         # Validate comparison results
         assert result.output, "Agent should return a response"
         response_lower = result.output.lower()
-        
-        assert "before" in response_lower or "original" in response_lower, "Should mention before state"
-        assert "after" in response_lower or "envelope" in response_lower, "Should mention after state"
-        assert "%" in result.output or "percent" in response_lower, "Should mention percentage"
+
+        assert "before" in response_lower or "original" in response_lower, (
+            "Should mention before state"
+        )
+        assert "after" in response_lower or "envelope" in response_lower, (
+            "Should mention after state"
+        )
+        assert "%" in result.output or "percent" in response_lower, (
+            "Should mention percentage"
+        )
         assert "case" in response_lower, "Should mention load cases"
 
     @pytest.mark.asyncio
@@ -218,9 +235,11 @@ class TestEnvelopeAgentIntegration:
         # Should handle the error gracefully
         assert result.output, "Agent should return a response even for errors"
         response_lower = result.output.lower()
-        assert "error" in response_lower or "load" in response_lower, "Should indicate error or need to load data"
+        assert "error" in response_lower or "load" in response_lower, (
+            "Should indicate error or need to load data"
+        )
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_agent_envelope_with_scaling(self):
         """Test envelope combined with other LoadSet operations."""
         # Validate configuration
@@ -257,11 +276,15 @@ class TestEnvelopeAgentIntegration:
         # Validate complex workflow
         assert result.output, "Agent should return a response"
         response_lower = result.output.lower()
-        
+
         assert "envelope" in response_lower, "Should mention envelope"
-        assert "scale" in response_lower or str(scale_factor) in result.output, "Should mention scaling"
+        assert "scale" in response_lower or str(scale_factor) in result.output, (
+            "Should mention scaling"
+        )
         assert target_units.lower() in response_lower, "Should mention unit conversion"
-        assert "export" in response_lower or "ansys" in response_lower, "Should mention export"
+        assert "export" in response_lower or "ansys" in response_lower, (
+            "Should mention export"
+        )
 
         # Validate output files
         assert self.output_folder.exists(), "Output folder should exist"
@@ -275,10 +298,10 @@ class TestEnvelopeAgentIntegration:
 
         # Check that agent is properly initialized
         assert agent is not None, "Agent should be created successfully"
-        
+
         # Check that agent has the correct model and deps type for pydantic-ai
-        assert hasattr(agent, 'model'), "Agent should have a model"
-        assert hasattr(agent, 'deps_type'), "Agent should have deps type"
+        assert hasattr(agent, "model"), "Agent should have a model"
+        assert hasattr(agent, "deps_type"), "Agent should have deps type"
 
     @pytest.mark.asyncio
     async def test_agent_envelope_explanation(self):
@@ -309,11 +332,17 @@ class TestEnvelopeAgentIntegration:
         # Validate explanation
         assert result.output, "Agent should return a response"
         response_lower = result.output.lower()
-        
+
         assert "envelope" in response_lower, "Should explain envelope"
-        assert "extreme" in response_lower or "maximum" in response_lower or "minimum" in response_lower, "Should mention extremes"
+        assert (
+            "extreme" in response_lower
+            or "maximum" in response_lower
+            or "minimum" in response_lower
+        ), "Should mention extremes"
         assert "negative" in response_lower, "Should mention negative values"
-        assert "ansys" in response_lower or "analysis" in response_lower, "Should mention practical use"
+        assert "ansys" in response_lower or "analysis" in response_lower, (
+            "Should mention practical use"
+        )
 
 
 # Helper functions
@@ -352,10 +381,14 @@ if __name__ == "__main__":
                 """,
                 deps=deps,
             )
-            print(f"✅ Envelope agent test passed: {len(result.output)} character response")
-            
+            print(
+                f"✅ Envelope agent test passed: {len(result.output)} character response"
+            )
+
             # Check if response mentions envelope and numbers
-            if "envelope" in result.output.lower() and any(char.isdigit() for char in result.output):
+            if "envelope" in result.output.lower() and any(
+                char.isdigit() for char in result.output
+            ):
                 print("✅ Response contains envelope and numerical results")
             else:
                 print("⚠️  Response may be missing expected content")
