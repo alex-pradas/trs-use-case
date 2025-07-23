@@ -1,9 +1,10 @@
 """
 Consolidated integration tests for AI agents with MCP server integration.
 
-This module consolidates all general agent integration tests including:
+This module consolidates all agent integration tests including:
 - LoadSet agent with clean architecture
 - Python execution agent integration
+- Script execution agent integration
 """
 
 import pytest
@@ -43,13 +44,12 @@ load_dotenv()
 
 
 # =============================================================================
-# LOADSET AGENT INTEGRATION TESTS
+# SHARED TEST UTILITIES
 # =============================================================================
 
-@pytest.mark.expensive
-class TestLoadSetAgentIntegration:
-    """Test suite for LoadSet agent integration with MCP server."""
-
+class AgentTestBase:
+    """Base class for agent integration tests with common utilities."""
+    
     def setup_method(self):
         """Set up test environment."""
         # Reset global state before each test
@@ -116,6 +116,15 @@ class TestLoadSetAgentIntegration:
         """
         expected_value = original_value * factor / unit_conversion_factor
         return abs(converted_value - expected_value) < 0.001
+
+
+# =============================================================================
+# LOADSET AGENT INTEGRATION TESTS
+# =============================================================================
+
+@pytest.mark.expensive
+class TestLoadSetAgentIntegration(AgentTestBase):
+    """Test suite for LoadSet agent integration with MCP server."""
 
     @pytest.mark.asyncio
     async def test_loadset_agent_full_workflow(self):
@@ -456,3 +465,128 @@ class TestPythonExecutionAgentIntegration:
         # Test reset_environment tool
         result = self.provider.reset_environment()
         assert result["success"], f"reset_environment failed: {result.get('error')}"
+
+
+# =============================================================================
+# SCRIPT EXECUTION AGENT INTEGRATION TESTS  
+# =============================================================================
+
+@pytest.mark.expensive
+class TestScriptExecutionAgentIntegration(AgentTestBase):
+    """Test suite for Script execution agent integration."""
+
+    def test_script_agent_tool_availability(self):
+        """Test that Script agent has properly registered tools."""
+        # Create agent
+        agent = create_script_agent()
+
+        # Check that agent has tools registered
+        assert hasattr(agent, "_tools"), "Script agent should have tools"
+
+        # Check specific tools exist
+        tool_names = [tool.function.__name__ for tool in agent._tools.values()]
+        assert "execute_python_script" in tool_names, (
+            "Script agent should have execute_python_script tool"
+        )
+
+    @pytest.mark.asyncio
+    async def test_script_agent_basic_functionality(self):
+        """Test basic Script agent functionality."""
+        # Validate configuration
+        is_valid, error = validate_model_config()
+        if not is_valid:
+            pytest.skip(f"Model configuration error: {error}")
+
+        # Create agent and dependencies
+        agent = create_script_agent()
+        deps = MCPServerProvider()
+
+        # Test basic script execution
+        result = await agent.run(
+            """
+        Create and execute a Python script that:
+        1. Prints 'Hello from script agent!'
+        2. Creates a simple function that adds two numbers
+        3. Calls the function with 5 and 3
+        4. Prints the result
+        """,
+            deps=deps,
+        )
+
+        assert result.output, "Script agent should return a response"
+
+
+# =============================================================================
+# CROSS-AGENT INTEGRATION TESTS
+# =============================================================================
+
+def test_all_agents_available():
+    """Test that all agent types can be created."""
+    loadset_agent = create_loadset_agent()
+    python_agent = create_python_agent()
+    script_agent = create_script_agent()
+
+    assert loadset_agent is not None, "LoadSet agent should be created"
+    assert python_agent is not None, "Python agent should be created"
+    assert script_agent is not None, "Script agent should be created"
+
+    # All agents should have the correct structure
+    for agent in [loadset_agent, python_agent, script_agent]:
+        assert hasattr(agent, 'model'), "Agent should have a model"
+        # The agent should be properly initialized
+        assert agent is not None
+
+
+# Helper functions
+def run_agent_test(coro):
+    """Run an async agent test synchronously."""
+    return asyncio.run(coro)
+
+
+if __name__ == "__main__":
+    # Run a quick integration test with clean architecture
+    import sys
+
+    async def main():
+        """Quick test of clean agent architecture."""
+        print("🧪 Agent Integration Test")
+        print("=" * 40)
+
+        # Validate configuration
+        is_valid, error = validate_model_config()
+        if not is_valid:
+            print(f"❌ Configuration error: {error}")
+            sys.exit(1)
+
+        print(f"✅ Using model: {get_model_name()}")
+
+        try:
+            # Create agents and dependencies
+            loadset_agent = create_loadset_agent()
+            python_agent = create_python_agent()
+            deps = MCPServerProvider()
+
+            # Test basic LoadSet agent functionality
+            result = await loadset_agent.run(
+                "Load 'solution/loads/new_loads.json' and give me a quick summary.",
+                deps=deps,
+            )
+            print(
+                f"✅ LoadSet agent test passed: {len(result.output)} character response"
+            )
+
+            # Test Python agent functionality
+            result = await python_agent.run(
+                "Execute: print('Hello from clean architecture!')", deps=deps
+            )
+            print(
+                f"✅ Python agent test passed: {len(result.output)} character response"
+            )
+
+            print("🎉 Clean architecture integration test passed!")
+
+        except Exception as e:
+            print(f"❌ Integration test failed: {e}")
+            sys.exit(1)
+
+    asyncio.run(main())

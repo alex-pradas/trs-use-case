@@ -16,6 +16,11 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+# Also add tools directory for clean imports
+tools_path = project_root / "tools"
+if str(tools_path) not in sys.path:
+    sys.path.insert(0, str(tools_path))
+
 # Load environment variables and configure logfire for the test process
 load_dotenv()
 token = os.getenv("LOGFIRE_TOKEN")
