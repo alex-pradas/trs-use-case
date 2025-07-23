@@ -9,18 +9,6 @@ import pytest
 import sys
 from pathlib import Path
 
-# Add project paths for imports
-project_root = Path(__file__).parent.parent.parent
-tools_path = project_root / "tools"
-solution_path = project_root / "solution" / "03_loads_processing"
-
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
-if str(tools_path) not in sys.path:
-    sys.path.insert(0, str(tools_path))
-if str(solution_path) not in sys.path:
-    sys.path.insert(0, str(solution_path))
-
 from tests.evals.eval_framework import AgentEvaluationSuite, EvalCase  # noqa: E402
 from tests.evals.tool_call_eval import (  # noqa: E402
     ScaleLoadsEvaluator,
@@ -30,6 +18,7 @@ from tests.evals.tool_call_eval import (  # noqa: E402
 from tools.agents import create_loadset_agent  # noqa: E402
 
 # Import the system prompt loading function from process_loads
+project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root / "solution" / "03_loads_processing"))
 try:
     from process_loads import load_system_prompt  # noqa: E402

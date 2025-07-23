@@ -8,12 +8,6 @@ import pytest
 import tempfile
 import json
 from pathlib import Path
-import sys
-
-# Add the tools directory to Python path
-tools_dir = Path(__file__).parent.parent / "tools"
-if str(tools_dir) not in sys.path:
-    sys.path.insert(0, str(tools_dir))
 
 from tools.mcps.loads_mcp_server import LoadSetMCPProvider  # noqa: E402
 from tools.loads import LoadSet, Units, LoadCase, PointLoad, ForceMoment  # noqa: E402

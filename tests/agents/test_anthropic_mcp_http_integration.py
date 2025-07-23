@@ -10,7 +10,6 @@ import tempfile
 import re
 import asyncio
 import pytest
-import sys
 import subprocess
 from pathlib import Path
 
@@ -18,11 +17,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pydantic_ai import Agent
 from pydantic_ai.mcp import MCPServerStreamableHTTP
-
-# Add the project root to Python path so we can import from tools
-project_root = Path(__file__).parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
 
 from tools.loads import LoadSet  # noqa: E402
 

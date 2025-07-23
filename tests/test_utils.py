@@ -16,27 +16,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def setup_python_path():
-    """
-    Set up Python path to include project root and tools directory.
-
-    This function should be called at the top of test files to ensure
-    proper imports work.
-    """
-    # Get the tests directory (parent of this file)
-    tests_dir = Path(__file__).parent
-
-    # Add the project root to Python path
-    project_root = tests_dir.parent
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-
-    # Add tools directory for clean architecture
-    tools_path = project_root / "tools"
-    if str(tools_path) not in sys.path:
-        sys.path.insert(0, str(tools_path))
-
-    return project_root, tools_path
 
 
 class TempDirectoryTestBase:

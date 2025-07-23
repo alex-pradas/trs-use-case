@@ -8,20 +8,9 @@ MCP server to generate and execute Python code autonomously.
 import pytest
 import asyncio
 import os
-import sys
 from pathlib import Path
 from typing import Any
 from dotenv import load_dotenv
-
-# Add the project root to Python path so we can import from tools
-project_root = Path(__file__).parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
-
-# Add tools directory for clean architecture
-tools_path = project_root / "tools"
-if str(tools_path) not in sys.path:
-    sys.path.insert(0, str(tools_path))
 
 from tools.agents import create_python_agent  # noqa: E402
 from tools.dependencies import MCPServerProvider  # noqa: E402

@@ -10,20 +10,7 @@ Usage:
 """
 
 import asyncio
-import sys
 from pathlib import Path
-
-# Add project paths for imports
-project_root = Path(__file__).parent.parent.parent
-tools_path = project_root / "tools"
-solution_path = project_root / "solution" / "03_loads_processing"
-
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
-if str(tools_path) not in sys.path:
-    sys.path.insert(0, str(tools_path))
-if str(solution_path) not in sys.path:
-    sys.path.insert(0, str(solution_path))
 
 from tests.evals.eval_framework import EvalCase, AgentEvaluationSuite  # noqa: E402
 from tests.evals.tool_call_eval import ScaleLoadsEvaluator, ToolCallEvaluator  # noqa: E402
