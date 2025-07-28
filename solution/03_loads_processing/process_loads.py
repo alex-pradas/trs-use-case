@@ -21,7 +21,7 @@ sys.path.insert(0, str(tools_dir))
 
 # ruff: noqa: E402
 from tools.agents import create_loadset_agent
-from tools.dependencies import get_default_mcp_provider
+from tools.mcps.loads_mcp_server import LoadSetMCPProvider
 
 
 def load_system_prompt() -> str:
@@ -89,17 +89,12 @@ def main() -> None:
     # Load custom system prompt
     system_prompt = load_system_prompt()
 
-    # start the server if not already running (this does not work because it starts it but the process stops there! I need a subprocess to run it in the background)
-    # from tools.mcps.loads_mcp_server import create_mcp_server
-    # server = create_mcp_server()
-    # server.run(transport="stdio")
-
-    # Create agent with custom system prompt and dependency provider
+    # Create agent with custom system prompt and direct provider
     agent = create_loadset_agent(system_prompt=system_prompt)
-    deps = get_default_mcp_provider()
+    provider = LoadSetMCPProvider()
 
-    # Run the agent with dependency injection
-    result = agent.run_sync(USER_PROMPT, deps=deps)
+    # Run the agent with direct provider injection
+    result = agent.run_sync(USER_PROMPT, deps=provider)
 
     print("\n=== Load Processing Results ===")
     print(f"Result: {result.output}")

@@ -27,9 +27,8 @@ if str(tools_path) not in sys.path:
     sys.path.insert(0, str(tools_path))
 
 from tools.agents import create_loadset_agent  # noqa: E402
-from tools.dependencies import get_default_mcp_provider  # noqa: E402
+from tools.mcps.loads_mcp_server import LoadSetMCPProvider  # noqa: E402
 from tools.model_config import validate_model_config  # noqa: E402
-from tools.mcps.loads_mcp_server import reset_global_state  # noqa: E402
 
 
 @pytest.fixture(scope="session")
@@ -55,10 +54,9 @@ def temp_output_dir() -> Generator[Path, None, None]:
 
 @pytest.fixture(autouse=True)
 def reset_mcp_state():
-    """Reset MCP server state before each test."""
-    reset_global_state()
+    """Reset MCP server state before each test - no longer needed in new architecture."""
+    # No global state to reset with new architecture
     yield
-    reset_global_state()
 
 
 @pytest.fixture
@@ -69,8 +67,8 @@ def loadset_agent():
 
 @pytest.fixture
 def mcp_dependencies():
-    """Create MCP server dependencies."""
-    return get_default_mcp_provider()
+    """Create LoadSet MCP provider."""
+    return LoadSetMCPProvider()
 
 
 @pytest.fixture

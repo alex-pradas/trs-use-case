@@ -44,10 +44,8 @@ tools_dir = Path(__file__).parent.parent
 if str(tools_dir) not in sys.path:
     sys.path.insert(0, str(tools_dir))
 
-# Import the MCP server creation functions
+# Import the MCP server creation function
 from mcps.loads_mcp_server import create_mcp_server as create_loads_server  # noqa: E402
-from mcps.python_exec_mcp_server import create_mcp_server as create_python_server  # noqa: E402
-from mcps.script_exec_mcp_server import create_mcp_server as create_script_server  # noqa: E402
 
 
 @dataclass
@@ -70,20 +68,6 @@ SERVER_CONFIGS = {
         create_func=create_loads_server,
         default_port=8000,
         description="LoadSet operations and comparisons",
-    ),
-    "python": ServerConfig(
-        name="Python Execution MCP Server",
-        key="python",
-        create_func=create_python_server,
-        default_port=8001,
-        description="Python code execution with persistent sessions",
-    ),
-    "script": ServerConfig(
-        name="Script Execution MCP Server",
-        key="script",
-        create_func=create_script_server,
-        default_port=8002,
-        description="Python script execution with workspace management",
     ),
 }
 
@@ -305,14 +289,10 @@ def parse_arguments() -> argparse.Namespace:
         epilog="""
 Server Options:
   loads    - LoadSet MCP Server (port 8000)
-  python   - Python Execution MCP Server (port 8001)
-  script   - Script Execution MCP Server (port 8002)
 
 Examples:
-  %(prog)s                           # Start all servers
-  %(prog)s --all                     # Start all servers (explicit)
-  %(prog)s --only loads              # Start only LoadSet server
-  %(prog)s --only loads,python       # Start LoadSet and Python servers
+  %(prog)s                           # Start LoadSet server
+  %(prog)s --only loads              # Start LoadSet server (explicit)
   %(prog)s --transport stdio         # Use stdio transport
         """,
     )
@@ -325,7 +305,7 @@ Examples:
     server_group.add_argument(
         "--only",
         type=str,
-        help="Start only specific servers (comma-separated: loads,python,script)",
+        help="Start only specific servers (currently only: loads)",
     )
 
     # Transport selection

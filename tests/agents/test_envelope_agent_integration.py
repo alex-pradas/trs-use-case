@@ -15,9 +15,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from tools.agents import create_loadset_agent  # noqa: E402
-from tools.dependencies import MCPServerProvider  # noqa: E402
+from tools.mcps.loads_mcp_server import LoadSetMCPProvider  # noqa: E402
 from tools.model_config import get_model_name, validate_model_config  # noqa: E402
-from tools.mcps.loads_mcp_server import reset_global_state  # noqa: E402
 from tools.loads import LoadSet  # noqa: E402
 
 # Load environment variables from .env file
@@ -31,7 +30,7 @@ class TestEnvelopeAgentIntegration:
     def setup_method(self):
         """Set up test environment."""
         # Reset global state before each test
-        reset_global_state()
+        # No global state to reset with new architecture
 
         # Create temporary output directory
         self.temp_dir = tempfile.mkdtemp()
@@ -45,7 +44,7 @@ class TestEnvelopeAgentIntegration:
             shutil.rmtree(self.temp_dir)
 
         # Reset global state
-        reset_global_state()
+        # No global state to reset with new architecture
 
     @pytest.mark.asyncio
     async def test_agent_envelope_workflow(self):
@@ -61,7 +60,7 @@ class TestEnvelopeAgentIntegration:
 
         # Create agent and dependencies
         agent = create_loadset_agent()
-        deps = MCPServerProvider()
+        deps = LoadSetMCPProvider()
 
         # Run the envelope workflow using clean architecture
         result = await agent.run(
@@ -118,7 +117,7 @@ class TestEnvelopeAgentIntegration:
 
         # Create agent and dependencies
         agent = create_loadset_agent()
-        deps = MCPServerProvider()
+        deps = LoadSetMCPProvider()
 
         # Test agent understanding of envelope concept
         result = await agent.run(
@@ -167,7 +166,7 @@ class TestEnvelopeAgentIntegration:
 
         # Create agent and dependencies
         agent = create_loadset_agent()
-        deps = MCPServerProvider()
+        deps = LoadSetMCPProvider()
 
         # Test comparison workflow
         result = await agent.run(
@@ -212,7 +211,7 @@ class TestEnvelopeAgentIntegration:
 
         # Create agent and dependencies
         agent = create_loadset_agent()
-        deps = MCPServerProvider()
+        deps = LoadSetMCPProvider()
 
         # Test with invalid request (envelope without loading data)
         result = await agent.run(
@@ -243,7 +242,7 @@ class TestEnvelopeAgentIntegration:
 
         # Create agent and dependencies
         agent = create_loadset_agent()
-        deps = MCPServerProvider()
+        deps = LoadSetMCPProvider()
 
         # Test combined workflow
         result = await agent.run(
@@ -301,7 +300,7 @@ class TestEnvelopeAgentIntegration:
 
         # Create agent and dependencies
         agent = create_loadset_agent()
-        deps = MCPServerProvider()
+        deps = LoadSetMCPProvider()
 
         # Ask agent to explain envelope
         result = await agent.run(
@@ -359,7 +358,7 @@ if __name__ == "__main__":
         try:
             # Create agent and dependencies
             agent = create_loadset_agent()
-            deps = MCPServerProvider()
+            deps = LoadSetMCPProvider()
 
             # Test envelope functionality
             result = await agent.run(

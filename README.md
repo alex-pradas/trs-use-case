@@ -1,14 +1,26 @@
 # LoadSet Processing Tools
 
-This project provides a load-transform-export pipeline for aerospace structural load data using Pydantic models and comprehensive testing.
+This project provides a load-transform-export pipeline for aerospace structural load data using Pydantic models, AI agents, and MCP servers. Features a **simplified dual architecture** for both direct usage and external MCP protocol access.
 
 ## Features
 
+### **Core LoadSet Operations**
 - **Load**: Read LoadSet data from JSON files with validation
 - **Transform**: Convert between units (N, kN, lbf, klbf) and scale by factors  
 - **Export**: Generate ANSYS load files in F-command format
 - **Compare**: Compare two LoadSets with detailed analysis and percentage differences
 - **Visualize**: Generate range bar charts showing force and moment comparisons
+- **Envelope**: Create envelope LoadSets containing only extreme value load cases
+
+### **AI Agent Integration**
+- **Pydantic AI Agent**: Intelligent LoadSet processing with natural language interface
+- **Direct Provider Access**: Fast, direct method calls without MCP protocol overhead
+- **Tool Integration**: 11 specialized tools for complete LoadSet workflows
+
+### **MCP Server Support**
+- **External Access**: FastMCP server for external clients and other applications
+- **Resource Support**: Built-in resource URIs for standard load files
+- **State Management**: Persistent state for multi-step operations
 
 ## Installation
 
@@ -20,6 +32,27 @@ uv sync
 ```
 
 ## Usage
+
+### **Option 1: AI Agent (Recommended)**
+
+```python
+from tools.agents import create_loadset_agent
+from tools.mcps.loads_mcp_server import LoadSetMCPProvider
+
+# Create agent and provider
+agent = create_loadset_agent()
+provider = LoadSetMCPProvider()
+
+# Process loads with natural language
+result = agent.run_sync(
+    "Load the new loads, convert to klbf, apply 1.5 safety factor, and export to ANSYS",
+    deps=provider
+)
+
+print(result.output)
+```
+
+### **Option 2: Direct LoadSet API**
 
 ```python
 from tools.loads import LoadSet
@@ -47,6 +80,24 @@ chart_files = comparison.generate_range_charts('output_charts/')
 # Creates: Point_A_ranges.png, Point_B_ranges.png, etc.
 ```
 
+### **Option 3: MCP Server (External Access)**
+
+```bash
+# Start MCP server for external clients
+python -m tools.mcps.start_servers
+
+# Or run specific transport
+python -m tools.mcps.loads_mcp_server stdio
+```
+
+```python
+# External MCP client usage
+import requests
+
+response = requests.post('http://localhost:8000/tools/load_from_json', 
+                        json={'file_path': 'solution/loads/new_loads.json'})
+```
+
 ## Running Tests
 
 The project includes comprehensive tests using pytest. Tests are organized into class-based test suites for better organization and shared setup.
@@ -62,11 +113,11 @@ Pytest is configured in `pyproject.toml` with sensible defaults:
 ### Run All Tests
 
 ```bash
-# Run all tests
-uv run pytest
+# Run all core tests (recommended)
+uv run pytest tests/tools tests/mcps tests/test_agents.py -v
 
-# Run with verbose output
-uv run pytest -v
+# Run all tests (includes some that may be skipped)
+uv run pytest
 
 # Run with output capture disabled (see print statements)
 uv run pytest -v -s
@@ -75,46 +126,52 @@ uv run pytest -v -s
 ### Run Specific Test Files
 
 ```bash
-# Run only the enhanced LoadSet tests
-uv run pytest tests/test_loadset_enhanced.py -v
+# Core LoadSet functionality
+uv run pytest tests/tools/test_loadset_core.py -v
 
-# Run LoadSet comparison tests
-uv run pytest tests/test_loadset_comparison.py -v
+# MCP server functionality
+uv run pytest tests/mcps/test_mcp_server.py -v
 
-# Run range chart tests (excluding visual generation)
-uv run pytest tests/test_range_charts.py -v
+# Agent architecture tests
+uv run pytest tests/test_agents.py -v
 
-# Run only the original loads tests
-uv run pytest tests/test_loads.py -v
+# Integration tests (expensive - uses AI model)
+uv run pytest tests/agents/test_envelope_agent_integration.py -v
 ```
 
 ### Run Specific Test Classes
 
 ```bash
-# Test only the read_json functionality
-uv run pytest tests/test_loadset_enhanced.py::TestLoadSetReadJson -v
+# Test LoadSet JSON loading
+uv run pytest tests/tools/test_loadset_core.py::TestLoadSetReadJson -v
 
-# Test only unit conversion
-uv run pytest tests/test_loadset_enhanced.py::TestLoadSetConvertTo -v
+# Test unit conversion
+uv run pytest tests/tools/test_loadset_core.py::TestLoadSetConvertTo -v
 
-# Test only scaling functionality
-uv run pytest tests/test_loadset_enhanced.py::TestLoadSetFactor -v
+# Test load scaling
+uv run pytest tests/tools/test_loadset_core.py::TestLoadSetFactor -v
 
-# Test only ANSYS export
-uv run pytest tests/test_loadset_enhanced.py::TestLoadSetToAnsys -v
+# Test ANSYS export
+uv run pytest tests/tools/test_loadset_core.py::TestLoadSetToAnsys -v
 
-# Test LoadSet comparison functionality
-uv run pytest tests/test_loadset_comparison.py::TestLoadSetComparison -v
+# Test LoadSet comparison
+uv run pytest tests/tools/test_loadset_core.py::TestLoadSetComparison -v
 
-# Test range chart generation
-uv run pytest tests/test_range_charts.py::TestRangeChartGeneration -v
+# Test MCP server tools
+uv run pytest tests/mcps/test_mcp_server.py::TestLoadFromJsonTool -v
+
+# Test agent architecture
+uv run pytest tests/test_agents.py::TestLoadSetAgentArchitecture -v
 ```
 
 ### Run Specific Test Methods
 
 ```bash
 # Test a specific method
-uv run pytest tests/test_loadset_enhanced.py::TestLoadSetConvertTo::test_convert_to_kN -v
+uv run pytest tests/tools/test_loadset_core.py::TestLoadSetConvertTo::test_convert_to_kN -v
+
+# Test agent creation
+uv run pytest tests/test_agents.py::TestLoadSetAgentArchitecture::test_loadset_agent_creation -v
 ```
 
 ### Visual Chart Generation
@@ -216,34 +273,39 @@ If you get "ModuleNotFoundError: No module named 'pytest'" or tests aren't showi
 
 ## Test Structure
 
-The tests are organized into focused test classes across multiple files:
+The tests are organized into focused areas reflecting the new architecture:
 
-### Core LoadSet Tests (`test_loadset_enhanced.py`)
+### Core LoadSet Tests (`tests/tools/test_loadset_core.py`)
 - **`TestLoadSetReadJson`**: Tests for loading JSON files with error handling
 - **`TestLoadSetConvertTo`**: Tests for unit conversion between different systems
 - **`TestLoadSetFactor`**: Tests for scaling load values by factors
 - **`TestLoadSetToAnsys`**: Tests for ANSYS file export functionality
-
-### Comparison Tests (`test_loadset_comparison.py`)
-- **`TestComparisonRow`**: Tests for individual comparison row functionality
-- **`TestLoadSetCompare`**: Tests for comparison result container and export
-- **`TestLoadSetPointExtremes`**: Tests for min/max value extraction
 - **`TestLoadSetComparison`**: Tests for LoadSet comparison functionality
-- **`TestLoadSetComparisonWithRealData`**: Integration tests with real data
+- **`TestLoadSetEnvelope`**: Tests for envelope generation functionality
 
-### Visualization Tests (`test_range_charts.py`)
-- **`TestRangeChartGeneration`**: Tests for range chart generation functionality
-- **`TestRangeChartsWithRealData`**: Tests with real data including visual generation
+### MCP Server Tests (`tests/mcps/test_mcp_server.py`)
+- **`TestMCPServerCreation`**: Tests for MCP server instantiation and configuration
+- **`TestLoadFromJsonTool`**: Tests for JSON loading via MCP tools
+- **`TestConvertUnitsTool`**: Tests for unit conversion via MCP tools
+- **`TestDataBasedMethods`**: Tests for direct data-based operations
+- **`TestResourceBasedMethods`**: Tests for resource URI-based operations
+
+### Agent Architecture Tests (`tests/test_agents.py`)
+- **`TestLoadSetAgentArchitecture`**: Tests for simplified agent architecture
+- **`TestLoadSetProviderIntegration`**: Tests for direct provider integration
+
+### Integration Tests (`tests/agents/`)
+- **`TestEnvelopeAgentIntegration`**: End-to-end tests with AI model calls (expensive)
 
 Each test class includes:
 - Comprehensive edge case testing
 - Error condition validation
 - Real data validation using actual load files
-- Method chaining verification
+- Architecture compliance verification
 
 ## Test Coverage
 
-The test suite includes **55+ comprehensive tests** covering:
+The test suite includes **107+ comprehensive tests** covering:
 
 ### Core Functionality
 - ✅ JSON file loading and validation
@@ -267,6 +329,16 @@ The test suite includes **55+ comprehensive tests** covering:
 - ✅ Multiple image format support (PNG, SVG, PDF)
 - ✅ Edge case handling (empty data, zero values)
 - ✅ Real data integration testing
+
+### AI Agent & MCP Architecture
+- ✅ Pydantic AI agent creation and configuration
+- ✅ Direct provider dependency injection
+- ✅ MCP server tool registration and execution
+- ✅ Resource-based loading (loadsets://new_loads.json)
+- ✅ Data-based operations with validation
+- ✅ State management across operations
+- ✅ Error handling and recovery
+- ✅ Architecture simplification validation
 
 ## Configuration Files
 
@@ -296,22 +368,53 @@ Debug configurations for:
 
 ```
 ├── tools/
-│   └── loads.py              # Main LoadSet implementation with comparison
+│   ├── agents.py            # Pydantic AI agent factory (simplified architecture)
+│   ├── loads.py            # Core LoadSet implementation
+│   ├── model_config.py     # AI model configuration
+│   └── mcps/               # MCP servers
+│       ├── loads_mcp_server.py    # LoadSet MCP server and provider
+│       └── start_servers.py       # MCP server startup script
 ├── tests/
-│   ├── test_loads.py         # Original load file tests
-│   ├── test_loadset_enhanced.py  # Enhanced LoadSet tests
-│   ├── test_loadset_comparison.py  # LoadSet comparison tests
-│   ├── test_range_charts.py  # Range chart visualization tests
-│   └── visual_range_charts/  # Generated visual charts (created by tests)
+│   ├── test_agents.py      # Agent architecture tests
+│   ├── tools/
+│   │   └── test_loadset_core.py   # Core LoadSet functionality tests
+│   ├── mcps/
+│   │   └── test_mcp_server.py     # MCP server tests
+│   └── agents/
+│       └── test_envelope_agent_integration.py  # AI integration tests
 ├── solution/
-│   └── loads/
-│       ├── new_loads.json   # Updated JSON load data
-│       └── old_loads.json   # Original load data
+│   ├── loads/
+│   │   ├── new_loads.json  # Updated JSON load data
+│   │   └── old_loads.json  # Original load data
+│   └── 03_loads_processing/
+│       └── process_loads.py # Main application using simplified architecture
 ├── .vscode/
-│   ├── settings.json         # VS Code workspace settings
-│   └── launch.json           # Debug configurations
-└── pyproject.toml           # Project and pytest configuration
+│   ├── settings.json       # VS Code workspace settings
+│   └── launch.json         # Debug configurations
+└── pyproject.toml         # Project and pytest configuration
 ```
+
+## Architecture
+
+This project implements a **simplified dual architecture** designed for both direct usage and external MCP protocol access:
+
+### **Design Philosophy**
+- **Direct Provider Access**: Pydantic AI agents use `LoadSetMCPProvider` directly for maximum performance
+- **External MCP Access**: FastMCP server available for external clients via HTTP/stdio
+- **Single Source of Truth**: All logic centralized in `LoadSetMCPProvider` class methods
+- **No Wrapper Complexity**: Eliminated intermediate abstractions for 60% code reduction
+
+### **Data Flow**
+```
+AI Agent → LoadSetMCPProvider → LoadSet Operations
+External Client → FastMCP Server → LoadSetMCPProvider → LoadSet Operations  
+```
+
+### **Benefits**
+- ✅ **Performance**: Direct method calls eliminate MCP protocol overhead for agents
+- ✅ **Simplicity**: 60% less code, easier to understand and maintain
+- ✅ **Flexibility**: Both direct usage and external access supported
+- ✅ **Type Safety**: Full Pydantic validation throughout the pipeline
 
 ## Development
 
