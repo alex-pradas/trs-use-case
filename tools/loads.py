@@ -1056,3 +1056,147 @@ class LoadSet(BaseModel):
             units=Units(forces=self.units.forces, moments=self.units.moments),
             load_cases=envelope_load_cases,
         )
+
+    @classmethod
+    def read_ansys(
+        cls, file_path: PathLike, units: Units, name: str | None = None, version: int = 1
+    ) -> "LoadSet":
+        """
+        Read a LoadSet from an ANSYS .inp file.
+
+        Parses ANSYS load files with the following format:
+        - /TITLE,{loadcase_name} - defines the load case name
+        - cmsel,s,pilot_{node_name} - selects the pilot node
+        - f,all,{component},{value} - applies force/moment components
+
+        Args:
+            file_path: Path to the ANSYS .inp file to read
+            units: Units to use for the LoadSet (forces and moments)
+            name: Optional name for the LoadSet (defaults to filename without extension)
+            version: Version number for the LoadSet (defaults to 1)
+
+        Returns:
+            LoadSet: The loaded LoadSet instance with a single LoadCase
+
+        Raises:
+            FileNotFoundError: If the file doesn't exist
+            ValueError: If the file format is invalid or cannot be parsed
+        """
+        path = Path(file_path)
+
+        if not path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        # Use filename as default name if not provided
+        if name is None:
+            name = path.stem
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+        except Exception as e:
+            raise ValueError(f"Could not read file {file_path}: {e}")
+
+        # Parse the ANSYS file
+        load_case_name = None
+        current_point = None
+        point_loads_data = {}  # {point_name: {component: value}}
+
+        for line_num, line in enumerate(lines, 1):
+            line = line.strip()
+            if not line or line.startswith("!"):  # Skip empty lines and comments
+                continue
+
+            try:
+                # Parse title command to get load case name
+                if line.startswith("/TITLE,"):
+                    load_case_name = line[7:]  # Remove "/TITLE," prefix
+                    continue
+
+                # Parse component selection to get point name
+                if line.startswith("cmsel,s,pilot_"):
+                    # Extract point name by removing "cmsel,s,pilot_" prefix
+                    current_point = line[14:]  # Remove "cmsel,s,pilot_" prefix
+                    if current_point not in point_loads_data:
+                        point_loads_data[current_point] = {}
+                    continue
+
+                # Parse force/moment command
+                if line.startswith("f,all,"):
+                    if current_point is None:
+                        raise ValueError(
+                            f"Line {line_num}: Force command found without preceding point selection"
+                        )
+
+                    # Parse: f,all,component,value
+                    parts = line.split(",")
+                    if len(parts) != 4 or parts[0] != "f" or parts[1] != "all":
+                        raise ValueError(f"Line {line_num}: Invalid force command format: {line}")
+
+                    component = parts[2].strip()
+                    value_str = parts[3].strip()
+
+                    # Validate component
+                    valid_components = {"fx", "fy", "fz", "mx", "my", "mz"}
+                    if component not in valid_components:
+                        raise ValueError(
+                            f"Line {line_num}: Invalid component '{component}'. Must be one of {valid_components}"
+                        )
+
+                    # Parse value (handle scientific notation)
+                    try:
+                        value = float(value_str)
+                    except ValueError:
+                        raise ValueError(
+                            f"Line {line_num}: Invalid numeric value '{value_str}'"
+                        )
+
+                    point_loads_data[current_point][component] = value
+                    continue
+
+                # Skip other commands (nsel, alls, etc.)
+
+            except Exception as e:
+                if isinstance(e, ValueError):
+                    raise  # Re-raise ValueError with line context
+                raise ValueError(f"Line {line_num}: Error parsing line '{line}': {e}")
+
+        # Validate that we found a load case name
+        if load_case_name is None:
+            raise ValueError("No /TITLE command found in ANSYS file")
+
+        # Validate that we found at least one point load
+        if not point_loads_data:
+            raise ValueError("No point loads found in ANSYS file")
+
+        # Create PointLoad objects
+        point_loads = []
+        for point_name, components in point_loads_data.items():
+            # Create ForceMoment with all components (default to 0.0 if not specified)
+            force_moment = ForceMoment(
+                fx=components.get("fx", 0.0),
+                fy=components.get("fy", 0.0),
+                fz=components.get("fz", 0.0),
+                mx=components.get("mx", 0.0),
+                my=components.get("my", 0.0),
+                mz=components.get("mz", 0.0),
+            )
+
+            point_load = PointLoad(name=point_name, force_moment=force_moment)
+            point_loads.append(point_load)
+
+        # Create LoadCase
+        load_case = LoadCase(
+            name=load_case_name,
+            description=f"Imported from {path.name}",
+            point_loads=point_loads,
+        )
+
+        # Create and return LoadSet
+        return cls(
+            name=name,
+            description=f"LoadSet imported from ANSYS file: {path.name}",
+            version=version,
+            units=units,
+            load_cases=[load_case],
+        )

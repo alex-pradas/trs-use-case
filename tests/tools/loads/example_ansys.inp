@@ -1,0 +1,41 @@
+/TITLE,cruise1_108
+nsel,u,,,all
+
+cmsel,s,pilot_Point A
+f,all,fx,1.120e+00
+nsel,u,,,all
+
+cmsel,s,pilot_Point A
+f,all,fy,1.474e+00
+nsel,u,,,all
+
+cmsel,s,pilot_Point A
+f,all,mx,1.424e+00
+nsel,u,,,all
+
+cmsel,s,pilot_Point A
+f,all,my,1.065e+00
+nsel,u,,,all
+
+cmsel,s,pilot_Point A
+f,all,mz,9.795e-01
+nsel,u,,,all
+
+cmsel,s,pilot_Point A
+f,all,fz,5.455e-01
+nsel,u,,,all
+
+cmsel,s,pilot_Point B
+f,all,fx,6.045e-01
+nsel,u,,,all
+
+cmsel,s,pilot_Point B
+f,all,fy,1.782e-01
+nsel,u,,,all
+
+cmsel,s,pilot_Point B
+f,all,mx,6.353e-01
+nsel,u,,,all
+
+
+alls
