@@ -126,7 +126,7 @@ class TestLoadSetReadJson:
             temp_file = f.name
 
         try:
-            load_set = LoadSet.read_json(temp_file)
+            load_set = LoadSet.read_json(Path(temp_file))
 
             # Check basic properties
             assert load_set.name == "Test Load Set"
@@ -160,7 +160,7 @@ class TestLoadSetReadJson:
     def test_read_json_nonexistent_file(self):
         """Test reading a file that doesn't exist."""
         with pytest.raises(FileNotFoundError):
-            LoadSet.read_json("/nonexistent/file.json")
+            LoadSet.read_json(Path("/nonexistent/file.json"))
 
     def test_read_json_invalid_json(self):
         """Test reading a file with invalid JSON."""
@@ -170,7 +170,7 @@ class TestLoadSetReadJson:
 
         try:
             with pytest.raises(json.JSONDecodeError):
-                LoadSet.read_json(temp_file)
+                LoadSet.read_json(Path(temp_file))
         finally:
             os.unlink(temp_file)
 
@@ -192,7 +192,7 @@ class TestLoadSetReadJson:
 
         try:
             with pytest.raises(ValueError):
-                LoadSet.read_json(temp_file)
+                LoadSet.read_json(Path(temp_file))
         finally:
             os.unlink(temp_file)
 
@@ -209,7 +209,7 @@ class TestLoadSetReadJson:
 
         try:
             with pytest.raises(ValueError):
-                LoadSet.read_json(temp_file)
+                LoadSet.read_json(Path(temp_file))
         finally:
             os.unlink(temp_file)
 
@@ -386,7 +386,7 @@ class TestLoadSetConvertTo:
     def test_convert_invalid_units(self):
         """Test converting to invalid units."""
         with pytest.raises(ValueError, match="Unsupported force unit"):
-            self.sample_loadset.convert_to("InvalidUnit")
+            self.sample_loadset.convert_to("InvalidUnit")  # type: ignore
 
     def test_convert_preserves_metadata(self):
         """Test that conversion preserves all metadata."""
@@ -596,7 +596,7 @@ class TestLoadSetFactor:
 
         # Check load case metadata
         assert len(factored.load_cases) == len(self.sample_loadset.load_cases)
-        for i, (orig_case, fact_case) in enumerate(
+        for _, (orig_case, fact_case) in enumerate(
             zip(self.sample_loadset.load_cases, factored.load_cases)
         ):
             assert fact_case.name == orig_case.name
@@ -604,7 +604,7 @@ class TestLoadSetFactor:
 
             # Check point load metadata
             assert len(fact_case.point_loads) == len(orig_case.point_loads)
-            for j, (orig_point, fact_point) in enumerate(
+            for _, (orig_point, fact_point) in enumerate(
                 zip(orig_case.point_loads, fact_case.point_loads)
             ):
                 assert fact_point.name == orig_point.name
@@ -707,7 +707,7 @@ class TestLoadSetToAnsys:
 
         with tempfile.TemporaryDirectory() as temp_dir:
             # Export to ANSYS
-            self.sample_loadset.to_ansys(temp_dir, "test_loads")
+            self.sample_loadset.to_ansys(Path(temp_dir), "test_loads")
 
             # Check that files were created
             expected_files = [
@@ -728,7 +728,7 @@ class TestLoadSetToAnsys:
 
         with tempfile.TemporaryDirectory() as temp_dir:
             # Export to ANSYS
-            self.sample_loadset.to_ansys(temp_dir, "test_loads")
+            self.sample_loadset.to_ansys(Path(temp_dir), "test_loads")
 
             # Read the first load case file
             file_path = os.path.join(temp_dir, "test_loads_Load_Case_1.inp")
@@ -766,7 +766,7 @@ class TestLoadSetToAnsys:
         kn_loadset = self.sample_loadset.convert_to("kN")
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            kn_loadset.to_ansys(temp_dir, "kn_loads")
+            kn_loadset.to_ansys(Path(temp_dir), "kn_loads")
 
             file_path = os.path.join(temp_dir, "kn_loads_Load_Case_1.inp")
             with open(file_path, "r") as f:
@@ -808,7 +808,7 @@ class TestLoadSetToAnsys:
             with pytest.raises(
                 FileNotFoundError, match="Path exists but is not a directory"
             ):
-                self.sample_loadset.to_ansys(temp_file.name, "test")
+                self.sample_loadset.to_ansys(Path(temp_file.name), "test")
 
     def test_to_ansys_empty_loadset(self):
         """Test ANSYS export with empty load cases."""
@@ -823,7 +823,7 @@ class TestLoadSetToAnsys:
         import os
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            empty_loadset.to_ansys(temp_dir, "empty")
+            empty_loadset.to_ansys(Path(temp_dir), "empty")
 
             # Should not create any files
             files = os.listdir(temp_dir)
@@ -850,7 +850,7 @@ class TestLoadSetToAnsys:
             assert len(os.listdir(temp_dir)) == 2
 
             # Export to ANSYS - should clean existing files
-            self.sample_loadset.to_ansys(temp_dir, "test_loads")
+            self.sample_loadset.to_ansys(Path(temp_dir), "test_loads")
 
             # Check that old files were removed and new files created
             files = os.listdir(temp_dir)
@@ -886,7 +886,7 @@ class TestLoadSetToAnsys:
         import os
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            special_loadset.to_ansys(temp_dir, "special")
+            special_loadset.to_ansys(Path(temp_dir), "special")
 
             # Check that file was created with sanitized name
             files = os.listdir(temp_dir)
@@ -949,7 +949,7 @@ class TestComparisonRow:
         with pytest.raises(ValueError):
             ComparisonRow(
                 point_name="Point_A",
-                component="invalid",  # Invalid component
+                component="invalid",  # Invalid component  # type: ignore
                 type="max",
                 loadset1_value=100.0,
                 loadset2_value=120.0,
@@ -964,7 +964,7 @@ class TestComparisonRow:
             ComparisonRow(
                 point_name="Point_A",
                 component="fx",
-                type="invalid",  # Invalid type
+                type="invalid",  # Invalid type  # type: ignore
                 loadset1_value=100.0,
                 loadset2_value=120.0,
                 loadset1_loadcase="Case1",
@@ -1329,7 +1329,7 @@ class TestLoadSetComparison:
         with pytest.raises(
             ValueError, match="Can only compare to another LoadSet instance"
         ):
-            self.loadset1.compare_to("not a loadset")
+            self.loadset1.compare_to("not a loadset")  # type: ignore
 
 
 class TestLoadSetComparisonWithRealData:
@@ -1509,9 +1509,358 @@ class TestLoadSetComparisonWithRealData:
         assert fx_row.pct_diff == float("inf")  # Infinite percentage change
 
 
-# =============================================================================
-# ENVELOPE FUNCTIONALITY TESTS
-# =============================================================================
+
+
+
+class TestLoadSetReadAnsys:
+    """Test LoadSet.read_ansys() class method."""
+
+    def test_read_ansys_example_file(self):
+        """Test reading the provided example_ansys.inp file."""
+        example_file = Path(__file__).parent / "loads" / "example_ansys.inp"
+        
+        # Ensure the test file exists
+        assert example_file.exists(), f"Test file not found: {example_file}"
+        
+        # Read the ANSYS file with explicit units
+        units = Units(forces="N", moments="Nm")
+        loadset = LoadSet.read_ansys(example_file, units)
+        
+        # Check basic LoadSet properties
+        assert loadset.name == "example_ansys"  # Should use filename as default name
+        assert loadset.description == f"LoadSet imported from ANSYS file: {example_file.name}"
+        assert loadset.version == 1
+        assert loadset.units.forces == "N"
+        assert loadset.units.moments == "Nm"
+        
+        # Should have exactly one load case
+        assert len(loadset.load_cases) == 1
+        load_case = loadset.load_cases[0]
+        
+        # Check load case properties
+        assert load_case.name == "cruise1_108"
+        assert load_case.description == f"Imported from {example_file.name}"
+        
+        # Should have exactly two point loads (Point A and Point B)
+        assert len(load_case.point_loads) == 2
+        
+        # Find Point A and Point B
+        point_a = None
+        point_b = None
+        for point_load in load_case.point_loads:
+            if point_load.name == "Point A":
+                point_a = point_load
+            elif point_load.name == "Point B":
+                point_b = point_load
+        
+        assert point_a is not None, "Point A not found"
+        assert point_b is not None, "Point B not found"
+        
+        # Check Point A values (from the example file)
+        assert abs(point_a.force_moment.fx - 1.120) < 1e-6
+        assert abs(point_a.force_moment.fy - 1.474) < 1e-6
+        assert abs(point_a.force_moment.fz - 0.5455) < 1e-6
+        assert abs(point_a.force_moment.mx - 1.424) < 1e-6
+        assert abs(point_a.force_moment.my - 1.065) < 1e-6
+        assert abs(point_a.force_moment.mz - 0.9795) < 1e-6
+        
+        # Check Point B values (from the example file)
+        assert abs(point_b.force_moment.fx - 0.6045) < 1e-6
+        assert abs(point_b.force_moment.fy - 0.1782) < 1e-6
+        assert abs(point_b.force_moment.fz - 0.0) < 1e-6  # Not specified in file, should be 0
+        assert abs(point_b.force_moment.mx - 0.6353) < 1e-6
+        assert abs(point_b.force_moment.my - 0.0) < 1e-6  # Not specified in file, should be 0
+        assert abs(point_b.force_moment.mz - 0.0) < 1e-6  # Not specified in file, should be 0
+
+    def test_read_ansys_custom_name_and_version(self):
+        """Test reading ANSYS file with custom name and version."""
+        example_file = Path(__file__).parent / "loads" / "example_ansys.inp"
+        units = Units(forces="kN", moments="kNm")
+        
+        loadset = LoadSet.read_ansys(example_file, units, name="Custom LoadSet", version=2)
+        
+        assert loadset.name == "Custom LoadSet"
+        assert loadset.version == 2
+        assert loadset.units.forces == "kN"
+        assert loadset.units.moments == "kNm"
+
+    def test_read_ansys_nonexistent_file(self):
+        """Test reading a nonexistent file raises FileNotFoundError."""
+        units = Units(forces="N", moments="Nm")
+        
+        with pytest.raises(FileNotFoundError, match="File not found"):
+            LoadSet.read_ansys(Path("/nonexistent/file.inp"), units)
+
+    def test_read_ansys_invalid_format_no_title(self):
+        """Test reading file without /TITLE command raises ValueError."""
+        import tempfile
+        
+        # Create a temporary file without /TITLE command
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
+            f.write("cmsel,s,pilot_Point1\n")
+            f.write("f,all,fx,100.0\n")
+            temp_file = f.name
+        
+        try:
+            units = Units(forces="N", moments="Nm")
+            with pytest.raises(ValueError, match="No /TITLE command found"):
+                LoadSet.read_ansys(Path(temp_file), units)
+        finally:
+            os.unlink(temp_file)
+
+    def test_read_ansys_invalid_format_no_loads(self):
+        """Test reading file without any loads raises ValueError."""
+        import tempfile
+        
+        # Create a temporary file with only /TITLE
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
+            f.write("/TITLE,EmptyCase\n")
+            f.write("nsel,u,,,all\n")
+            f.write("alls\n")
+            temp_file = f.name
+        
+        try:
+            units = Units(forces="N", moments="Nm")
+            with pytest.raises(ValueError, match="No point loads found"):
+                LoadSet.read_ansys(Path(temp_file), units)
+        finally:
+            os.unlink(temp_file)
+
+    def test_read_ansys_invalid_force_command(self):
+        """Test reading file with invalid force command format."""
+        import tempfile
+        
+        # Create a temporary file with malformed force command
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
+            f.write("/TITLE,TestCase\n")
+            f.write("cmsel,s,pilot_Point1\n")
+            f.write("f,all,fx\n")  # Missing value
+            temp_file = f.name
+        
+        try:
+            units = Units(forces="N", moments="Nm")
+            with pytest.raises(ValueError, match="Invalid force command format"):
+                LoadSet.read_ansys(Path(temp_file), units)
+        finally:
+            os.unlink(temp_file)
+
+    def test_read_ansys_invalid_component(self):
+        """Test reading file with invalid component name."""
+        import tempfile
+        
+        # Create a temporary file with invalid component
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
+            f.write("/TITLE,TestCase\n")
+            f.write("cmsel,s,pilot_Point1\n")
+            f.write("f,all,invalid,100.0\n")  # Invalid component
+            temp_file = f.name
+        
+        try:
+            units = Units(forces="N", moments="Nm")
+            with pytest.raises(ValueError, match="Invalid component 'invalid'"):
+                LoadSet.read_ansys(Path(temp_file), units)
+        finally:
+            os.unlink(temp_file)
+
+    def test_read_ansys_invalid_numeric_value(self):
+        """Test reading file with invalid numeric value."""
+        import tempfile
+        
+        # Create a temporary file with invalid numeric value
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
+            f.write("/TITLE,TestCase\n")
+            f.write("cmsel,s,pilot_Point1\n")
+            f.write("f,all,fx,not_a_number\n")  # Invalid numeric value
+            temp_file = f.name
+        
+        try:
+            units = Units(forces="N", moments="Nm")
+            with pytest.raises(ValueError, match="Invalid numeric value 'not_a_number'"):
+                LoadSet.read_ansys(Path(temp_file), units)
+        finally:
+            os.unlink(temp_file)
+
+    def test_read_ansys_force_without_point_selection(self):
+        """Test reading file with force command before point selection."""
+        import tempfile
+        
+        # Create a temporary file with force command before point selection
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
+            f.write("/TITLE,TestCase\n")
+            f.write("f,all,fx,100.0\n")  # Force command without preceding cmsel
+            temp_file = f.name
+        
+        try:
+            units = Units(forces="N", moments="Nm")
+            with pytest.raises(ValueError, match="Force command found without preceding point selection"):
+                LoadSet.read_ansys(Path(temp_file), units)
+        finally:
+            os.unlink(temp_file)
+
+    def test_read_ansys_scientific_notation(self):
+        """Test reading file with scientific notation values."""
+        import tempfile
+        
+        # Create a temporary file with scientific notation
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
+            f.write("/TITLE,ScientificCase\n")
+            f.write("cmsel,s,pilot_TestPoint\n")
+            f.write("f,all,fx,1.23e+03\n")  # 1230.0
+            f.write("f,all,fy,-4.56e-02\n")  # -0.0456
+            f.write("f,all,fz,7.89E+01\n")  # 78.9 (uppercase E)
+            temp_file = f.name
+        
+        try:
+            units = Units(forces="N", moments="Nm")
+            loadset = LoadSet.read_ansys(Path(temp_file), units)
+            
+            point_load = loadset.load_cases[0].point_loads[0]
+            assert abs(point_load.force_moment.fx - 1230.0) < 1e-6
+            assert abs(point_load.force_moment.fy - (-0.0456)) < 1e-8
+            assert abs(point_load.force_moment.fz - 78.9) < 1e-6
+            
+        finally:
+            os.unlink(temp_file)
+
+    def test_read_ansys_comments_and_empty_lines(self):
+        """Test reading file with comments and empty lines."""
+        import tempfile
+        
+        # Create a temporary file with comments and empty lines
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
+            f.write("! This is a comment\n")
+            f.write("\n")  # Empty line
+            f.write("/TITLE,CommentCase\n")
+            f.write("! Another comment\n")
+            f.write("\n")  # Empty line
+            f.write("cmsel,s,pilot_TestPoint\n")
+            f.write("f,all,fx,100.0\n")
+            f.write("! Final comment\n")
+            temp_file = f.name
+        
+        try:
+            units = Units(forces="N", moments="Nm")
+            loadset = LoadSet.read_ansys(Path(temp_file), units)
+            
+            # Should parse successfully despite comments and empty lines
+            assert loadset.load_cases[0].name == "CommentCase"
+            assert len(loadset.load_cases[0].point_loads) == 1
+            assert loadset.load_cases[0].point_loads[0].name == "TestPoint"
+            assert loadset.load_cases[0].point_loads[0].force_moment.fx == 100.0
+            
+        finally:
+            os.unlink(temp_file)
+
+    def test_read_ansys_multiple_points(self):
+        """Test reading file with multiple points."""
+        import tempfile
+        
+        # Create a temporary file with multiple points
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
+            f.write("/TITLE,MultiPointCase\n")
+            f.write("cmsel,s,pilot_Point1\n")
+            f.write("f,all,fx,100.0\n")
+            f.write("f,all,fy,200.0\n")
+            f.write("cmsel,s,pilot_Point2\n")
+            f.write("f,all,fx,300.0\n")
+            f.write("f,all,mz,400.0\n")
+            temp_file = f.name
+        
+        try:
+            units = Units(forces="N", moments="Nm")
+            loadset = LoadSet.read_ansys(Path(temp_file), units)
+            
+            assert len(loadset.load_cases[0].point_loads) == 2
+            
+            # Find the points
+            point1 = None
+            point2 = None
+            for point_load in loadset.load_cases[0].point_loads:
+                if point_load.name == "Point1":
+                    point1 = point_load
+                elif point_load.name == "Point2":
+                    point2 = point_load
+            
+            assert point1 is not None
+            assert point2 is not None
+            
+            # Check Point1 values
+            assert point1.force_moment.fx == 100.0
+            assert point1.force_moment.fy == 200.0
+            assert point1.force_moment.fz == 0.0  # Not specified
+            assert point1.force_moment.mz == 0.0  # Not specified
+            
+            # Check Point2 values
+            assert point2.force_moment.fx == 300.0
+            assert point2.force_moment.fy == 0.0  # Not specified
+            assert point2.force_moment.mz == 400.0
+            
+        finally:
+            os.unlink(temp_file)
+
+    def test_read_ansys_round_trip(self):
+        """Test round-trip: export to ANSYS, then read back and compare."""
+        # Create a simple LoadSet
+        original_loadset = LoadSet(
+            name="RoundTrip Test",
+            version=1,
+            units=Units(forces="N", moments="Nm"),
+            load_cases=[
+                LoadCase(
+                    name="TestCase",
+                    description="Test case for round-trip",
+                    point_loads=[
+                        PointLoad(
+                            name="Node1",
+                            force_moment=ForceMoment(
+                                fx=1000.0, fy=2000.0, fz=3000.0,
+                                mx=100.0, my=200.0, mz=300.0
+                            )
+                        ),
+                        PointLoad(
+                            name="Node2",
+                            force_moment=ForceMoment(
+                                fx=500.0, fy=0.0, fz=1500.0,
+                                mx=50.0, my=0.0, mz=150.0
+                            )
+                        )
+                    ]
+                )
+            ]
+        )
+        
+        import tempfile
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Export to ANSYS
+            original_loadset.to_ansys(Path(temp_dir), "roundtrip")
+            
+            # Read back from ANSYS
+            ansys_file = Path(temp_dir) / "roundtrip_TestCase.inp"
+            assert ansys_file.exists()
+            
+            read_loadset = LoadSet.read_ansys(ansys_file, Units(forces="N", moments="Nm"))
+            
+            # Compare the results
+            assert read_loadset.load_cases[0].name == "TestCase"
+            assert len(read_loadset.load_cases[0].point_loads) == 2
+            
+            # Find the corresponding points
+            original_points = {pl.name: pl for pl in original_loadset.load_cases[0].point_loads}
+            read_points = {pl.name: pl for pl in read_loadset.load_cases[0].point_loads}
+            
+            assert set(original_points.keys()) == set(read_points.keys())
+            
+            # Compare values (allowing for floating point precision)
+            for point_name in original_points:
+                orig_fm = original_points[point_name].force_moment
+                read_fm = read_points[point_name].force_moment
+                
+                assert abs(orig_fm.fx - read_fm.fx) < 1e-6, f"{point_name} fx mismatch"
+                assert abs(orig_fm.fy - read_fm.fy) < 1e-6, f"{point_name} fy mismatch"
+                assert abs(orig_fm.fz - read_fm.fz) < 1e-6, f"{point_name} fz mismatch"
+                assert abs(orig_fm.mx - read_fm.mx) < 1e-6, f"{point_name} mx mismatch"
+                assert abs(orig_fm.my - read_fm.my) < 1e-6, f"{point_name} my mismatch"
+                assert abs(orig_fm.mz - read_fm.mz) < 1e-6, f"{point_name} mz mismatch"
 
 
 class TestLoadSetEnvelope:
