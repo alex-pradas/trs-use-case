@@ -1,4 +1,4 @@
-# Scenario 1: Just the new loads have been passed
+# Case 1: Just the new loads have been passed
 - Pass just the new loads to the agent
 - Explicitely mentioned that previous loads have not been provided.
 - There is no limit/ultimate definition of the loads.
@@ -33,8 +33,8 @@ USER_PROMPT_1
 - The final value of the loads for a given loadcase point and component is correct (perform check on 3 combination of different: loadcases, points and components).
 
 
-## Scenario 2:
-Same as scenario 1, but key differences: 
+## Case 2:
+Same as Case 1, but key differences: 
 - old loads provided.
 - The loads are in (klbs, lb-ft) units.
 
@@ -48,7 +48,7 @@ USER_PROMPT_2
 
 
 <!-- Unclear if Scenario 3 will be implemented -->
-## Scenario 3: Previous loads are greater than new loads
+## Case 3: Previous loads are greater than new loads
 
 
 

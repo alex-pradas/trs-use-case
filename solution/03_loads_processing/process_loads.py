@@ -78,7 +78,7 @@ Use these default values if no specific instructions are provided:
 
 DO NOT ASK QUESTIONS. USE THE PROVIDED TOOLS TO PROCESS LOADS AND GENERATE OUTPUTS.
 
-Remember to call get_point_extremes!!!
+Remember to call tool get_point_extremes!!!
 """
 
     return system_prompt
