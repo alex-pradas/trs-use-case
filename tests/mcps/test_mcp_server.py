@@ -573,8 +573,8 @@ class TestDataBasedMethods:
     def test_data_based_with_real_project_data(self):
         """Test data-based methods with real project data."""
         # Load real project data
-        new_loads_path = Path("solution/loads/new_loads.json")
-        old_loads_path = Path("solution/loads/old_loads.json")
+        new_loads_path = Path("solution/loads/03_01_new_loads.json")
+        old_loads_path = Path("solution/loads/03_03_old_loads.json")
 
         # Skip if files don't exist
         if not new_loads_path.exists() or not old_loads_path.exists():
@@ -684,13 +684,13 @@ class TestResourceBasedMethods:
         reset_global_state()
 
     def test_load_from_resource_new_loads_success(self):
-        """Test successful loading from new_loads.json resource."""
-        result = self.load_from_resource_tool("loadsets://new_loads.json")
+        """Test successful loading from 03_01_new_loads.json resource."""
+        result = self.load_from_resource_tool("loadsets://03_01_new_loads.json")
 
         assert result["success"] is True
         assert (
             result["message"]
-            == "LoadSet loaded from resource loadsets://new_loads.json"
+            == "LoadSet loaded from resource loadsets://03_01_new_loads.json"
         )
         assert result["loadset_name"] == "Aerospace Structural Load Cases"
         assert result["num_load_cases"] == 25
@@ -698,13 +698,13 @@ class TestResourceBasedMethods:
         assert result["units"]["moments"] == "Nm"
 
     def test_load_from_resource_old_loads_success(self):
-        """Test successful loading from old_loads.json resource."""
-        result = self.load_from_resource_tool("loadsets://old_loads.json")
+        """Test successful loading from 03_03_old_loads.json resource."""
+        result = self.load_from_resource_tool("loadsets://03_03_old_loads.json")
 
         assert result["success"] is True
         assert (
             result["message"]
-            == "LoadSet loaded from resource loadsets://old_loads.json"
+            == "LoadSet loaded from resource loadsets://03_03_old_loads.json"
         )
         assert result["loadset_name"] == "Aerospace Structural Load Cases"
         assert result["num_load_cases"] == 25
@@ -713,7 +713,7 @@ class TestResourceBasedMethods:
 
     def test_load_from_resource_invalid_scheme(self):
         """Test loading from resource with invalid URI scheme."""
-        result = self.load_from_resource_tool("invalid://new_loads.json")
+        result = self.load_from_resource_tool("invalid://03_01_new_loads.json")
 
         assert result["success"] is False
         assert "error" in result
@@ -727,7 +727,7 @@ class TestResourceBasedMethods:
         assert result["success"] is False
         assert "error" in result
         assert "Unknown resource: unknown_file.json" in result["error"]
-        assert "Available: new_loads.json, old_loads.json" in result["error"]
+        assert "Available: 03_01_new_loads.json, 03_02_new_loads.json, 03_03_old_loads.json" in result["error"]
 
     def test_load_from_resource_malformed_uri(self):
         """Test loading from malformed resource URI."""
@@ -736,7 +736,7 @@ class TestResourceBasedMethods:
             "loadsets:",  # Missing //
             "loadsets",  # Missing ://
             "",  # Empty string
-            "loadsets://new_loads.json/extra/path",  # Extra path components
+            "loadsets://03_01_new_loads.json/extra/path",  # Extra path components
         ]
 
         for uri in malformed_uris:
@@ -746,12 +746,12 @@ class TestResourceBasedMethods:
 
     def test_load_second_loadset_from_resource_success(self):
         """Test successful loading second loadset from resource."""
-        result = self.load_second_from_resource_tool("loadsets://old_loads.json")
+        result = self.load_second_from_resource_tool("loadsets://03_03_old_loads.json")
 
         assert result["success"] is True
         assert (
             result["message"]
-            == "Comparison LoadSet loaded from resource loadsets://old_loads.json"
+            == "Comparison LoadSet loaded from resource loadsets://03_03_old_loads.json"
         )
         assert result["loadset_name"] == "Aerospace Structural Load Cases"
         assert result["num_load_cases"] == 25
@@ -760,7 +760,7 @@ class TestResourceBasedMethods:
 
     def test_load_second_loadset_from_resource_invalid_scheme(self):
         """Test loading second loadset with invalid URI scheme."""
-        result = self.load_second_from_resource_tool("invalid://old_loads.json")
+        result = self.load_second_from_resource_tool("invalid://03_03_old_loads.json")
 
         assert result["success"] is False
         assert "error" in result
@@ -777,12 +777,12 @@ class TestResourceBasedMethods:
     def test_complete_resource_based_workflow(self):
         """Test complete workflow using resource-based methods."""
         # Load first LoadSet from resource
-        result1 = self.load_from_resource_tool("loadsets://new_loads.json")
+        result1 = self.load_from_resource_tool("loadsets://03_01_new_loads.json")
         assert result1["success"] is True
         assert result1["loadset_name"] == "Aerospace Structural Load Cases"
 
         # Load second LoadSet from resource
-        result2 = self.load_second_from_resource_tool("loadsets://old_loads.json")
+        result2 = self.load_second_from_resource_tool("loadsets://03_03_old_loads.json")
         assert result2["success"] is True
         assert result2["loadset_name"] == "Aerospace Structural Load Cases"
 
@@ -802,14 +802,14 @@ class TestResourceBasedMethods:
     def test_resource_vs_data_consistency(self):
         """Test that resource-based and data-based methods produce consistent results."""
         # Load from resource
-        resource_result = self.load_from_resource_tool("loadsets://new_loads.json")
+        resource_result = self.load_from_resource_tool("loadsets://03_01_new_loads.json")
         assert resource_result["success"] is True
 
         # Reset state and load same data using data-based method
         reset_global_state()
 
         # Load the same data using data-based method
-        new_loads_path = Path("solution/loads/new_loads.json")
+        new_loads_path = Path("solution/loads/03_01_new_loads.json")
         if new_loads_path.exists():
             with open(new_loads_path, "r") as f:
                 new_loads_data = json.load(f)
@@ -826,11 +826,11 @@ class TestResourceBasedMethods:
     def test_mixed_resource_and_data_workflow(self):
         """Test workflow mixing resource-based and data-based methods."""
         # Load first LoadSet from resource
-        result1 = self.load_from_resource_tool("loadsets://new_loads.json")
+        result1 = self.load_from_resource_tool("loadsets://03_01_new_loads.json")
         assert result1["success"] is True
 
         # Load second LoadSet from data (if available)
-        old_loads_path = Path("solution/loads/old_loads.json")
+        old_loads_path = Path("solution/loads/03_03_old_loads.json")
         if old_loads_path.exists():
             with open(old_loads_path, "r") as f:
                 old_loads_data = json.load(f)
@@ -849,15 +849,15 @@ class TestResourceBasedMethods:
     def test_resource_loading_state_management(self):
         """Test that resource loading properly manages state."""
         # Load first resource
-        result1 = self.load_from_resource_tool("loadsets://new_loads.json")
+        result1 = self.load_from_resource_tool("loadsets://03_01_new_loads.json")
         assert result1["success"] is True
 
         # Load second resource (should replace first)
-        result2 = self.load_from_resource_tool("loadsets://old_loads.json")
+        result2 = self.load_from_resource_tool("loadsets://03_03_old_loads.json")
         assert result2["success"] is True
 
         # Load comparison resource
-        result3 = self.load_second_from_resource_tool("loadsets://new_loads.json")
+        result3 = self.load_second_from_resource_tool("loadsets://03_01_new_loads.json")
         assert result3["success"] is True
 
         # Compare should work with the current state
@@ -872,11 +872,11 @@ class TestResourceBasedMethods:
             "loadsets://",  # Missing resource name
             "loadsets:",  # Invalid format
             "loadsets",  # Missing scheme
-            "http://new_loads.json",  # Wrong scheme
-            "loadsets://new_loads.txt",  # Wrong extension (but should still fail on unknown resource)
-            "loadsets://new_loads.json/extra",  # Extra path
-            "LOADSETS://new_loads.json",  # Case sensitive
-            "loadsets://NEW_LOADS.JSON",  # Case sensitive
+            "http://03_01_new_loads.json",  # Wrong scheme
+            "loadsets://03_01_new_loads.txt",  # Wrong extension (but should still fail on unknown resource)
+            "loadsets://03_01_new_loads.json/extra",  # Extra path
+            "LOADSETS://03_01_new_loads.json",  # Case sensitive
+            "loadsets://03_01_NEW_LOADS.JSON",  # Case sensitive
         ]
 
         for uri in invalid_uris:
@@ -908,11 +908,11 @@ class TestResourceBasedMethods:
         """Test that the expected resource files exist in the project."""
         # This test verifies the project structure
         project_root = Path(__file__).parent.parent.parent
-        new_loads_path = project_root / "solution" / "loads" / "new_loads.json"
-        old_loads_path = project_root / "solution" / "loads" / "old_loads.json"
+        new_loads_path = project_root / "solution" / "loads" / "03_01_new_loads.json"
+        old_loads_path = project_root / "solution" / "loads" / "03_03_old_loads.json"
 
-        assert new_loads_path.exists(), f"new_loads.json not found at {new_loads_path}"
-        assert old_loads_path.exists(), f"old_loads.json not found at {old_loads_path}"
+        assert new_loads_path.exists(), f"03_01_new_loads.json not found at {new_loads_path}"
+        assert old_loads_path.exists(), f"03_03_old_loads.json not found at {old_loads_path}"
 
         # Verify files are valid JSON
         with open(new_loads_path, "r") as f:

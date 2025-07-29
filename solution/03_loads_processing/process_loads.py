@@ -11,6 +11,8 @@ from pathlib import Path
 import sys
 from dotenv import load_dotenv
 
+from pydantic_ai.messages import ToolCallPart
+
 # Load environment variables
 load_dotenv()
 
@@ -60,7 +62,7 @@ Based on this context, you will help process loads and perform structural analys
 You have access to the LoadSet MCP server functions.
 
 Key Operations required:
-1. Process loads from customer format and convert units (N and Nm)
+1. Process loads from customer format and convert units if required (N and Nm)
 2. Factor in safety margins (1.5 for ultimate loads) if appropriate
 2. Compare new loads with previous applicable loads, if old loads are provided by user.
 3. Determine if detailed analysis is needed (if old loads are provided)
@@ -104,8 +106,19 @@ def main() -> None:
     result = agent.run_sync(USER_PROMPT_1, deps=provider)
 
     print("\n=== Load Processing Results for USER_PROMPT_1 ===")
-    print(f"Result: {result.output}")
 
+    # This codeblock is a prototype of testing what calls were made to the MCP server.
+    messages = result.all_messages()
+    tool_calls = [
+        part for message in messages
+        for part in message.parts
+        if isinstance(part, ToolCallPart)
+    ]
+    if tool_calls:
+        for tool_call in tool_calls:
+            print(f"  * Called {tool_call.tool_name} with args: {tool_call.args}")
+
+    print(f"Result: {result.output}")
 
     logfire.log("info", "Step 3, Scenario 2")
     # Run the agent with direct provider injection

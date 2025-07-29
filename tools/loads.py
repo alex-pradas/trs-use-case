@@ -486,6 +486,7 @@ class LoadSet(BaseModel):
     description: str | None = None
     version: int
     units: Units
+    loads_type: Literal["limit", "ultimate"] | None = None
     load_cases: list[LoadCase]
 
     @classmethod

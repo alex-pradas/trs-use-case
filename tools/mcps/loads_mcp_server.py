@@ -95,7 +95,7 @@ class LoadSetMCPProvider:
         Load a LoadSet from a resource URI.
 
         Args:
-            resource_uri: Resource URI (e.g., "loadsets://new_loads.json")
+            resource_uri: Resource URI (e.g., "loadsets://03_01_new_loads.json")
 
         Returns:
             dict: Success message and LoadSet summary
@@ -111,14 +111,16 @@ class LoadSetMCPProvider:
                 # Get the project root directory (two levels up from tools/mcps)
                 project_root = Path(__file__).parent.parent.parent
                 
-                if resource_name == "new_loads.json":
-                    file_path = project_root / "solution" / "loads" / "new_loads.json"
-                elif resource_name == "old_loads.json":
-                    file_path = project_root / "solution" / "loads" / "old_loads.json"
+                if resource_name == "03_01_new_loads.json":
+                    file_path = project_root / "solution" / "loads" / "03_01_new_loads.json"
+                elif resource_name == "03_02_new_loads.json":
+                    file_path = project_root / "solution" / "loads" / "03_02_new_loads.json"
+                elif resource_name == "03_03_old_loads.json":
+                    file_path = project_root / "solution" / "loads" / "03_03_old_loads.json"
                 else:
                     return {
                         "success": False,
-                        "error": f"Unknown resource: {resource_name}. Available: new_loads.json, old_loads.json",
+                        "error": f"Unknown resource: {resource_name}. Available: 03_01_new_loads.json, 03_02_new_loads.json, 03_03_old_loads.json",
                     }
                 
                 # Load the LoadSet from the file
@@ -361,7 +363,7 @@ class LoadSetMCPProvider:
         Load a second LoadSet from a resource URI for comparison.
 
         Args:
-            resource_uri: Resource URI (e.g., "loadsets://old_loads.json")
+            resource_uri: Resource URI (e.g., "loadsets://03_03_old_loads.json")
 
         Returns:
             dict: Success message and LoadSet summary
@@ -377,14 +379,16 @@ class LoadSetMCPProvider:
                 # Get the project root directory (two levels up from tools/mcps)
                 project_root = Path(__file__).parent.parent.parent
                 
-                if resource_name == "new_loads.json":
-                    file_path = project_root / "solution" / "loads" / "new_loads.json"
-                elif resource_name == "old_loads.json":
-                    file_path = project_root / "solution" / "loads" / "old_loads.json"
+                if resource_name == "03_01_new_loads.json":
+                    file_path = project_root / "solution" / "loads" / "03_01_new_loads.json"
+                elif resource_name == "03_02_new_loads.json":
+                    file_path = project_root / "solution" / "loads" / "03_02_new_loads.json"
+                elif resource_name == "03_03_old_loads.json":
+                    file_path = project_root / "solution" / "loads" / "03_03_old_loads.json"
                 else:
                     return {
                         "success": False,
-                        "error": f"Unknown resource: {resource_name}. Available: new_loads.json, old_loads.json",
+                        "error": f"Unknown resource: {resource_name}. Available: 03_01_new_loads.json, 03_02_new_loads.json, 03_03_old_loads.json",
                     }
                 
                 # Load the comparison LoadSet from the file
@@ -667,41 +671,59 @@ def create_mcp_server() -> FastMCP:
     mcp.tool(provider.envelope_loadset)
 
     # Register resource definitions for JSON load files
-    @mcp.resource("loadsets://new_loads.json")
-    def get_new_loads():
+    @mcp.resource("loadsets://03_01_new_loads.json")
+    def get_03_01_new_loads():
         """
-        Get the new loads JSON file content.
+        Get the 03_01_new_loads JSON file content.
         
         Returns:
-            dict: Contents of solution/loads/new_loads.json
+            dict: Contents of solution/loads/03_01_new_loads.json
         """
         try:
             # Get the project root directory (two levels up from tools/mcps)
             project_root = Path(__file__).parent.parent.parent
-            new_loads_path = project_root / "solution" / "loads" / "new_loads.json"
+            new_loads_path = project_root / "solution" / "loads" / "03_01_new_loads.json"
             
             with open(new_loads_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
-            return {"error": f"Failed to load new_loads.json: {str(e)}"}
+            return {"error": f"Failed to load 03_01_new_loads.json: {str(e)}"}
 
-    @mcp.resource("loadsets://old_loads.json")
-    def get_old_loads():
+    @mcp.resource("loadsets://03_02_new_loads.json")
+    def get_03_02_new_loads():
         """
-        Get the old loads JSON file content.
+        Get the 03_02_new_loads JSON file content.
         
         Returns:
-            dict: Contents of solution/loads/old_loads.json
+            dict: Contents of solution/loads/03_02_new_loads.json
         """
         try:
             # Get the project root directory (two levels up from tools/mcps)
             project_root = Path(__file__).parent.parent.parent
-            old_loads_path = project_root / "solution" / "loads" / "old_loads.json"
+            new_loads_path = project_root / "solution" / "loads" / "03_02_new_loads.json"
+            
+            with open(new_loads_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            return {"error": f"Failed to load 03_02_new_loads.json: {str(e)}"}
+
+    @mcp.resource("loadsets://03_03_old_loads.json")
+    def get_03_03_old_loads():
+        """
+        Get the 03_03_old_loads JSON file content.
+        
+        Returns:
+            dict: Contents of solution/loads/03_03_old_loads.json
+        """
+        try:
+            # Get the project root directory (two levels up from tools/mcps)
+            project_root = Path(__file__).parent.parent.parent
+            old_loads_path = project_root / "solution" / "loads" / "03_03_old_loads.json"
             
             with open(old_loads_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
-            return {"error": f"Failed to load old_loads.json: {str(e)}"}
+            return {"error": f"Failed to load 03_03_old_loads.json: {str(e)}"}
 
     return mcp
 

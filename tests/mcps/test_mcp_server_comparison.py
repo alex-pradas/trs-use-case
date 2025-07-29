@@ -46,13 +46,13 @@ class TestMCPServerComparison:
         """Test loading a second LoadSet for comparison."""
         # First load the primary LoadSet
         result1 = self.call_tool(
-            "load_from_json", file_path="solution/loads/new_loads.json"
+            "load_from_json", file_path="solution/loads/03_01_new_loads.json"
         )
         assert result1["success"] is True
 
         # Then load the comparison LoadSet
         result2 = self.call_tool(
-            "load_second_loadset", file_path="solution/loads/old_loads.json"
+            "load_second_loadset", file_path="solution/loads/03_03_old_loads.json"
         )
 
         assert result2["success"] is True
@@ -73,8 +73,8 @@ class TestMCPServerComparison:
     def test_compare_loadsets_success(self):
         """Test successful LoadSet comparison."""
         # Load both LoadSets
-        self.call_tool("load_from_json", file_path="solution/loads/new_loads.json")
-        self.call_tool("load_second_loadset", file_path="solution/loads/old_loads.json")
+        self.call_tool("load_from_json", file_path="solution/loads/03_01_new_loads.json")
+        self.call_tool("load_second_loadset", file_path="solution/loads/03_03_old_loads.json")
 
         # Compare LoadSets
         result = self.call_tool("compare_loadsets")
@@ -97,7 +97,7 @@ class TestMCPServerComparison:
     def test_compare_loadsets_no_comparison_loadset(self):
         """Test comparison without comparison LoadSet loaded."""
         # Load only primary LoadSet
-        self.call_tool("load_from_json", file_path="solution/loads/new_loads.json")
+        self.call_tool("load_from_json", file_path="solution/loads/03_01_new_loads.json")
 
         result = self.call_tool("compare_loadsets")
 
@@ -107,8 +107,8 @@ class TestMCPServerComparison:
     def test_get_comparison_summary_success(self):
         """Test getting comparison summary."""
         # Load both LoadSets and compare
-        self.call_tool("load_from_json", file_path="solution/loads/new_loads.json")
-        self.call_tool("load_second_loadset", file_path="solution/loads/old_loads.json")
+        self.call_tool("load_from_json", file_path="solution/loads/03_01_new_loads.json")
+        self.call_tool("load_second_loadset", file_path="solution/loads/03_03_old_loads.json")
         self.call_tool("compare_loadsets")
 
         # Get summary
@@ -143,8 +143,8 @@ class TestMCPServerComparison:
     def test_export_comparison_json_success(self):
         """Test exporting comparison to JSON file."""
         # Load both LoadSets and compare
-        self.call_tool("load_from_json", file_path="solution/loads/new_loads.json")
-        self.call_tool("load_second_loadset", file_path="solution/loads/old_loads.json")
+        self.call_tool("load_from_json", file_path="solution/loads/03_01_new_loads.json")
+        self.call_tool("load_second_loadset", file_path="solution/loads/03_03_old_loads.json")
         self.call_tool("compare_loadsets")
 
         # Export to JSON
@@ -174,8 +174,8 @@ class TestMCPServerComparison:
     def test_generate_comparison_charts_as_files(self):
         """Test generating comparison charts as files."""
         # Load both LoadSets and compare
-        self.call_tool("load_from_json", file_path="solution/loads/new_loads.json")
-        self.call_tool("load_second_loadset", file_path="solution/loads/old_loads.json")
+        self.call_tool("load_from_json", file_path="solution/loads/03_01_new_loads.json")
+        self.call_tool("load_second_loadset", file_path="solution/loads/03_03_old_loads.json")
         self.call_tool("compare_loadsets")
 
         # Generate charts as files
@@ -204,8 +204,8 @@ class TestMCPServerComparison:
     def test_generate_comparison_charts_as_image_objects(self):
         """Test generating comparison charts as base64 strings."""
         # Load both LoadSets and compare
-        self.call_tool("load_from_json", file_path="solution/loads/new_loads.json")
-        self.call_tool("load_second_loadset", file_path="solution/loads/old_loads.json")
+        self.call_tool("load_from_json", file_path="solution/loads/03_01_new_loads.json")
+        self.call_tool("load_second_loadset", file_path="solution/loads/03_03_old_loads.json")
         self.call_tool("compare_loadsets")
 
         # Generate charts as base64 strings
@@ -253,8 +253,8 @@ class TestMCPServerComparison:
     def test_generate_comparison_charts_missing_output_dir(self):
         """Test generating charts as files without output directory."""
         # Load both LoadSets and compare
-        self.call_tool("load_from_json", file_path="solution/loads/new_loads.json")
-        self.call_tool("load_second_loadset", file_path="solution/loads/old_loads.json")
+        self.call_tool("load_from_json", file_path="solution/loads/03_01_new_loads.json")
+        self.call_tool("load_second_loadset", file_path="solution/loads/03_03_old_loads.json")
         self.call_tool("compare_loadsets")
 
         # Try to generate charts without output_dir
@@ -267,13 +267,13 @@ class TestMCPServerComparison:
         """Test complete comparison workflow."""
         # Step 1: Load primary LoadSet
         result1 = self.call_tool(
-            "load_from_json", file_path="solution/loads/new_loads.json"
+            "load_from_json", file_path="solution/loads/03_01_new_loads.json"
         )
         assert result1["success"] is True
 
         # Step 2: Load comparison LoadSet
         result2 = self.call_tool(
-            "load_second_loadset", file_path="solution/loads/old_loads.json"
+            "load_second_loadset", file_path="solution/loads/03_03_old_loads.json"
         )
         assert result2["success"] is True
 
