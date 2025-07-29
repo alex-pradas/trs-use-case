@@ -76,6 +76,41 @@ class AgentCalledToolSimple(Evaluator):
             
             return result
 
+
+@dataclass
+class AgentDidNotCallTool(Evaluator):
+    """Evaluator to check that a specific tool was NOT called by the agent."""
+    tool_name: str
+
+    def evaluate(self, ctx: EvaluatorContext) -> bool:
+        import logfire
+        
+        with logfire.span(f"evaluate_tool_NOT_called_{self.tool_name}"):
+            # Check if the tool was called (opposite of what we want)
+            tool_was_called = ctx.span_tree.any(
+                SpanQuery(
+                    name_equals='agent run',
+                    stop_recursing_when=SpanQuery(name_equals='agent run'),
+                    some_descendant_has=SpanQuery(
+                        name_equals='running tool',
+                        has_attributes={'gen_ai.tool.name': self.tool_name},
+                    ),
+                )
+            )
+            
+            # Return the opposite - True if tool was NOT called
+            result = not tool_was_called
+            
+            logfire.info(
+                f"AgentDidNotCallTool evaluation for '{self.tool_name}'",
+                tool_name=self.tool_name,
+                tool_was_called=tool_was_called,
+                result=result,
+                expectation="Tool should NOT be called"
+            )
+            
+            return result
+
 # Test case using the same input as USER_PROMPT_1 from process_loads.py
 case1 = Case(
     name="Scenario 1: Process loads without previous loads",
@@ -91,6 +126,8 @@ I do not have any previous loads to compare against.
         AgentCalledToolSimple(tool_name="export_to_ansys"),
         # Also check for load_from_json to ensure basic functionality
         AgentCalledToolSimple(tool_name="load_from_json"),
+        # Check that convert_to was NOT called (loads should already be in Newtons)
+        AgentDidNotCallTool(tool_name="convert_units"),
     )
 )
 
