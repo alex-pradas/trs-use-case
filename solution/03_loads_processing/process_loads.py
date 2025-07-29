@@ -6,6 +6,7 @@ The system prompt is dynamically loaded from use case definition files to ensure
 Uses the Loads MCP server for all load processing operations.
 """
 
+from math import log
 from pathlib import Path
 import sys
 from dotenv import load_dotenv
@@ -77,12 +78,17 @@ DO NOT ASK QUESTIONS. USE THE PROVIDED TOOLS TO PROCESS LOADS AND GENERATE OUTPU
     return system_prompt
 
 
-USER_PROMPT = """\
+USER_PROMPT_1 = """\
 I need to process some loads for ANSYS analysis.
-the files are here: /Users/alex/repos/trs-use-case/solution/loads/new_loads.json
-
+the files are here: /Users/alex/repos/trs-use-case/solution/loads/03_01_new_loads.json
+I do not have any previous loads to compare against.
 """
 
+USER_PROMPT_2 = """\
+I need to process some loads for ANSYS analysis.
+the files are here: /Users/alex/repos/trs-use-case/solution/loads/03_02_new_loads.json
+old files are here: /Users/alex/repos/trs-use-case/solution/loads/03_03_old_loads.json
+"""
 
 def main() -> None:
     """Main function to run the load processing workflow."""
@@ -93,17 +99,27 @@ def main() -> None:
     agent = create_loadset_agent(system_prompt=system_prompt)
     provider = LoadSetMCPProvider()
 
+    logfire.log("info","Step 3, Scenario 1")
     # Run the agent with direct provider injection
-    result = agent.run_sync(USER_PROMPT, deps=provider)
+    result = agent.run_sync(USER_PROMPT_1, deps=provider)
 
-    print("\n=== Load Processing Results ===")
+    print("\n=== Load Processing Results for USER_PROMPT_1 ===")
     print(f"Result: {result.output}")
+
+
+    logfire.log("info", "Step 3, Scenario 2")
+    # Run the agent with direct provider injection
+    result = agent.run_sync(USER_PROMPT_2, deps=provider)
+
+    print("\n=== Load Processing Results for USER_PROMPT_2 ===")
+    print(f"Result: {result.output}")
+
 
 
 if __name__ == "__main__":
     import logfire
 
-    logfire.configure()
+    logfire.configure(environment='test')
     logfire.instrument_pydantic_ai()
 
     # Run the main function

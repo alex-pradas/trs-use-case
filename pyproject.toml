@@ -3,13 +3,14 @@ name = "trs-use-case"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
-    "pydantic-ai>=0.4.6",
+    "pydantic-ai>=0.4.8",
     "fastmcp>=2.10.6",
     "python-dotenv>=1.1.1",
     "logfire>=4.0.0",
     "matplotlib>=3.8.0",
-    "numpy>=1.24.0",
+    "numpy>=2.3.2",
     "ipython>=9.4.0",
+    "pydantic-evals>=0.4.8",
 ]
 
 [tool.pytest.ini_options]

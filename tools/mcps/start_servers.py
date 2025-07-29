@@ -57,7 +57,7 @@ class ServerConfig:
     create_func: Callable
     default_port: int
     description: str
-    startup_args: dict[str, Any] = None
+    startup_args: dict[str, Any] | None= None
 
 
 # Server configurations
