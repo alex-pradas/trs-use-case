@@ -934,6 +934,43 @@ class TestLoadSetToAnsys:
             assert len(actual_files) == 2
             assert set(actual_files) == set(expected_files)
 
+    def test_to_ansys_optional_folder_path(self):
+        """Test to_ansys with optional folder_path parameter (defaults to 'output')."""
+        import tempfile
+        import os
+
+        # Create a temporary working directory and change to it
+        with tempfile.TemporaryDirectory() as temp_working_dir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(temp_working_dir)
+                
+                # Export to ANSYS without folder_path (should use 'output' folder)
+                self.sample_loadset.to_ansys()
+
+                # Check that the 'output' folder was created
+                output_dir = os.path.join(temp_working_dir, "output")
+                assert os.path.exists(output_dir), "Expected 'output' directory was not created"
+                assert os.path.isdir(output_dir), "'output' exists but is not a directory"
+
+                # Check that files were created in the output directory  
+                expected_files = [
+                    "Load_Case_1.inp",
+                    "Load_Case_2.inp",
+                ]
+                
+                for expected_file in expected_files:
+                    file_path = os.path.join(output_dir, expected_file)
+                    assert os.path.exists(file_path), f"Expected file {expected_file} was not created in output directory"
+
+                # Verify no other files were created in output directory
+                actual_files = os.listdir(output_dir)
+                assert len(actual_files) == 2
+                assert set(actual_files) == set(expected_files)
+
+            finally:
+                os.chdir(original_cwd)
+
 
 # =============================================================================
 # COMPARISON FUNCTIONALITY TESTS

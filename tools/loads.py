@@ -643,7 +643,7 @@ class LoadSet(BaseModel):
             load_cases=new_load_cases,
         )
 
-    def to_ansys(self, folder_path: PathLike, name_stem: str | None = None) -> None:
+    def to_ansys(self, folder_path: PathLike | None = None, name_stem: str | None = None) -> None:
         """
         Export LoadSet to ANSYS load files.
 
@@ -651,13 +651,16 @@ class LoadSet(BaseModel):
         Creates the output folder if it doesn't exist and cleans any existing files.
 
         Args:
-            folder_path: Directory to save the files
+            folder_path: Optional directory to save the files. Defaults to 'output' folder.
             name_stem: Optional base name for the files. If None, uses only load case names.
 
         Raises:
             FileNotFoundError: If the folder path exists but is not a directory
         """
-        folder = Path(folder_path)
+        if folder_path is None:
+            folder = Path("output")
+        else:
+            folder = Path(folder_path)
 
         # Check if path exists and is not a directory
         if folder.exists() and not folder.is_dir():
