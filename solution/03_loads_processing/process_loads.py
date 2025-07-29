@@ -66,7 +66,9 @@ Key Operations required:
 2. Factor in safety margins (1.5 for ultimate loads) if appropriate
 2. Compare new loads with previous applicable loads, if old loads are provided by user.
 3. Determine if detailed analysis is needed (if old loads are provided)
-4. If analysis needed, create an envelope of the loadset and generate the ANSYS input files
+4. If analysis needed:
+   4.1 Create an envelope of the loadset (via get_point_extremes) 
+   4.2 Generate the ANSYS input files
 5. If no exceedances, provide comparison results and no-analysis statement
 
 
@@ -75,6 +77,8 @@ Use these default values if no specific instructions are provided:
 - output directory for all output: ../output/
 
 DO NOT ASK QUESTIONS. USE THE PROVIDED TOOLS TO PROCESS LOADS AND GENERATE OUTPUTS.
+
+Remember to call get_point_extremes!!!
 """
 
     return system_prompt

@@ -186,7 +186,7 @@ class PointExtremesEvaluator(Evaluator):
 
 # Test case using the same input as USER_PROMPT_1 from process_loads.py
 case1 = Case(
-    name="Scenario 1: Process loads without previous loads",
+    name="Scenario 1: Default",
     inputs="""\
 I need to process some loads for ANSYS analysis.
 the files are here: /Users/alex/repos/trs-use-case/solution/loads/03_01_new_loads.json
