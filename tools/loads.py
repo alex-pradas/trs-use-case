@@ -643,7 +643,7 @@ class LoadSet(BaseModel):
             load_cases=new_load_cases,
         )
 
-    def to_ansys(self, folder_path: PathLike, name_stem: str) -> None:
+    def to_ansys(self, folder_path: PathLike, name_stem: str | None = None) -> None:
         """
         Export LoadSet to ANSYS load files.
 
@@ -652,7 +652,7 @@ class LoadSet(BaseModel):
 
         Args:
             folder_path: Directory to save the files
-            name_stem: Base name for the files (will be suffixed with load case names)
+            name_stem: Optional base name for the files. If None, uses only load case names.
 
         Raises:
             FileNotFoundError: If the folder path exists but is not a directory
@@ -680,7 +680,10 @@ class LoadSet(BaseModel):
         for load_case in self.load_cases:
             # Sanitize load case name for filename
             sanitized_name = self._sanitize_filename(load_case.name or "unnamed")
-            filename = f"{name_stem}_{sanitized_name}.inp"
+            if name_stem is None:
+                filename = f"{sanitized_name}.inp"
+            else:
+                filename = f"{name_stem}_{sanitized_name}.inp"
             file_path = folder / filename
 
             # Generate ANSYS commands

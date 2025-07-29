@@ -62,9 +62,9 @@ def create_loadset_agent(
 
     @agent.tool
     def export_to_ansys(
-        ctx: RunContext[LoadSetMCPProvider], folder_path: str, name_stem: str
+        ctx: RunContext[LoadSetMCPProvider], folder_path: str, name_stem: str | None = None
     ) -> dict:
-        """Export the current LoadSet to ANSYS format files."""
+        """Export the current LoadSet to ANSYS format files. name_stem is optional."""
         return ctx.deps.export_to_ansys(Path(folder_path), name_stem)
 
     @agent.tool

@@ -910,6 +910,30 @@ class TestLoadSetToAnsys:
             files = list(path_obj.glob("pathlib_test_*.inp"))
             assert len(files) == 2
 
+    def test_to_ansys_optional_name_stem(self):
+        """Test to_ansys with optional name_stem parameter (None)."""
+        import tempfile
+        import os
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Export to ANSYS without name_stem (should use only load case names)
+            self.sample_loadset.to_ansys(Path(temp_dir))
+
+            # Check that files were created with only load case names
+            expected_files = [
+                "Load_Case_1.inp",
+                "Load_Case_2.inp",
+            ]
+            
+            for expected_file in expected_files:
+                file_path = os.path.join(temp_dir, expected_file)
+                assert os.path.exists(file_path), f"Expected file {expected_file} was not created"
+
+            # Verify no other files were created
+            actual_files = os.listdir(temp_dir)
+            assert len(actual_files) == 2
+            assert set(actual_files) == set(expected_files)
+
 
 # =============================================================================
 # COMPARISON FUNCTIONALITY TESTS

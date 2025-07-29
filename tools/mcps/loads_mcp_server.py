@@ -202,13 +202,13 @@ class LoadSetMCPProvider:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def export_to_ansys(self, folder_path: PathLike, name_stem: str) -> dict:
+    def export_to_ansys(self, folder_path: PathLike, name_stem: str | None = None) -> dict:
         """
         Export the current LoadSet to ANSYS format files.
 
         Args:
             folder_path: Directory path to save ANSYS files
-            name_stem: Base name for the output files
+            name_stem: Optional base name for the output files. If None, uses only load case names.
 
         Returns:
             dict: Success message and export info
