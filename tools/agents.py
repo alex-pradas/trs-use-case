@@ -14,6 +14,7 @@ Expected code reduction: 60% (from 400 to ~160 lines)
 from pydantic_ai import Agent, RunContext
 
 from pathlib import Path
+from loads import ForceUnit
 from tools.model_config import get_model_name
 from tools.mcps.loads_mcp_server import LoadSetMCPProvider
 # No need for response models - using raw dict responses
@@ -47,10 +48,10 @@ def create_loadset_agent(
 
     @agent.tool
     def convert_units(
-        ctx: RunContext[LoadSetMCPProvider], target_units: str
+        ctx: RunContext[LoadSetMCPProvider], target_units: ForceUnit
     ) -> dict:
         """Convert the current LoadSet to different units (N, kN, lbf, klbf)."""
-        return ctx.deps.convert_units(target_units)
+        return ctx.deps.convert_units(target_units) 
 
     @agent.tool
     def scale_loads(
@@ -97,6 +98,11 @@ def create_loadset_agent(
     def envelope_loadset(ctx: RunContext[LoadSetMCPProvider]) -> dict:
         """Create an envelope LoadSet containing only load cases with extreme values."""
         return ctx.deps.envelope_loadset()
+
+    @agent.tool
+    def get_point_extremes(ctx: RunContext[LoadSetMCPProvider]) -> dict:
+        """Get extreme values (min/max) for each point and component in the current LoadSet."""
+        return ctx.deps.get_point_extremes()
 
     return agent
 

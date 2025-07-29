@@ -641,6 +641,32 @@ class LoadSetMCPProvider:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    def get_point_extremes(self) -> dict:
+        """
+        Get extreme values (min/max) for each point and component in the current LoadSet.
+        
+        Returns the raw get_point_extremes() data from the LoadSet, wrapped in a success response.
+
+        Returns:
+            dict: Raw extreme values data structure from LoadSet.get_point_extremes()
+        """
+        if self._current_loadset is None:
+            return {
+                "success": False,
+                "error": "No LoadSet loaded. Use load_from_json first.",
+            }
+
+        try:
+            extremes = self._current_loadset.get_point_extremes()
+            
+            return {
+                "success": True,
+                "message": "Point extremes calculated successfully",
+                "extremes": extremes,  # Raw extremes data as returned by LoadSet.get_point_extremes()
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
 
 def create_mcp_server() -> FastMCP:
     """
@@ -669,6 +695,7 @@ def create_mcp_server() -> FastMCP:
     mcp.tool(provider.export_comparison_json)
     mcp.tool(provider.get_comparison_summary)
     mcp.tool(provider.envelope_loadset)
+    mcp.tool(provider.get_point_extremes)
 
     # Register resource definitions for JSON load files
     @mcp.resource("loadsets://03_01_new_loads.json")
