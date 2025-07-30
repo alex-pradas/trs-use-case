@@ -211,7 +211,7 @@ class LoadSetMCPProvider:
             name_stem: Optional base name for the output files. If None, uses only load case names.
 
         Returns:
-            dict: Success message and export info
+            dict: Success message, export info, and LoadSet extremes data for evaluation
         """
         if self._current_loadset is None:
             return {
@@ -220,12 +220,17 @@ class LoadSetMCPProvider:
             }
 
         try:
+            # Export to ANSYS files
             self._current_loadset.to_ansys(folder_path, name_stem)
+            
+            # Calculate point extremes for evaluation purposes
+            loadset_extremes = self._current_loadset.get_point_extremes()
 
             return {
                 "success": True,
                 "message": f"ANSYS files exported to {folder_path} with stem {name_stem}",
                 "num_files": len(self._current_loadset.load_cases),
+                "loadset_extremes": loadset_extremes,  # Include extremes data for evaluators
             }
         except Exception as e:
             return {"success": False, "error": str(e)}

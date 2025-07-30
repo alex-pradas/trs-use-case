@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from pathlib import Path
-from pyexpat import model
 import sys
 
 # Add tools to path so we can import dependencies
@@ -114,8 +113,8 @@ class AgentDidNotCallTool(Evaluator):
 
 
 @dataclass
-class PointExtremesEvaluator(Evaluator):
-    """Evaluator to validate specific point extreme values by reading actual ANSYS files."""
+class LoadSetExtremesEvaluator(Evaluator):
+    """Evaluator to validate specific point extreme values from LoadSet data in tool call response."""
     point_name: str
     component: str  # fx, fy, fz, mx, my, mz
     extreme_type: str  # max or min
@@ -125,12 +124,10 @@ class PointExtremesEvaluator(Evaluator):
 
     def evaluate(self, ctx: EvaluatorContext) -> bool:
         import logfire
-        from pathlib import Path
-        from tools.loads import LoadSet, Units
         
-        with logfire.span(f"evaluate_point_extremes_{self.point_name}_{self.component}_{self.extreme_type}"):
+        with logfire.span(f"evaluate_loadset_extremes_{self.point_name}_{self.component}_{self.extreme_type}"):
             try:
-                # First check if export_to_ansys tool was called
+                # First verify that export_to_ansys was called
                 export_tool_called = ctx.span_tree.any(
                     SpanQuery(
                         name_equals='running tool',
@@ -142,74 +139,93 @@ class PointExtremesEvaluator(Evaluator):
                     logfire.warning("export_to_ansys tool was not called")
                     return False
                 
-                # Define output directory constant
-                output_dir = Path("/Users/alex/repos/trs-use-case/output")
-                
-                if not output_dir.exists():
-                    logfire.error(f"Output directory does not exist: {output_dir}")
-                    return False
-                
-                # Read all ANSYS files in the output directory
-                ansys_files = list(output_dir.glob("*.inp"))
-                
-                if not ansys_files:
-                    logfire.error(f"No ANSYS files found in {output_dir}")
-                    return False
-                
-                logfire.info(f"Found {len(ansys_files)} ANSYS files: {[f.name for f in ansys_files]}")
-                
-                # Create a consolidated LoadSet by reading all ANSYS files
-                all_load_cases = []
-                units = Units(forces="N", moments="Nm")  # Default units
-                
-                for ansys_file in ansys_files:
-                    try:
-                        # Read each ANSYS file as a separate LoadSet
-                        temp_loadset = LoadSet.read_ansys(ansys_file, units)
-                        # Add the load case to our consolidated list
-                        all_load_cases.extend(temp_loadset.load_cases)
-                        
-                        logfire.info(f"Successfully read {ansys_file.name} with {len(temp_loadset.load_cases)} load cases")
-                        
-                    except Exception as e:
-                        logfire.error(f"Error reading ANSYS file {ansys_file}: {e}")
-                        continue
-                
-                if not all_load_cases:
-                    logfire.error("No load cases could be read from ANSYS files")
-                    return False
-                
-                # Create consolidated LoadSet
-                consolidated_loadset = LoadSet(
-                    name="Consolidated from ANSYS files",
-                    description="LoadSet created from all ANSYS files for evaluation",
-                    version=1,
-                    units=units,
-                    load_cases=all_load_cases
+                # Find the export_to_ansys tool call spans  
+                export_spans = ctx.span_tree.find(
+                    SpanQuery(
+                        name_equals='running tool',
+                        has_attributes={'gen_ai.tool.name': 'export_to_ansys'}
+                    )
                 )
                 
-                # Get point extremes from the consolidated LoadSet
-                extremes = consolidated_loadset.get_point_extremes()
-                
-                logfire.info(f"Point extremes calculated for {len(extremes)} points")
-                
-                # Check if the expected point exists
-                if self.point_name not in extremes:
-                    logfire.error(f"Point '{self.point_name}' not found in extremes")
+                if not export_spans:
+                    logfire.error("export_to_ansys tool span not found")
                     return False
                 
-                point_data = extremes[self.point_name]
+                export_span = export_spans[0]  # Get the first matching span
                 
-                # Check if the expected component exists
+                # Extract tool_response from span attributes
+                tool_response = None
+                if hasattr(export_span, 'attributes') and 'tool_response' in export_span.attributes:
+                    tool_response_attr = export_span.attributes['tool_response']
+                    
+                    # Handle different attribute value types
+                    if isinstance(tool_response_attr, dict):
+                        tool_response = tool_response_attr
+                        logfire.info("Successfully extracted tool_response as dict from span")
+                    elif isinstance(tool_response_attr, str):
+                        try:
+                            import json
+                            tool_response = json.loads(tool_response_attr)
+                            logfire.info("Successfully extracted tool_response as parsed JSON from span")
+                        except json.JSONDecodeError as e:
+                            logfire.error(f"Failed to parse tool_response JSON: {e}")
+                            return False
+                    else:
+                        logfire.error(f"Unexpected tool_response type: {type(tool_response_attr)}")
+                        return False
+                else:
+                    logfire.error(
+                        "tool_response not found in export_to_ansys span attributes",
+                        available_attributes=list(export_span.attributes.keys()) if hasattr(export_span, 'attributes') else None
+                    )
+                    return False
+                
+                # Validate tool call was successful
+                if not tool_response.get('success', False):
+                    logfire.error(f"export_to_ansys tool call failed: {tool_response.get('message', 'Unknown error')}")
+                    return False
+                
+                # Extract loadset extremes from the tool response
+                loadset_extremes = tool_response.get('loadset_extremes')
+                if not loadset_extremes:
+                    logfire.error("No loadset_extremes found in export_to_ansys tool response")
+                    return False
+                
+                logfire.info(
+                    f"Successfully extracted LoadSet extremes for validation",
+                    evaluator_type="LoadSetExtremesEvaluator",
+                    point_name=self.point_name,
+                    component=self.component,
+                    extreme_type=self.extreme_type,
+                    num_points=len(loadset_extremes)
+                )
+                
+                # Validate the expected point exists
+                if self.point_name not in loadset_extremes:
+                    logfire.error(
+                        f"Point '{self.point_name}' not found in loadset extremes",
+                        available_points=list(loadset_extremes.keys())
+                    )
+                    return False
+                
+                point_data = loadset_extremes[self.point_name]
+                
+                # Validate the expected component exists
                 if self.component not in point_data:
-                    logfire.error(f"Component '{self.component}' not found for point '{self.point_name}'")
+                    logfire.error(
+                        f"Component '{self.component}' not found for point '{self.point_name}'",
+                        available_components=list(point_data.keys())
+                    )
                     return False
                 
                 component_data = point_data[self.component]
                 
-                # Check if the expected extreme type exists
+                # Validate the expected extreme type exists
                 if self.extreme_type not in component_data:
-                    logfire.error(f"Extreme type '{self.extreme_type}' not found for component '{self.component}'")
+                    logfire.error(
+                        f"Extreme type '{self.extreme_type}' not found for component '{self.component}'",
+                        available_extreme_types=list(component_data.keys())
+                    )
                     return False
                 
                 extreme_data = component_data[self.extreme_type]
@@ -226,7 +242,7 @@ class PointExtremesEvaluator(Evaluator):
                 result = value_match and loadcase_match
                 
                 logfire.info(
-                    f"PointExtremesEvaluator for {self.point_name}.{self.component}.{self.extreme_type}",
+                    f"LoadSetExtremesEvaluator for {self.point_name}.{self.component}.{self.extreme_type}",
                     point_name=self.point_name,
                     component=self.component,
                     extreme_type=self.extreme_type,
@@ -239,14 +255,12 @@ class PointExtremesEvaluator(Evaluator):
                     actual_loadcase=actual_loadcase,
                     loadcase_match=loadcase_match,
                     result=result,
-                    total_ansys_files=len(ansys_files),
-                    total_load_cases=len(all_load_cases)
                 )
                 
                 return result
                 
             except Exception as e:
-                logfire.error(f"Error in PointExtremesEvaluator: {e}", exc_info=True)
+                logfire.error(f"Error in LoadSetExtremesEvaluator: {e}", exc_info=True)
                 return False
 
 
@@ -265,27 +279,28 @@ SCENARIO_1_EVALUATORS = (
     AgentCalledToolSimple(tool_name="export_to_ansys"),  # Check ANSYS export
     AgentCalledToolSimple(tool_name="load_from_json"),  # Check load operation
     AgentDidNotCallTool(tool_name="convert_units"),  # Check units not converted
-    
-    # Numerical validation of point extremes (based on actual ANSYS file values)
-    PointExtremesEvaluator(
+    AgentCalledToolSimple(tool_name="envelope_loadset"),  # Check envelope operation
+   
+    # Numerical validation of point extremes (using LoadSet data from tool call response)
+    LoadSetExtremesEvaluator(
         point_name="Point A",
         component="fx",
         extreme_type="max",
-        expected_value=1.496,
+        expected_value=1.4958699,
         expected_loadcase="landing_011"
     ),
-    PointExtremesEvaluator(
+    LoadSetExtremesEvaluator(
         point_name="Point A", 
         component="my",
         extreme_type="min",
-        expected_value=0.2132,
+        expected_value=0.213177015,
         expected_loadcase="cruise2_098"
     ),
-    PointExtremesEvaluator(
+    LoadSetExtremesEvaluator(
         point_name="Point B",
         component="fy", 
         extreme_type="max",
-        expected_value=1.463,
+        expected_value=1.462682895,
         expected_loadcase="landing_012"
     ),
 )
@@ -350,24 +365,23 @@ DO NOT ASK QUESTIONS. USE THE PROVIDED TOOLS TO PROCESS LOADS AND GENERATE OUTPU
 
     return system_prompt
 
-import sys
-from pathlib import Path
-
-# Add the process_loads module to path
-process_loads_dir = Path(__file__).parent
-if str(process_loads_dir) not in sys.path:
-    sys.path.insert(0, str(process_loads_dir))
-
-# Import the load_system_prompt function from process_loads.py
-from process_loads import load_system_prompt as load_updated_system_prompt
-
-system_prompt = load_updated_system_prompt()
-agent = create_loadset_agent(system_prompt=system_prompt)
 
 async def agent_task(inputs: str):
     """Task function that runs the agent with the given inputs."""
     # Import the updated system prompt function from process_loads
-   
+    import sys
+    from pathlib import Path
+    
+    # Add the process_loads module to path
+    process_loads_dir = Path(__file__).parent
+    if str(process_loads_dir) not in sys.path:
+        sys.path.insert(0, str(process_loads_dir))
+    
+    # Import the load_system_prompt function from process_loads.py
+    from process_loads import load_system_prompt as load_updated_system_prompt
+    
+    system_prompt = load_updated_system_prompt()
+    agent = create_loadset_agent(system_prompt=system_prompt)
     provider = LoadSetMCPProvider()
     
     # Run the agent asynchronously
@@ -380,25 +394,18 @@ async def main():
     import logfire
     
     with logfire.span("load_processing_evaluation"):
-
+        logfire.info("Starting evaluation for load processing agent")
+        print("Running evaluation for load processing agent...")
         
-
+        # Log evaluation setup
+        logfire.info(
+            "Evaluation setup",
+            dataset_cases=len(dataset.cases),
+            evaluators=[type(e).__name__ for e in SCENARIO_1_EVALUATORS]
+        )
         
         # Evaluate the dataset against the agent task
-        report = await dataset.evaluate(agent_task, name="claude-3-haiku-20240307")
-        # Log evaluation results
-        logfire.info(
-            "Evaluation completed",
-            total_cases=len(report.cases)
-        )
-        print("\n=== Evaluation Report ===")
-        report.print()
-
-        with agent.override(model="anthropic:claude-4-sonnet-20250514"):
-            # Re-evaluate with a different model
-            report = await dataset.evaluate(agent_task, name="canthropic:claude-4-sonnet-20250514")
-
-        
+        report = await dataset.evaluate(agent_task)
         
         # Log evaluation results
         logfire.info(

@@ -405,6 +405,62 @@ class TestScaleLoadsTool:
         assert result["success"] is False
         assert "No LoadSet loaded" in result["error"]
 
+    def test_export_to_ansys_includes_extremes(self):
+        """Test that export_to_ansys includes loadset_extremes in the response."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(self.test_data, f)
+            temp_file = f.name
+
+        try:
+            # Load the LoadSet
+            load_result = self.load_tool(temp_file)
+            assert load_result["success"] is True
+
+            # Scale loads by factor of 1.5 (to match evaluation scenario)
+            scale_result = self.scale_tool(1.5)
+            assert scale_result["success"] is True
+
+            # Export to ANSYS and verify extremes are included
+            export_tool = self.server._tool_manager._tools["export_to_ansys"].fn
+            
+            with tempfile.TemporaryDirectory() as temp_dir:
+                export_result = export_tool(temp_dir, "test")
+                
+                # Verify export succeeded
+                assert export_result["success"] is True
+                assert "ANSYS files exported" in export_result["message"]
+                
+                # Verify loadset_extremes is included in response
+                assert "loadset_extremes" in export_result
+                extremes = export_result["loadset_extremes"]
+                
+                # Verify structure of extremes data
+                assert isinstance(extremes, dict)
+                assert "Point 1" in extremes  # Point name from test data
+                
+                point_data = extremes["Point 1"]
+                assert isinstance(point_data, dict)
+                
+                # Verify components are present
+                for component in ["fx", "fy", "fz", "mx", "my", "mz"]:
+                    assert component in point_data
+                    
+                    component_data = point_data[component]
+                    assert isinstance(component_data, dict)
+                    
+                    # Verify min/max structure
+                    for extreme_type in ["min", "max"]:
+                        if extreme_type in component_data:
+                            extreme_data = component_data[extreme_type]
+                            assert "value" in extreme_data
+                            assert "loadcase" in extreme_data
+                            assert isinstance(extreme_data["value"], (int, float))
+                            assert isinstance(extreme_data["loadcase"], str)
+
+        finally:
+            import os
+            os.unlink(temp_file)
+
 
 class TestDataBasedMethods:
     """Test data-based LoadSet methods (load_from_data, load_second_loadset_from_data)."""
