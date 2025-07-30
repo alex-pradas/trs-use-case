@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from pyexpat import model
 import sys
 
 # Add tools to path so we can import dependencies
@@ -349,23 +350,24 @@ DO NOT ASK QUESTIONS. USE THE PROVIDED TOOLS TO PROCESS LOADS AND GENERATE OUTPU
 
     return system_prompt
 
+import sys
+from pathlib import Path
+
+# Add the process_loads module to path
+process_loads_dir = Path(__file__).parent
+if str(process_loads_dir) not in sys.path:
+    sys.path.insert(0, str(process_loads_dir))
+
+# Import the load_system_prompt function from process_loads.py
+from process_loads import load_system_prompt as load_updated_system_prompt
+
+system_prompt = load_updated_system_prompt()
+agent = create_loadset_agent(system_prompt=system_prompt)
 
 async def agent_task(inputs: str):
     """Task function that runs the agent with the given inputs."""
     # Import the updated system prompt function from process_loads
-    import sys
-    from pathlib import Path
-    
-    # Add the process_loads module to path
-    process_loads_dir = Path(__file__).parent
-    if str(process_loads_dir) not in sys.path:
-        sys.path.insert(0, str(process_loads_dir))
-    
-    # Import the load_system_prompt function from process_loads.py
-    from process_loads import load_system_prompt as load_updated_system_prompt
-    
-    system_prompt = load_updated_system_prompt()
-    agent = create_loadset_agent(system_prompt=system_prompt)
+   
     provider = LoadSetMCPProvider()
     
     # Run the agent asynchronously
@@ -383,7 +385,18 @@ async def main():
 
         
         # Evaluate the dataset against the agent task
-        report = await dataset.evaluate(agent_task)
+        report = await dataset.evaluate(agent_task, name="claude-3-haiku-20240307")
+        # Log evaluation results
+        logfire.info(
+            "Evaluation completed",
+            total_cases=len(report.cases)
+        )
+        print("\n=== Evaluation Report ===")
+        report.print()
+
+        with agent.override(model="anthropic:claude-4-sonnet-20250514"):
+            # Re-evaluate with a different model
+            report = await dataset.evaluate(agent_task, name="canthropic:claude-4-sonnet-20250514")
 
         
         
