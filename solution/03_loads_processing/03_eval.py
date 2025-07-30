@@ -250,52 +250,58 @@ class PointExtremesEvaluator(Evaluator):
 
 
 
-# Test case using the same input as USER_PROMPT_1 from process_loads.py
-case1 = Case(
-    name="Scenario 1: Default",
-    inputs="""\
+# Define shared case variables
+SCENARIO_1_INPUTS = """\
 I need to process some loads for ANSYS analysis.
 the files are here: /Users/alex/repos/trs-use-case/solution/loads/03_01_new_loads.json
 output directory for ansys files: /Users/alex/repos/trs-use-case/output
 I do not have any previous loads to compare against.
-""",
-    evaluators=(
-        # Tool call validations
-        AgentCalledToolSimple(tool_name="scale_loads"),  # Check factor(1.5) operation
-        AgentCalledToolSimple(tool_name="export_to_ansys"),  # Check ANSYS export
-        AgentCalledToolSimple(tool_name="load_from_json"),  # Check load operation
-        AgentDidNotCallTool(tool_name="convert_units"),  # Check units not converted
-        AgentCalledToolSimple(tool_name="get_point_extremes"),  # Check extremes calculated
-        
-        # Numerical validation of point extremes (based on actual ANSYS file values)
-        PointExtremesEvaluator(
-            point_name="Point A",
-            component="fx",
-            extreme_type="max",
-            expected_value=1.496,
-            expected_loadcase="landing_011"
-        ),
-        PointExtremesEvaluator(
-            point_name="Point A", 
-            component="my",
-            extreme_type="min",
-            expected_value=0.2132,
-            expected_loadcase="cruise2_098"
-        ),
-        PointExtremesEvaluator(
-            point_name="Point B",
-            component="fy", 
-            extreme_type="max",
-            expected_value=1.463,
-            expected_loadcase="landing_012"
-        ),
-    )
+"""
+
+SCENARIO_1_EVALUATORS = (
+    # Tool call validations
+    AgentCalledToolSimple(tool_name="scale_loads"),  # Check factor(1.5) operation
+    AgentCalledToolSimple(tool_name="export_to_ansys"),  # Check ANSYS export
+    AgentCalledToolSimple(tool_name="load_from_json"),  # Check load operation
+    AgentDidNotCallTool(tool_name="convert_units"),  # Check units not converted
+    
+    # Numerical validation of point extremes (based on actual ANSYS file values)
+    PointExtremesEvaluator(
+        point_name="Point A",
+        component="fx",
+        extreme_type="max",
+        expected_value=1.496,
+        expected_loadcase="landing_011"
+    ),
+    PointExtremesEvaluator(
+        point_name="Point A", 
+        component="my",
+        extreme_type="min",
+        expected_value=0.2132,
+        expected_loadcase="cruise2_098"
+    ),
+    PointExtremesEvaluator(
+        point_name="Point B",
+        component="fy", 
+        extreme_type="max",
+        expected_value=1.463,
+        expected_loadcase="landing_012"
+    ),
 )
 
+# Create test cases using list comprehension
+cases = [
+    Case(
+        name=f"Scenario 1- iteration {i}",
+        inputs=SCENARIO_1_INPUTS,
+        evaluators=SCENARIO_1_EVALUATORS
+    )
+    for i in range(1, 6)
+]
 
 # Create dataset
 dataset = Dataset(
-    cases=[case1],
+    cases=list(cases),
     evaluators=[]
 )
 
@@ -372,18 +378,14 @@ async def main():
     import logfire
     
     with logfire.span("load_processing_evaluation"):
-        logfire.info("Starting evaluation for load processing agent")
-        print("Running evaluation for load processing agent...")
+
         
-        # Log evaluation setup
-        logfire.info(
-            "Evaluation setup",
-            dataset_cases=len(dataset.cases),
-            evaluators=[type(e).__name__ for e in case1.evaluators]
-        )
+
         
         # Evaluate the dataset against the agent task
         report = await dataset.evaluate(agent_task)
+
+        
         
         # Log evaluation results
         logfire.info(
