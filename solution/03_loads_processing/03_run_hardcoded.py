@@ -9,22 +9,49 @@ sys.path.insert(0, str(repo_root))
 
 from tools.loads import LoadSet
 
-# inputs
-new_loads_path = Path("/Users/alex/repos/trs-use-case/solution/loads/03_01_new_loads.json")
-old_loads_path = None # Path("/Users/alex/repos/trs-use-case/solution/loads/03_01_old_loads.json")
-output_path = Path("/Users/alex/repos/trs-use-case/solution/03_loads_processing") / "output"
-
+# Global settings
 delete_output = True
+
+# Activity configurations
+ACTIVITIES = {
+    "03A": {
+        "input_file": "solution/loads/03_01_new_loads.json",
+        "old_loads_file": None,  # Path to old loads if needed for comparison
+        "expected_values": {
+            "Point A": {
+                "fx": {"max": {"loadcase": "landing_011", "value": 1.4958699}},
+                "my": {"min": {"loadcase": "cruise2_098", "value": 0.213177015}},
+            },
+            "Point B": {
+                "fy": {"max": {"loadcase": "landing_012", "value": 1.462682895}}
+            },
+        },
+    },
+    "03B": {
+        "input_file": "solution/loads/03_02_new_loads.json",
+        "old_loads_file": None,  # Path to old loads if needed for comparison
+        "expected_values": {
+            "Point A": {
+                "fx": {"max": {"loadcase": "landing_011", "value": 6.6539613983178}},
+                "my": {"min": {"loadcase": "cruise2_098", "value": 0.28902923412327}},
+            },
+            "Point B": {
+                "fy": {"max": {"loadcase": "landing_012", "value": 6.506338232562691}}
+            },
+        },
+    },
+}
+
 
 def process_loads(new_loads_path, output_path, old_loads_path=None):
     """
     Process loads from JSON files, perform enveloping, and export to ANSYS format.
-    
+
     Args:
         new_loads_path: Path to new loads JSON file
         output_path: Output directory for ANSYS files
         old_loads_path: Optional path to old loads JSON file for comparison
-    
+
     Returns:
         dict: Extreme values results from enveloped loadset
     """
@@ -62,53 +89,82 @@ def process_loads(new_loads_path, output_path, old_loads_path=None):
     results = enveloped_loadset.get_point_extremes()
     print("Extreme values in the LoadSet:")
     from pprint import pprint
+
     pprint(results)
-    
+
     return results
 
-def validation_Activity_03A(results):
+
+def validate_activity(activity_name, results):
     """
-    Validate the extreme values results from Activity 03A.
-    
+    Validate the extreme values results for any activity.
+
     Args:
+        activity_name: Name of the activity (e.g., "03A", "03B")
         results: Dictionary containing extreme values from enveloped loadset
-        
+
     Raises:
         AssertionError: If validation fails
+        KeyError: If activity_name is not found in ACTIVITIES
     """
+    if activity_name not in ACTIVITIES:
+        raise KeyError(
+            f"Activity '{activity_name}' not found in ACTIVITIES configuration"
+        )
+
+    expected_values = ACTIVITIES[activity_name]["expected_values"]
     tolerance = 1e-6
-    
-    # Point A fx max validation
-    assert results["Point A"]["fx"]["max"]["loadcase"] == "landing_011", \
-        f"Expected Point A fx max from landing_011, got {results['Point A']['fx']['max']['loadcase']}"
-    assert abs(results["Point A"]["fx"]["max"]["value"] - 1.4958699) < tolerance, \
-        f"Point A fx max value mismatch: expected 1.4958699, got {results['Point A']['fx']['max']['value']}"
-    
-    # Point A my min validation
-    assert results["Point A"]["my"]["min"]["loadcase"] == "cruise2_098", \
-        f"Expected Point A my min from cruise2_098, got {results['Point A']['my']['min']['loadcase']}"
-    assert abs(results["Point A"]["my"]["min"]["value"] - 0.213177015) < tolerance, \
-        f"Point A my min value mismatch: expected 0.213177015, got {results['Point A']['my']['min']['value']}"
-    
-    # Point B fy max validation
-    assert results["Point B"]["fy"]["max"]["loadcase"] == "landing_012", \
-        f"Expected Point B fy max from landing_012, got {results['Point B']['fy']['max']['loadcase']}"
-    assert abs(results["Point B"]["fy"]["max"]["value"] - 1.462682895) < tolerance, \
-        f"Point B fy max value mismatch: expected 1.462682895, got {results['Point B']['fy']['max']['value']}"
-    
-    print("✅ All Activity 03A validations passed!")
+
+    # Validate each expected value
+    for point_name, point_data in expected_values.items():
+        for component, component_data in point_data.items():
+            for extremes_type, expected in component_data.items():
+                # Get actual values
+                actual = results[point_name][component][extremes_type]
+
+                # Validate loadcase
+                assert actual["loadcase"] == expected["loadcase"], (
+                    f"Activity {activity_name}: Expected {point_name} {component} {extremes_type} from {expected['loadcase']}, got {actual['loadcase']}"
+                )
+
+                # Validate value with tolerance
+                assert abs(actual["value"] - expected["value"]) < tolerance, (
+                    f"Activity {activity_name}: {point_name} {component} {extremes_type} value mismatch: expected {expected['value']}, got {actual['value']}"
+                )
+
+    print(f"✅ All Activity {activity_name} validations passed!")
 
 
-def main():
+def main(activity="03A"):
     """
     Main function to execute the load processing workflow.
+
+    Args:
+        activity: Activity name (e.g., "03A", "03B")
     """
+    if activity not in ACTIVITIES:
+        raise KeyError(f"Activity '{activity}' not found in ACTIVITIES configuration")
+
+    # Get configuration for the specified activity
+    config = ACTIVITIES[activity]
+
+    # Set up paths
+    new_loads_path = repo_root / config["input_file"]
+    old_loads_path = (
+        repo_root / config["old_loads_file"] if config["old_loads_file"] else None
+    )
+    output_path = repo_root / f"solution/03_loads_processing/outputs/{activity}"
+
+    print(f"🚀 Running Activity {activity}")
+    print(f"Input file: {config['input_file']}")
+    print(f"Output folder: outputs/{activity}/")
+
     # Call the function with correct argument order
     results = process_loads(new_loads_path, output_path, old_loads_path)
-    
-    # Validate results
-    validation_Activity_03A(results)
-    
+
+    # Validate results using the generic validation function
+    validate_activity(activity, results)
+
     # Clean up output directory if requested
     if delete_output:
         for file in output_path.glob("*.inp"):
@@ -117,4 +173,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # Default to Activity 03A for backward compatibility
+    # You can also run: python script.py and modify this line for different activities
+    activity_to_run = "03A"  # Change to "03B" to run Activity 03B
+    main(activity_to_run)
