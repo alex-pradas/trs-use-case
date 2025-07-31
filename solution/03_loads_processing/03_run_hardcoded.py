@@ -81,10 +81,11 @@ def process_loads(new_loads_path, output_path, old_loads_path=None):
     # Analysis done, now comes the sanity check
 
     # Count files exported
-    exported_files = len(list(output_path.glob("*.inp")))
+    inp_files = list(output_path.glob("*.inp"))
+    exported_files = len(inp_files)
     ### print the first 5 files
     print(f"Ansys Files exported ({exported_files}) to {output_path}:")
-    for file in output_path.glob("*.inp")[:5]:
+    for file in inp_files[:5]:
         print(f" - {file.name}")
     if exported_files > 5:
         print(f" - ... and {exported_files - 5} more")
@@ -158,9 +159,9 @@ def main(activity="03A"):
     )
     output_path = repo_root / f"solution/03_loads_processing/outputs/{activity}"
 
-    print(f"\n ==== 🚀 Running Activity {activity} ====")
+    print(f"\n ==== 🚀 Running Activity {activity} ====\n ")
     print(f" * Input file: {config['input_file']}")
-    print(f" * Output folder: outputs/{activity}/")
+    print(f" * Output folder: outputs/{activity}/\n")
 
     # Call the function with correct argument order
     results = process_loads(new_loads_path, output_path, old_loads_path)
