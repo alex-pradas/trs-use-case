@@ -55,7 +55,7 @@ class TestEnvelopeAgentIntegration:
             pytest.skip(f"Model configuration error: {error}")
 
         # Test data
-        json_path = "use_case_definition/data/loads/new_loads.json"
+        json_path = "use_case_definition/data/loads/03_A_new_loads.json"
         output_folder = str(self.output_folder)
 
         # Create agent and dependencies
@@ -122,7 +122,7 @@ class TestEnvelopeAgentIntegration:
         # Test agent understanding of envelope concept
         result = await agent.run(
             """
-        Please load the LoadSet data from 'use_case_definition/data/loads/new_loads.json' and explain:
+        Please load the LoadSet data from 'use_case_definition/data/loads/03_A_new_loads.json' and explain:
         1. What is an envelope of load cases?
         2. Create an envelope and tell me how many load cases were reduced
         3. Explain which types of load cases are included in an envelope
@@ -174,7 +174,7 @@ class TestEnvelopeAgentIntegration:
         I want to compare a LoadSet before and after creating an envelope.
         
         Please:
-        1. Load the LoadSet from 'use_case_definition/data/loads/new_loads.json'
+        1. Load the LoadSet from 'use_case_definition/data/loads/03_A_new_loads.json'
         2. Note how many load cases it has originally
         3. Create an envelope of this LoadSet
         4. Show me how many load cases remain after the envelope
@@ -235,7 +235,7 @@ class TestEnvelopeAgentIntegration:
             pytest.skip(f"Model configuration error: {error}")
 
         # Test data
-        json_path = "use_case_definition/data/loads/new_loads.json"
+        json_path = "use_case_definition/data/loads/03_A_new_loads.json"
         scale_factor = 2.0
         target_units = "kN"
         output_folder = str(self.output_folder)
@@ -306,7 +306,7 @@ class TestEnvelopeAgentIntegration:
         result = await agent.run(
             """
         Please explain what a LoadSet envelope is and why it's useful in engineering analysis.
-        Then demonstrate by loading 'use_case_definition/data/loads/new_loads.json' and creating an envelope.
+        Then demonstrate by loading 'use_case_definition/data/loads/03_A_new_loads.json' and creating an envelope.
         
         Focus on:
         - What values are kept in an envelope
@@ -363,7 +363,7 @@ if __name__ == "__main__":
             # Test envelope functionality
             result = await agent.run(
                 """
-                Load 'use_case_definition/data/loads/new_loads.json', create an envelope, 
+                Load 'use_case_definition/data/loads/03_A_new_loads.json', create an envelope, 
                 and tell me how many load cases were reduced.
                 """,
                 deps=deps,
