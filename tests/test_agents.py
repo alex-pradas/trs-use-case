@@ -26,18 +26,18 @@ class TestLoadSetAgentArchitecture:
         # Should provide LoadSet operations as direct dependency
         provider = LoadSetMCPProvider()
         assert provider is not None
-        assert hasattr(provider, 'load_from_json')
-        assert hasattr(provider, 'convert_units')
-        assert hasattr(provider, 'scale_loads')
-        assert hasattr(provider, 'export_to_ansys')
-        assert hasattr(provider, 'compare_loadsets')
+        assert hasattr(provider, "load_from_json")
+        assert hasattr(provider, "convert_units")
+        assert hasattr(provider, "scale_loads")
+        assert hasattr(provider, "export_to_ansys")
+        assert hasattr(provider, "compare_loadsets")
 
     def test_loadset_agent_creation(self):
         """Test LoadSet agent creation with direct provider."""
         # Agent should be created with LoadSetMCPProvider as dependency
         agent = create_loadset_agent()
         assert isinstance(agent, Agent)
-        
+
         # Agent should have the correct dependency type
         assert agent._deps_type == LoadSetMCPProvider
 
@@ -52,6 +52,7 @@ class TestLoadSetAgentArchitecture:
         # mcp_bridge.py should not be needed in new architecture
         try:
             from tools.mcp_bridge import call_mcp_tool
+
             pytest.fail("MCP bridge should be eliminated in simplified architecture")
         except ImportError:
             # Expected - we should not have mcp_bridge in new architecture
@@ -60,10 +61,10 @@ class TestLoadSetAgentArchitecture:
     def test_simplified_architecture(self):
         """Test that the architecture is simplified with direct provider access."""
         agent = create_loadset_agent()
-        
+
         # Agent should use LoadSetMCPProvider directly, not wrapped in MCPServerProvider
         assert agent._deps_type == LoadSetMCPProvider
-        
+
         # This validates we eliminated the complex wrapper layer
 
     def test_agent_configuration_simplification(self):
@@ -82,7 +83,7 @@ class TestLoadSetProviderIntegration:
     def test_provider_state_management(self):
         """Test that provider manages state correctly."""
         provider = LoadSetMCPProvider()
-        
+
         # Should start with no current loadset
         assert provider._current_loadset is None
         assert provider._comparison_loadset is None
@@ -91,7 +92,7 @@ class TestLoadSetProviderIntegration:
     def test_provider_reset_functionality(self):
         """Test that provider can reset state."""
         provider = LoadSetMCPProvider()
-        
+
         # Reset should work without errors
         provider.reset_state()
         assert provider._current_loadset is None
@@ -103,11 +104,11 @@ class TestLoadSetProviderIntegration:
         """Test that agent works with provider (basic integration test)."""
         agent = create_loadset_agent()
         provider = LoadSetMCPProvider()
-        
+
         # Should be able to create both without errors
         assert agent is not None
         assert provider is not None
-        
+
         # This validates that the dependency types match
         assert agent._deps_type == type(provider)
 

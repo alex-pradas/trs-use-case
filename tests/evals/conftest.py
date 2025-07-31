@@ -139,7 +139,9 @@ def sample_eval_cases():
             expected_tool_calls=[
                 {
                     "name": "load_from_json",
-                    "args": {"file_path": "use_case_definition/data/loads/new_loads.json"},
+                    "args": {
+                        "file_path": "use_case_definition/data/loads/new_loads.json"
+                    },
                 }
             ],
             description="Test basic load file loading",
@@ -150,7 +152,9 @@ def sample_eval_cases():
             expected_tool_calls=[
                 {
                     "name": "load_from_json",
-                    "args": {"file_path": "use_case_definition/data/loads/new_loads.json"},
+                    "args": {
+                        "file_path": "use_case_definition/data/loads/new_loads.json"
+                    },
                 },
                 {"name": "scale_loads", "args": {"factor": 1.5}},
             ],
@@ -162,7 +166,9 @@ def sample_eval_cases():
             expected_tool_calls=[
                 {
                     "name": "load_from_json",
-                    "args": {"file_path": "use_case_definition/data/loads/new_loads.json"},
+                    "args": {
+                        "file_path": "use_case_definition/data/loads/new_loads.json"
+                    },
                 },
                 {"name": "scale_loads", "args": {"factor": 1.5}},
                 {"name": "convert_units", "args": {"target_units": "klbf"}},

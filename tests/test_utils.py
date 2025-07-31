@@ -16,8 +16,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-
-
 class TempDirectoryTestBase:
     """Base class for tests that need temporary directories."""
 

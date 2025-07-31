@@ -234,7 +234,9 @@ class TestMCPStdioIntegration:
         content = ansys_file.read_text()
 
         # Read original values from new_loads.json for Take_off_004, Point A
-        original_loadset = LoadSet.read_json(Path("use_case_definition/data/loads/new_loads.json"))
+        original_loadset = LoadSet.read_json(
+            Path("use_case_definition/data/loads/new_loads.json")
+        )
 
         # Find Take_off_004 load case
         take_off_004 = None
@@ -306,7 +308,9 @@ class TestMCPStdioIntegration:
         assert result.output, "Agent workflow failed or returned empty output"
 
         # Load original data to verify number of files
-        original_loadset = LoadSet.read_json(Path("use_case_definition/data/loads/new_loads.json"))
+        original_loadset = LoadSet.read_json(
+            Path("use_case_definition/data/loads/new_loads.json")
+        )
         expected_files = len(original_loadset.load_cases)
 
         # Check that all load cases were processed
@@ -324,7 +328,9 @@ class TestMCPStdioIntegration:
     def test_mathematical_calculations(self):
         """Test the mathematical calculation functions used for validation."""
         # Read test values from Take_off_004, Point A
-        original_loadset = LoadSet.read_json(Path("use_case_definition/data/loads/new_loads.json"))
+        original_loadset = LoadSet.read_json(
+            Path("use_case_definition/data/loads/new_loads.json")
+        )
 
         # Find Take_off_004 load case and Point A
         take_off_004 = next(
@@ -434,7 +440,9 @@ class TestMCPHTTPIntegration:
     async def test_agent_http_final_value_validation(self):
         """Test HTTP transport with final value validation using known data."""
         # Get original values from the JSON for validation
-        original_loadset = LoadSet.read_json(Path("use_case_definition/data/loads/new_loads.json"))
+        original_loadset = LoadSet.read_json(
+            Path("use_case_definition/data/loads/new_loads.json")
+        )
         first_load_case = original_loadset.load_cases[0]
         first_point_load = first_load_case.point_loads[0]
 

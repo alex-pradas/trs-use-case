@@ -228,7 +228,11 @@ class TestLoadSetReadJson:
     def test_read_json_actual_new_loads_file(self):
         """Test reading the actual new_loads file."""
         new_loads_path = (
-            Path(__file__).parent.parent.parent / "use_case_definition" / "data" / "loads" / "03_A_new_loads.json"
+            Path(__file__).parent.parent.parent
+            / "use_case_definition"
+            / "data"
+            / "loads"
+            / "03_A_new_loads.json"
         )
 
         if new_loads_path.exists():
@@ -924,10 +928,12 @@ class TestLoadSetToAnsys:
                 "Load_Case_1.inp",
                 "Load_Case_2.inp",
             ]
-            
+
             for expected_file in expected_files:
                 file_path = os.path.join(temp_dir, expected_file)
-                assert os.path.exists(file_path), f"Expected file {expected_file} was not created"
+                assert os.path.exists(file_path), (
+                    f"Expected file {expected_file} was not created"
+                )
 
             # Verify no other files were created
             actual_files = os.listdir(temp_dir)
@@ -944,24 +950,30 @@ class TestLoadSetToAnsys:
             original_cwd = os.getcwd()
             try:
                 os.chdir(temp_working_dir)
-                
+
                 # Export to ANSYS without folder_path (should use 'output' folder)
                 self.sample_loadset.to_ansys()
 
                 # Check that the 'output' folder was created
                 output_dir = os.path.join(temp_working_dir, "output")
-                assert os.path.exists(output_dir), "Expected 'output' directory was not created"
-                assert os.path.isdir(output_dir), "'output' exists but is not a directory"
+                assert os.path.exists(output_dir), (
+                    "Expected 'output' directory was not created"
+                )
+                assert os.path.isdir(output_dir), (
+                    "'output' exists but is not a directory"
+                )
 
-                # Check that files were created in the output directory  
+                # Check that files were created in the output directory
                 expected_files = [
                     "Load_Case_1.inp",
                     "Load_Case_2.inp",
                 ]
-                
+
                 for expected_file in expected_files:
                     file_path = os.path.join(output_dir, expected_file)
-                    assert os.path.exists(file_path), f"Expected file {expected_file} was not created in output directory"
+                    assert os.path.exists(file_path), (
+                        f"Expected file {expected_file} was not created in output directory"
+                    )
 
                 # Verify no other files were created in output directory
                 actual_files = os.listdir(output_dir)
@@ -1101,8 +1113,14 @@ class TestLoadSetCompare:
         assert "report_metadata" in result_dict
         assert "comparisons" in result_dict
         assert "loadcases_info" in result_dict["report_metadata"]
-        assert result_dict["report_metadata"]["loadcases_info"]["loadset1"]["name"] == "LoadSet 1"
-        assert result_dict["report_metadata"]["loadcases_info"]["loadset2"]["name"] == "LoadSet 2"
+        assert (
+            result_dict["report_metadata"]["loadcases_info"]["loadset1"]["name"]
+            == "LoadSet 1"
+        )
+        assert (
+            result_dict["report_metadata"]["loadcases_info"]["loadset2"]["name"]
+            == "LoadSet 2"
+        )
         assert len(result_dict["comparisons"]) == 1
         assert result_dict["comparisons"][0]["point_name"] == "Point_A"
 
@@ -1132,7 +1150,10 @@ class TestLoadSetCompare:
         import json
 
         parsed = json.loads(json_str)
-        assert parsed["report_metadata"]["loadcases_info"]["loadset1"]["name"] == "LoadSet 1"
+        assert (
+            parsed["report_metadata"]["loadcases_info"]["loadset1"]["name"]
+            == "LoadSet 1"
+        )
         assert len(parsed["comparisons"]) == 1
 
     def test_export_comparison_report(self):
@@ -1140,10 +1161,10 @@ class TestLoadSetCompare:
         import tempfile
         import json
         from pathlib import Path
-        
+
         # Debug flag - set to True to keep files for manual inspection
         debug = False
-        
+
         # Create sample comparison data with known values
         # Point A - Force components (fx, fy)
         row1 = ComparisonRow(
@@ -1157,7 +1178,7 @@ class TestLoadSetCompare:
             abs_diff=20.0,
             pct_diff=20.0,
         )
-        
+
         row2 = ComparisonRow(
             point_name="Point_A",
             component="fx",
@@ -1169,7 +1190,7 @@ class TestLoadSetCompare:
             abs_diff=20.0,
             pct_diff=25.0,
         )
-        
+
         row3 = ComparisonRow(
             point_name="Point_A",
             component="fy",
@@ -1181,7 +1202,7 @@ class TestLoadSetCompare:
             abs_diff=20.0,
             pct_diff=13.3,
         )
-        
+
         row4 = ComparisonRow(
             point_name="Point_A",
             component="fy",
@@ -1193,7 +1214,7 @@ class TestLoadSetCompare:
             abs_diff=15.0,
             pct_diff=30.0,
         )
-        
+
         # Point B - Moment components (mx, my, mz)
         row5 = ComparisonRow(
             point_name="Point_B",
@@ -1206,7 +1227,7 @@ class TestLoadSetCompare:
             abs_diff=150.0,
             pct_diff=30.0,
         )
-        
+
         row6 = ComparisonRow(
             point_name="Point_B",
             component="mx",
@@ -1218,7 +1239,7 @@ class TestLoadSetCompare:
             abs_diff=120.0,
             pct_diff=40.0,
         )
-        
+
         row7 = ComparisonRow(
             point_name="Point_B",
             component="my",
@@ -1230,7 +1251,7 @@ class TestLoadSetCompare:
             abs_diff=25.0,
             pct_diff=12.5,
         )
-        
+
         row8 = ComparisonRow(
             point_name="Point_B",
             component="my",
@@ -1242,7 +1263,7 @@ class TestLoadSetCompare:
             abs_diff=15.0,
             pct_diff=15.0,
         )
-        
+
         row9 = ComparisonRow(
             point_name="Point_B",
             component="mz",
@@ -1254,7 +1275,7 @@ class TestLoadSetCompare:
             abs_diff=200.0,
             pct_diff=25.0,
         )
-        
+
         row10 = ComparisonRow(
             point_name="Point_B",
             component="mz",
@@ -1266,22 +1287,33 @@ class TestLoadSetCompare:
             abs_diff=150.0,
             pct_diff=37.5,
         )
-        
+
         # Create LoadSetCompare instance
         compare = LoadSetCompare(
             loadset1_metadata={
                 "name": "Old LoadSet",
                 "version": 1,
-                "units": {"forces": "N", "moments": "Nm"}
+                "units": {"forces": "N", "moments": "Nm"},
             },
             loadset2_metadata={
-                "name": "New LoadSet", 
+                "name": "New LoadSet",
                 "version": 2,
-                "units": {"forces": "N", "moments": "Nm"}
+                "units": {"forces": "N", "moments": "Nm"},
             },
-            comparison_rows=[row1, row2, row3, row4, row5, row6, row7, row8, row9, row10],
+            comparison_rows=[
+                row1,
+                row2,
+                row3,
+                row4,
+                row5,
+                row6,
+                row7,
+                row8,
+                row9,
+                row10,
+            ],
         )
-        
+
         if debug:
             # For debugging - create a persistent directory in tests/temp_output
             test_dir = Path(__file__).parent.parent / "temp_output"
@@ -1291,76 +1323,82 @@ class TestLoadSetCompare:
         else:
             # Normal testing - use temporary directory
             cleanup_needed = False
-        
+
         def run_test(temp_dir):
             # Test basic export functionality
             json_path = compare.export_comparison_report(
                 output_dir=temp_dir,
                 report_name="test_comparison",
                 image_format="png",
-                indent=2
+                indent=2,
             )
-            
+
             # Verify JSON file was created
             assert json_path.exists()
             assert json_path.name == "test_comparison.json"
             assert json_path.parent == Path(temp_dir)
-            
+
             # Load and verify JSON content
             with open(json_path, "r") as f:
                 report_data = json.load(f)
-            
+
             # Check original comparison data is preserved
             assert "report_metadata" in report_data
             assert "comparisons" in report_data
             assert "loadcases_info" in report_data["report_metadata"]
-            assert report_data["report_metadata"]["loadcases_info"]["loadset1"]["name"] == "Old LoadSet"
-            assert report_data["report_metadata"]["loadcases_info"]["loadset2"]["name"] == "New LoadSet"
+            assert (
+                report_data["report_metadata"]["loadcases_info"]["loadset1"]["name"]
+                == "Old LoadSet"
+            )
+            assert (
+                report_data["report_metadata"]["loadcases_info"]["loadset2"]["name"]
+                == "New LoadSet"
+            )
             assert len(report_data["comparisons"]) == 10
-            
+
             # Check report metadata contains all expected fields
             report_meta = report_data["report_metadata"]
-            
+
             # Verify chart files metadata
             assert "chart_files" in report_meta
             assert "image_format" in report_meta
             assert "new_exceeds_old" in report_meta
             assert "total_comparisons" in report_meta
             assert "points_analyzed" in report_meta
-            
+
             # Check statistical summary
             assert report_meta["total_comparisons"] == 10
             assert report_meta["points_analyzed"] == 2  # Point_A and Point_B
             assert report_meta["image_format"] == "png"
-            
+
             # Verify new_exceeds_old calculation (should be False since some values are within envelope)
             assert report_meta["new_exceeds_old"] is False
-            
+
             # Check chart files were actually generated
             chart_files = report_meta["chart_files"]
             assert len(chart_files) == 2  # Point_A and Point_B
             assert "Point_A" in chart_files
             assert "Point_B" in chart_files
-            
+
             # Verify actual chart files exist
             for point_name, filename in chart_files.items():
                 chart_path = Path(temp_dir) / filename
                 assert chart_path.exists()
                 assert chart_path.suffix == ".png"
                 assert chart_path.stat().st_size > 0  # File should not be empty
-                
+
                 # Verify filename pattern
                 expected_pattern = f"{point_name.replace(' ', '_')}_ranges.png"
                 assert filename == expected_pattern
-                
+
             return json_path, chart_files
-        
+
         if debug:
             json_path, chart_files = run_test(temp_dir)
             print(f"\nDEBUG: Files saved to {temp_dir}")
             print(f"JSON report: {json_path}")
             print(f"Chart files: {list(chart_files.values())}")
-            
+
             if cleanup_needed:
                 # For debug mode, we usually want to KEEP files, so skip cleanup
                 # Uncomment the next lines if you want to clean up debug files:
@@ -1371,30 +1409,30 @@ class TestLoadSetCompare:
             # Use temporary directory with automatic cleanup
             with tempfile.TemporaryDirectory() as temp_dir:
                 run_test(temp_dir)
-        
+
         # Test with custom parameters
         with tempfile.TemporaryDirectory() as temp_dir:
             json_path = compare.export_comparison_report(
                 output_dir=temp_dir,  # type: ignore
                 report_name="custom_report",
                 image_format="svg",
-                indent=4
+                indent=4,
             )
-            
+
             # Verify custom parameters were applied
             assert json_path.name == "custom_report.json"
-            
+
             with open(json_path, "r") as f:
                 content = f.read()
                 # Check indentation (4 spaces)
-                lines = content.split('\n')
-                indented_lines = [line for line in lines if line.startswith('    ')]
+                lines = content.split("\n")
+                indented_lines = [line for line in lines if line.startswith("    ")]
                 assert len(indented_lines) > 0  # Should have 4-space indented lines
-            
+
             with open(json_path, "r") as f:
                 report_data = json.load(f)
                 assert report_data["report_metadata"]["image_format"] == "svg"
-            
+
             # Check SVG files were created
             chart_files = report_data["report_metadata"]["chart_files"]
             for filename in chart_files.values():
@@ -1407,82 +1445,112 @@ class TestLoadSetCompare:
         # Test case where new loads exceed old loads in all comparisons
         exceeding_rows = [
             ComparisonRow(
-                point_name="Point_A", component="fx", type="max",
-                loadset1_value=100.0, loadset2_value=120.0,  # New max higher
-                loadset1_loadcase="Case1", loadset2_loadcase="Case2",
-                abs_diff=20.0, pct_diff=20.0,
+                point_name="Point_A",
+                component="fx",
+                type="max",
+                loadset1_value=100.0,
+                loadset2_value=120.0,  # New max higher
+                loadset1_loadcase="Case1",
+                loadset2_loadcase="Case2",
+                abs_diff=20.0,
+                pct_diff=20.0,
             ),
             ComparisonRow(
-                point_name="Point_A", component="fx", type="min",
-                loadset1_value=80.0, loadset2_value=60.0,  # New min lower
-                loadset1_loadcase="Case3", loadset2_loadcase="Case4",
-                abs_diff=20.0, pct_diff=25.0,
+                point_name="Point_A",
+                component="fx",
+                type="min",
+                loadset1_value=80.0,
+                loadset2_value=60.0,  # New min lower
+                loadset1_loadcase="Case3",
+                loadset2_loadcase="Case4",
+                abs_diff=20.0,
+                pct_diff=25.0,
             ),
         ]
-        
+
         exceeding_compare = LoadSetCompare(
-            loadset1_metadata={"name": "Old"}, 
+            loadset1_metadata={"name": "Old"},
             loadset2_metadata={"name": "New"},
             comparison_rows=exceeding_rows,
         )
-        
+
         assert exceeding_compare.new_exceeds_old() is True
-        
+
         # Test case where new loads do NOT exceed old loads
         non_exceeding_rows = [
             ComparisonRow(
-                point_name="Point_A", component="fx", type="max",
-                loadset1_value=100.0, loadset2_value=90.0,  # New max lower
-                loadset1_loadcase="Case1", loadset2_loadcase="Case2",
-                abs_diff=10.0, pct_diff=10.0,
+                point_name="Point_A",
+                component="fx",
+                type="max",
+                loadset1_value=100.0,
+                loadset2_value=90.0,  # New max lower
+                loadset1_loadcase="Case1",
+                loadset2_loadcase="Case2",
+                abs_diff=10.0,
+                pct_diff=10.0,
             ),
             ComparisonRow(
-                point_name="Point_A", component="fx", type="min",
-                loadset1_value=80.0, loadset2_value=85.0,  # New min higher
-                loadset1_loadcase="Case3", loadset2_loadcase="Case4",
-                abs_diff=5.0, pct_diff=6.25,
+                point_name="Point_A",
+                component="fx",
+                type="min",
+                loadset1_value=80.0,
+                loadset2_value=85.0,  # New min higher
+                loadset1_loadcase="Case3",
+                loadset2_loadcase="Case4",
+                abs_diff=5.0,
+                pct_diff=6.25,
             ),
         ]
-        
+
         non_exceeding_compare = LoadSetCompare(
-            loadset1_metadata={"name": "Old"}, 
+            loadset1_metadata={"name": "Old"},
             loadset2_metadata={"name": "New"},
             comparison_rows=non_exceeding_rows,
         )
-        
+
         assert non_exceeding_compare.new_exceeds_old() is False
-        
+
         # Test mixed case - some exceed, some don't (should return False)
         mixed_rows = [
             ComparisonRow(
-                point_name="Point_A", component="fx", type="max",
-                loadset1_value=100.0, loadset2_value=120.0,  # Exceeds
-                loadset1_loadcase="Case1", loadset2_loadcase="Case2",
-                abs_diff=20.0, pct_diff=20.0,
+                point_name="Point_A",
+                component="fx",
+                type="max",
+                loadset1_value=100.0,
+                loadset2_value=120.0,  # Exceeds
+                loadset1_loadcase="Case1",
+                loadset2_loadcase="Case2",
+                abs_diff=20.0,
+                pct_diff=20.0,
             ),
             ComparisonRow(
-                point_name="Point_A", component="fy", type="max",
-                loadset1_value=200.0, loadset2_value=180.0,  # Doesn't exceed
-                loadset1_loadcase="Case1", loadset2_loadcase="Case2",
-                abs_diff=20.0, pct_diff=10.0,
+                point_name="Point_A",
+                component="fy",
+                type="max",
+                loadset1_value=200.0,
+                loadset2_value=180.0,  # Doesn't exceed
+                loadset1_loadcase="Case1",
+                loadset2_loadcase="Case2",
+                abs_diff=20.0,
+                pct_diff=10.0,
             ),
         ]
-        
+
         mixed_compare = LoadSetCompare(
-            loadset1_metadata={"name": "Old"}, 
+            loadset1_metadata={"name": "Old"},
             loadset2_metadata={"name": "New"},
             comparison_rows=mixed_rows,
         )
-        
+
         assert mixed_compare.new_exceeds_old() is False
-        
+
         # Test empty comparison rows
         empty_compare = LoadSetCompare(
-            loadset1_metadata={"name": "Old"}, 
+            loadset1_metadata={"name": "Old"},
             loadset2_metadata={"name": "New"},
             comparison_rows=[],
         )
-        
+
         assert empty_compare.new_exceeds_old() is False
 
 
@@ -1919,41 +1987,41 @@ class TestLoadSetComparisonWithRealData:
         assert fx_row.pct_diff == float("inf")  # Infinite percentage change
 
 
-
-
-
 class TestLoadSetReadAnsys:
     """Test LoadSet.read_ansys() class method."""
 
     def test_read_ansys_example_file(self):
         """Test reading the provided example_ansys.inp file."""
         example_file = Path(__file__).parent / "loads" / "example_ansys.inp"
-        
+
         # Ensure the test file exists
         assert example_file.exists(), f"Test file not found: {example_file}"
-        
+
         # Read the ANSYS file with explicit units
         units = Units(forces="N", moments="Nm")
         loadset = LoadSet.read_ansys(example_file, units)
-        
+
         # Check basic LoadSet properties
         assert loadset.name == "example_ansys"  # Should use filename as default name
-        assert loadset.description == f"LoadSet imported from ANSYS file: {example_file.name}"
+        assert (
+            loadset.description
+            == f"LoadSet imported from ANSYS file: {example_file.name}"
+        )
         assert loadset.version == 1
         assert loadset.units.forces == "N"
         assert loadset.units.moments == "Nm"
-        
+
         # Should have exactly one load case
         assert len(loadset.load_cases) == 1
         load_case = loadset.load_cases[0]
-        
+
         # Check load case properties
         assert load_case.name == "cruise1_108"
         assert load_case.description == f"Imported from {example_file.name}"
-        
+
         # Should have exactly two point loads (Point A and Point B)
         assert len(load_case.point_loads) == 2
-        
+
         # Find Point A and Point B
         point_a = None
         point_b = None
@@ -1962,10 +2030,10 @@ class TestLoadSetReadAnsys:
                 point_a = point_load
             elif point_load.name == "Point B":
                 point_b = point_load
-        
+
         assert point_a is not None, "Point A not found"
         assert point_b is not None, "Point B not found"
-        
+
         # Check Point A values (from the example file)
         assert abs(point_a.force_moment.fx - 1.120) < 1e-6
         assert abs(point_a.force_moment.fy - 1.474) < 1e-6
@@ -1973,22 +2041,30 @@ class TestLoadSetReadAnsys:
         assert abs(point_a.force_moment.mx - 1.424) < 1e-6
         assert abs(point_a.force_moment.my - 1.065) < 1e-6
         assert abs(point_a.force_moment.mz - 0.9795) < 1e-6
-        
+
         # Check Point B values (from the example file)
         assert abs(point_b.force_moment.fx - 0.6045) < 1e-6
         assert abs(point_b.force_moment.fy - 0.1782) < 1e-6
-        assert abs(point_b.force_moment.fz - 0.0) < 1e-6  # Not specified in file, should be 0
+        assert (
+            abs(point_b.force_moment.fz - 0.0) < 1e-6
+        )  # Not specified in file, should be 0
         assert abs(point_b.force_moment.mx - 0.6353) < 1e-6
-        assert abs(point_b.force_moment.my - 0.0) < 1e-6  # Not specified in file, should be 0
-        assert abs(point_b.force_moment.mz - 0.0) < 1e-6  # Not specified in file, should be 0
+        assert (
+            abs(point_b.force_moment.my - 0.0) < 1e-6
+        )  # Not specified in file, should be 0
+        assert (
+            abs(point_b.force_moment.mz - 0.0) < 1e-6
+        )  # Not specified in file, should be 0
 
     def test_read_ansys_custom_name_and_version(self):
         """Test reading ANSYS file with custom name and version."""
         example_file = Path(__file__).parent / "loads" / "example_ansys.inp"
         units = Units(forces="kN", moments="kNm")
-        
-        loadset = LoadSet.read_ansys(example_file, units, name="Custom LoadSet", version=2)
-        
+
+        loadset = LoadSet.read_ansys(
+            example_file, units, name="Custom LoadSet", version=2
+        )
+
         assert loadset.name == "Custom LoadSet"
         assert loadset.version == 2
         assert loadset.units.forces == "kN"
@@ -1997,20 +2073,20 @@ class TestLoadSetReadAnsys:
     def test_read_ansys_nonexistent_file(self):
         """Test reading a nonexistent file raises FileNotFoundError."""
         units = Units(forces="N", moments="Nm")
-        
+
         with pytest.raises(FileNotFoundError, match="File not found"):
             LoadSet.read_ansys(Path("/nonexistent/file.inp"), units)
 
     def test_read_ansys_invalid_format_no_title(self):
         """Test reading file without /TITLE command raises ValueError."""
         import tempfile
-        
+
         # Create a temporary file without /TITLE command
         with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
             f.write("cmsel,s,pilot_Point1\n")
             f.write("f,all,fx,100.0\n")
             temp_file = f.name
-        
+
         try:
             units = Units(forces="N", moments="Nm")
             with pytest.raises(ValueError, match="No /TITLE command found"):
@@ -2021,14 +2097,14 @@ class TestLoadSetReadAnsys:
     def test_read_ansys_invalid_format_no_loads(self):
         """Test reading file without any loads raises ValueError."""
         import tempfile
-        
+
         # Create a temporary file with only /TITLE
         with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
             f.write("/TITLE,EmptyCase\n")
             f.write("nsel,u,,,all\n")
             f.write("alls\n")
             temp_file = f.name
-        
+
         try:
             units = Units(forces="N", moments="Nm")
             with pytest.raises(ValueError, match="No point loads found"):
@@ -2039,14 +2115,14 @@ class TestLoadSetReadAnsys:
     def test_read_ansys_invalid_force_command(self):
         """Test reading file with invalid force command format."""
         import tempfile
-        
+
         # Create a temporary file with malformed force command
         with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
             f.write("/TITLE,TestCase\n")
             f.write("cmsel,s,pilot_Point1\n")
             f.write("f,all,fx\n")  # Missing value
             temp_file = f.name
-        
+
         try:
             units = Units(forces="N", moments="Nm")
             with pytest.raises(ValueError, match="Invalid force command format"):
@@ -2057,14 +2133,14 @@ class TestLoadSetReadAnsys:
     def test_read_ansys_invalid_component(self):
         """Test reading file with invalid component name."""
         import tempfile
-        
+
         # Create a temporary file with invalid component
         with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
             f.write("/TITLE,TestCase\n")
             f.write("cmsel,s,pilot_Point1\n")
             f.write("f,all,invalid,100.0\n")  # Invalid component
             temp_file = f.name
-        
+
         try:
             units = Units(forces="N", moments="Nm")
             with pytest.raises(ValueError, match="Invalid component 'invalid'"):
@@ -2075,17 +2151,19 @@ class TestLoadSetReadAnsys:
     def test_read_ansys_invalid_numeric_value(self):
         """Test reading file with invalid numeric value."""
         import tempfile
-        
+
         # Create a temporary file with invalid numeric value
         with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
             f.write("/TITLE,TestCase\n")
             f.write("cmsel,s,pilot_Point1\n")
             f.write("f,all,fx,not_a_number\n")  # Invalid numeric value
             temp_file = f.name
-        
+
         try:
             units = Units(forces="N", moments="Nm")
-            with pytest.raises(ValueError, match="Invalid numeric value 'not_a_number'"):
+            with pytest.raises(
+                ValueError, match="Invalid numeric value 'not_a_number'"
+            ):
                 LoadSet.read_ansys(Path(temp_file), units)
         finally:
             os.unlink(temp_file)
@@ -2093,16 +2171,19 @@ class TestLoadSetReadAnsys:
     def test_read_ansys_force_without_point_selection(self):
         """Test reading file with force command before point selection."""
         import tempfile
-        
+
         # Create a temporary file with force command before point selection
         with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
             f.write("/TITLE,TestCase\n")
             f.write("f,all,fx,100.0\n")  # Force command without preceding cmsel
             temp_file = f.name
-        
+
         try:
             units = Units(forces="N", moments="Nm")
-            with pytest.raises(ValueError, match="Force command found without preceding point selection"):
+            with pytest.raises(
+                ValueError,
+                match="Force command found without preceding point selection",
+            ):
                 LoadSet.read_ansys(Path(temp_file), units)
         finally:
             os.unlink(temp_file)
@@ -2110,7 +2191,7 @@ class TestLoadSetReadAnsys:
     def test_read_ansys_scientific_notation(self):
         """Test reading file with scientific notation values."""
         import tempfile
-        
+
         # Create a temporary file with scientific notation
         with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
             f.write("/TITLE,ScientificCase\n")
@@ -2119,23 +2200,23 @@ class TestLoadSetReadAnsys:
             f.write("f,all,fy,-4.56e-02\n")  # -0.0456
             f.write("f,all,fz,7.89E+01\n")  # 78.9 (uppercase E)
             temp_file = f.name
-        
+
         try:
             units = Units(forces="N", moments="Nm")
             loadset = LoadSet.read_ansys(Path(temp_file), units)
-            
+
             point_load = loadset.load_cases[0].point_loads[0]
             assert abs(point_load.force_moment.fx - 1230.0) < 1e-6
             assert abs(point_load.force_moment.fy - (-0.0456)) < 1e-8
             assert abs(point_load.force_moment.fz - 78.9) < 1e-6
-            
+
         finally:
             os.unlink(temp_file)
 
     def test_read_ansys_comments_and_empty_lines(self):
         """Test reading file with comments and empty lines."""
         import tempfile
-        
+
         # Create a temporary file with comments and empty lines
         with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
             f.write("! This is a comment\n")
@@ -2147,24 +2228,24 @@ class TestLoadSetReadAnsys:
             f.write("f,all,fx,100.0\n")
             f.write("! Final comment\n")
             temp_file = f.name
-        
+
         try:
             units = Units(forces="N", moments="Nm")
             loadset = LoadSet.read_ansys(Path(temp_file), units)
-            
+
             # Should parse successfully despite comments and empty lines
             assert loadset.load_cases[0].name == "CommentCase"
             assert len(loadset.load_cases[0].point_loads) == 1
             assert loadset.load_cases[0].point_loads[0].name == "TestPoint"
             assert loadset.load_cases[0].point_loads[0].force_moment.fx == 100.0
-            
+
         finally:
             os.unlink(temp_file)
 
     def test_read_ansys_multiple_points(self):
         """Test reading file with multiple points."""
         import tempfile
-        
+
         # Create a temporary file with multiple points
         with tempfile.NamedTemporaryFile(mode="w", suffix=".inp", delete=False) as f:
             f.write("/TITLE,MultiPointCase\n")
@@ -2175,13 +2256,13 @@ class TestLoadSetReadAnsys:
             f.write("f,all,fx,300.0\n")
             f.write("f,all,mz,400.0\n")
             temp_file = f.name
-        
+
         try:
             units = Units(forces="N", moments="Nm")
             loadset = LoadSet.read_ansys(Path(temp_file), units)
-            
+
             assert len(loadset.load_cases[0].point_loads) == 2
-            
+
             # Find the points
             point1 = None
             point2 = None
@@ -2190,21 +2271,21 @@ class TestLoadSetReadAnsys:
                     point1 = point_load
                 elif point_load.name == "Point2":
                     point2 = point_load
-            
+
             assert point1 is not None
             assert point2 is not None
-            
+
             # Check Point1 values
             assert point1.force_moment.fx == 100.0
             assert point1.force_moment.fy == 200.0
             assert point1.force_moment.fz == 0.0  # Not specified
             assert point1.force_moment.mz == 0.0  # Not specified
-            
+
             # Check Point2 values
             assert point2.force_moment.fx == 300.0
             assert point2.force_moment.fy == 0.0  # Not specified
             assert point2.force_moment.mz == 400.0
-            
+
         finally:
             os.unlink(temp_file)
 
@@ -2223,48 +2304,56 @@ class TestLoadSetReadAnsys:
                         PointLoad(
                             name="Node1",
                             force_moment=ForceMoment(
-                                fx=1000.0, fy=2000.0, fz=3000.0,
-                                mx=100.0, my=200.0, mz=300.0
-                            )
+                                fx=1000.0,
+                                fy=2000.0,
+                                fz=3000.0,
+                                mx=100.0,
+                                my=200.0,
+                                mz=300.0,
+                            ),
                         ),
                         PointLoad(
                             name="Node2",
                             force_moment=ForceMoment(
-                                fx=500.0, fy=0.0, fz=1500.0,
-                                mx=50.0, my=0.0, mz=150.0
-                            )
-                        )
-                    ]
+                                fx=500.0, fy=0.0, fz=1500.0, mx=50.0, my=0.0, mz=150.0
+                            ),
+                        ),
+                    ],
                 )
-            ]
+            ],
         )
-        
+
         import tempfile
+
         with tempfile.TemporaryDirectory() as temp_dir:
             # Export to ANSYS
             original_loadset.to_ansys(Path(temp_dir), "roundtrip")
-            
+
             # Read back from ANSYS
             ansys_file = Path(temp_dir) / "roundtrip_TestCase.inp"
             assert ansys_file.exists()
-            
-            read_loadset = LoadSet.read_ansys(ansys_file, Units(forces="N", moments="Nm"))
-            
+
+            read_loadset = LoadSet.read_ansys(
+                ansys_file, Units(forces="N", moments="Nm")
+            )
+
             # Compare the results
             assert read_loadset.load_cases[0].name == "TestCase"
             assert len(read_loadset.load_cases[0].point_loads) == 2
-            
+
             # Find the corresponding points
-            original_points = {pl.name: pl for pl in original_loadset.load_cases[0].point_loads}
+            original_points = {
+                pl.name: pl for pl in original_loadset.load_cases[0].point_loads
+            }
             read_points = {pl.name: pl for pl in read_loadset.load_cases[0].point_loads}
-            
+
             assert set(original_points.keys()) == set(read_points.keys())
-            
+
             # Compare values (allowing for floating point precision)
             for point_name in original_points:
                 orig_fm = original_points[point_name].force_moment
                 read_fm = read_points[point_name].force_moment
-                
+
                 assert abs(orig_fm.fx - read_fm.fx) < 1e-6, f"{point_name} fx mismatch"
                 assert abs(orig_fm.fy - read_fm.fy) < 1e-6, f"{point_name} fy mismatch"
                 assert abs(orig_fm.fz - read_fm.fz) < 1e-6, f"{point_name} fz mismatch"

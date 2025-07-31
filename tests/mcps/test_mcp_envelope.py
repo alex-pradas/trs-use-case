@@ -10,7 +10,6 @@ import json
 from pathlib import Path
 
 from tools.mcps.loads_mcp_server import LoadSetMCPProvider  # noqa: E402
-from tools.loads import LoadSet, Units, LoadCase, PointLoad, ForceMoment  # noqa: E402
 
 
 class TestMCPEnvelope:
@@ -286,7 +285,7 @@ class TestMCPEnvelope:
 
         try:
             # Load from file
-            load_result = self.provider.load_from_json(temp_file)
+            load_result = self.provider.load_from_json(Path(temp_file))
             assert load_result["success"] is True
 
             # Create envelope

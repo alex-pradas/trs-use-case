@@ -65,4 +65,4 @@ dev = [
 
 # Ruff settings
 [tool.ruff]
-ignore = ["F541"]  # f strings without variables inside. Claude code likes to write multilines all with the f for consistency.
+lint.ignore = ["F541", "E402"]  # f strings without variables inside. Claude code likes to write multilines all with the f for consistency.

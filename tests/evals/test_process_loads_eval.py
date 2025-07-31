@@ -69,7 +69,9 @@ This is for ultimate load analysis, so please apply the appropriate safety facto
             expected_tool_calls=[
                 {
                     "name": "load_from_json",
-                    "args": {"file_path": "use_case_definition/data/loads/new_loads.json"},
+                    "args": {
+                        "file_path": "use_case_definition/data/loads/new_loads.json"
+                    },
                 },
                 {"name": "scale_loads", "args": {"factor": 1.5}},
             ],
@@ -90,7 +92,9 @@ Factor in safety margins (1.5 for ultimate loads).
             expected_tool_calls=[
                 {
                     "name": "load_from_json",
-                    "args": {"file_path": "use_case_definition/data/loads/new_loads.json"},
+                    "args": {
+                        "file_path": "use_case_definition/data/loads/new_loads.json"
+                    },
                 },
                 {"name": "scale_loads", "args": {"factor": 1.5}},
             ],
@@ -323,9 +327,7 @@ class TestProcessLoadsAgentBehavior:
         """Test that agent follows system prompt guidance for applying safety factors."""
 
         # Custom prompt that explicitly requires factor 1.5
-        prompt = (
-            "Process loads for ultimate analysis from use_case_definition/data/loads/new_loads.json"
-        )
+        prompt = "Process loads for ultimate analysis from use_case_definition/data/loads/new_loads.json"
 
         evaluator = ScaleLoadsEvaluator(1.5, "SystemPromptGuidanceEval")
         eval_case = EvalCase(
@@ -356,9 +358,7 @@ class TestProcessLoadsAgentBehavior:
     ):
         """Test that the agent doesn't apply safety factor multiple times."""
 
-        prompt = (
-            "Load use_case_definition/data/loads/new_loads.json and apply ultimate safety factor of 1.5"
-        )
+        prompt = "Load use_case_definition/data/loads/new_loads.json and apply ultimate safety factor of 1.5"
 
         evaluator = ToolCallEvaluator("NoDoubleFactor", allow_extra_calls=True)
         eval_case = EvalCase(
