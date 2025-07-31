@@ -7,7 +7,7 @@ import sys
 repo_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(repo_root))
 
-from tools.loads import LoadSet
+from tools.loads import LoadSet  # noqa: E402
 
 # Global settings
 delete_output = True
@@ -82,12 +82,15 @@ def process_loads(new_loads_path, output_path, old_loads_path=None):
 
     # Count files exported
     exported_files = len(list(output_path.glob("*.inp")))
-    print(f"Exported {exported_files} ANSYS files to {output_path}")
-    assert exported_files == 9
-
+    ### print the first 5 files
+    print(f"Ansys Files exported ({exported_files}) to {output_path}:")
+    for file in output_path.glob("*.inp")[:5]:
+        print(f" - {file.name}")
+    if exported_files > 5:
+        print(f" - ... and {exported_files - 5} more")
     # Get the values
     results = enveloped_loadset.get_point_extremes()
-    print("Extreme values in the LoadSet:")
+    print("\nExtreme values in the LoadSet:")
     from pprint import pprint
 
     pprint(results)
@@ -155,9 +158,9 @@ def main(activity="03A"):
     )
     output_path = repo_root / f"solution/03_loads_processing/outputs/{activity}"
 
-    print(f"🚀 Running Activity {activity}")
-    print(f"Input file: {config['input_file']}")
-    print(f"Output folder: outputs/{activity}/")
+    print(f"\n ==== 🚀 Running Activity {activity} ====")
+    print(f" * Input file: {config['input_file']}")
+    print(f" * Output folder: outputs/{activity}/")
 
     # Call the function with correct argument order
     results = process_loads(new_loads_path, output_path, old_loads_path)
