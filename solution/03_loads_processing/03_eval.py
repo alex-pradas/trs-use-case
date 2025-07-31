@@ -306,13 +306,15 @@ SCENARIO_1_EVALUATORS = (
 )
 
 # Create test cases using list comprehension
+
+k=10  # Number of iterations for test cases (pass^k)
 cases = [
     Case(
-        name=f"Scenario 1- iteration {i}",
+        name=f"Scenario 1 - iteration {i}",
         inputs=SCENARIO_1_INPUTS,
         evaluators=SCENARIO_1_EVALUATORS
     )
-    for i in range(1, 6)
+    for i in range(1, k+1)
 ]
 
 # Create dataset
