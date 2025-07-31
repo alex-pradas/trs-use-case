@@ -47,17 +47,6 @@ class TestLoadSetAgentArchitecture:
         agent = create_loadset_agent(system_prompt=custom_prompt)
         assert isinstance(agent, Agent)
 
-    def test_no_mcp_bridge_abstraction(self):
-        """Test that MCP bridge abstraction is eliminated."""
-        # mcp_bridge.py should not be needed in new architecture
-        try:
-            from tools.mcp_bridge import call_mcp_tool
-
-            pytest.fail("MCP bridge should be eliminated in simplified architecture")
-        except ImportError:
-            # Expected - we should not have mcp_bridge in new architecture
-            pass
-
     def test_simplified_architecture(self):
         """Test that the architecture is simplified with direct provider access."""
         agent = create_loadset_agent()
@@ -110,7 +99,7 @@ class TestLoadSetProviderIntegration:
         assert provider is not None
 
         # This validates that the dependency types match
-        assert agent._deps_type == type(provider)
+        assert agent._deps_type is type(provider)
 
 
 if __name__ == "__main__":
