@@ -130,7 +130,7 @@ class TestLoadFromJsonTool:
 
         try:
             # Get the tool function
-            tool_func = server._tool_manager._tools["load_from_json"].fn
+            tool_func = server._tool_manager._tools["load_from_json"].fn  #type: ignore
 
             # Call the tool
             result = tool_func(temp_file)
@@ -154,7 +154,7 @@ class TestLoadFromJsonTool:
         server = create_mcp_server()
 
         # Get the tool function
-        tool_func = server._tool_manager._tools["load_from_json"].fn
+        tool_func = server._tool_manager._tools["load_from_json"].fn  #type: ignore
 
         # Call the tool with non-existent file
         result = tool_func("/path/that/does/not/exist.json")
@@ -175,7 +175,7 @@ class TestLoadFromJsonTool:
 
         try:
             # Get the tool function
-            tool_func = server._tool_manager._tools["load_from_json"].fn
+            tool_func = server._tool_manager._tools["load_from_json"].fn  #type: ignore
 
             # Call the tool
             result = tool_func(temp_file)
@@ -203,7 +203,7 @@ class TestLoadFromJsonTool:
 
         try:
             # Get the tool function
-            tool_func = server._tool_manager._tools["load_from_json"].fn
+            tool_func = server._tool_manager._tools["load_from_json"].fn  #type: ignore
 
             # Call the tool
             result = tool_func(temp_file)
@@ -227,8 +227,8 @@ class TestConvertUnitsTool:
         """Set up test data for each test method."""
         reset_global_state()  # Reset state before each test
         self.server = create_mcp_server()
-        self.load_tool = self.server._tool_manager._tools["load_from_json"].fn
-        self.convert_tool = self.server._tool_manager._tools["convert_units"].fn
+        self.load_tool = self.server._tool_manager._tools["load_from_json"].fn  #type: ignore
+        self.convert_tool = self.server._tool_manager._tools["convert_units"].fn  #type: ignore
 
         # Create test LoadSet data
         self.test_data = {
@@ -357,8 +357,8 @@ class TestScaleLoadsTool:
         """Set up test data for each test method."""
         reset_global_state()
         self.server = create_mcp_server()
-        self.load_tool = self.server._tool_manager._tools["load_from_json"].fn
-        self.scale_tool = self.server._tool_manager._tools["scale_loads"].fn
+        self.load_tool = self.server._tool_manager._tools["load_from_json"].fn  #type: ignore
+        self.scale_tool = self.server._tool_manager._tools["scale_loads"].fn  #type: ignore
 
         # Create test LoadSet data
         self.test_data = {
@@ -426,14 +426,14 @@ class TestDataBasedMethods:
         """Set up test data for each test method."""
         reset_global_state()
         self.server = create_mcp_server()
-        self.load_from_data_tool = self.server._tool_manager._tools["load_from_data"].fn
+        self.load_from_data_tool = self.server._tool_manager._tools["load_from_data"].fn  #type: ignore
         self.load_second_from_data_tool = self.server._tool_manager._tools[
             "load_second_loadset_from_data"
-        ].fn
-        self.compare_tool = self.server._tool_manager._tools["compare_loadsets"].fn
+        ].fn  #type: ignore
+        self.compare_tool = self.server._tool_manager._tools["compare_loadsets"].fn  #type: ignore
         self.chart_tool = self.server._tool_manager._tools[
             "generate_comparison_charts"
-        ].fn
+        ].fn  #type: ignore
 
         # Create test LoadSet data
         self.test_data_1 = {
@@ -570,7 +570,7 @@ class TestDataBasedMethods:
         try:
             load_second_tool = self.server._tool_manager._tools[
                 "load_second_loadset"
-            ].fn
+            ].fn  #type: ignore
             result2 = load_second_tool(temp_file)
             assert result2["success"] is True
 
@@ -663,7 +663,7 @@ class TestDataBasedMethods:
             temp_file = f.name
 
         try:
-            file_tool = self.server._tool_manager._tools["load_from_json"].fn
+            file_tool = self.server._tool_manager._tools["load_from_json"].fn  #type: ignore
             file_result = file_tool(temp_file)
             assert file_result["success"] is False
             assert "error" in file_result
@@ -686,11 +686,11 @@ class TestResourceBasedMethods:
         self.server = create_mcp_server()
         self.load_from_resource_tool = self.server._tool_manager._tools[
             "load_from_resource"
-        ].fn
+        ].fn  #type: ignore
         self.load_second_from_resource_tool = self.server._tool_manager._tools[
             "load_second_loadset_from_resource"
-        ].fn
-        self.compare_tool = self.server._tool_manager._tools["compare_loadsets"].fn
+        ].fn  #type: ignore
+        self.compare_tool = self.server._tool_manager._tools["compare_loadsets"].fn  #type: ignore
 
     def teardown_method(self):
         """Clean up after each test method."""
@@ -754,7 +754,10 @@ class TestResourceBasedMethods:
         assert result["success"] is False
         assert "error" in result
         assert "Unknown resource: unknown_file.json" in result["error"]
-        assert "Available: 03_A_new_loads.json, 03_B_new_loads.json, 03_old_loads.json" in result["error"]
+        assert (
+            "Available: 03_A_new_loads.json, 03_B_new_loads.json, 03_old_loads.json"
+            in result["error"]
+        )
 
     def test_load_from_resource_malformed_uri(self):
         """Test loading from malformed resource URI."""
@@ -840,7 +843,7 @@ class TestResourceBasedMethods:
             with open(new_loads_path, "r") as f:
                 new_loads_data = json.load(f)
 
-            data_tool = self.server._tool_manager._tools["load_from_data"].fn
+            data_tool = self.server._tool_manager._tools["load_from_data"].fn  #type: ignore
             data_result = data_tool(new_loads_data)
             assert data_result["success"] is True
 
@@ -863,7 +866,7 @@ class TestResourceBasedMethods:
 
             data_tool = self.server._tool_manager._tools[
                 "load_second_loadset_from_data"
-            ].fn
+            ].fn  #type: ignore
             result2 = data_tool(old_loads_data)
             assert result2["success"] is True
 
@@ -910,7 +913,7 @@ class TestResourceBasedMethods:
                 result = self.load_from_resource_tool(uri)
                 assert result["success"] is False
                 assert "error" in result
-            except Exception as e:
+            except Exception:
                 # Some URIs might cause exceptions, which is also acceptable
                 pass
 
@@ -934,13 +937,37 @@ class TestResourceBasedMethods:
         """Test that the expected resource files exist in the project."""
         # This test verifies the project structure
         project_root = Path(__file__).parent.parent.parent
-        new_loads_a_path = project_root / "use_case_definition" / "data" / "loads" / "03_A_new_loads.json"
-        new_loads_b_path = project_root / "use_case_definition" / "data" / "loads" / "03_B_new_loads.json"
-        old_loads_path = project_root / "use_case_definition" / "data" / "loads" / "03_old_loads.json"
+        new_loads_a_path = (
+            project_root
+            / "use_case_definition"
+            / "data"
+            / "loads"
+            / "03_A_new_loads.json"
+        )
+        new_loads_b_path = (
+            project_root
+            / "use_case_definition"
+            / "data"
+            / "loads"
+            / "03_B_new_loads.json"
+        )
+        old_loads_path = (
+            project_root
+            / "use_case_definition"
+            / "data"
+            / "loads"
+            / "03_old_loads.json"
+        )
 
-        assert new_loads_a_path.exists(), f"03_A_new_loads.json not found at {new_loads_a_path}"
-        assert new_loads_b_path.exists(), f"03_B_new_loads.json not found at {new_loads_b_path}"
-        assert old_loads_path.exists(), f"03_old_loads.json not found at {old_loads_path}"
+        assert new_loads_a_path.exists(), (
+            f"03_A_new_loads.json not found at {new_loads_a_path}"
+        )
+        assert new_loads_b_path.exists(), (
+            f"03_B_new_loads.json not found at {new_loads_b_path}"
+        )
+        assert old_loads_path.exists(), (
+            f"03_old_loads.json not found at {old_loads_path}"
+        )
 
         # Verify files are valid JSON
         with open(new_loads_a_path, "r") as f:
@@ -980,7 +1007,7 @@ class TestMCPServerComparison:
 
     def call_tool(self, tool_name: str, **kwargs):
         """Helper method to call MCP tools."""
-        tool_func = self.mcp._tool_manager._tools[tool_name].fn
+        tool_func = self.mcp._tool_manager._tools[tool_name].fn  #type: ignore
         return tool_func(**kwargs)
 
     def teardown_method(self):
@@ -998,13 +1025,15 @@ class TestMCPServerComparison:
         """Test loading a second LoadSet for comparison."""
         # First load the primary LoadSet
         result1 = self.call_tool(
-            "load_from_json", file_path="use_case_definition/data/loads/03_A_new_loads.json"
+            "load_from_json",
+            file_path="use_case_definition/data/loads/03_A_new_loads.json",
         )
         assert result1["success"] is True
 
         # Then load the comparison LoadSet
         result2 = self.call_tool(
-            "load_second_loadset", file_path="use_case_definition/data/loads/03_old_loads.json"
+            "load_second_loadset",
+            file_path="use_case_definition/data/loads/03_old_loads.json",
         )
 
         assert result2["success"] is True
@@ -1025,8 +1054,14 @@ class TestMCPServerComparison:
     def test_compare_loadsets_success(self):
         """Test successful LoadSet comparison."""
         # Load both LoadSets
-        self.call_tool("load_from_json", file_path="use_case_definition/data/loads/03_A_new_loads.json")
-        self.call_tool("load_second_loadset", file_path="use_case_definition/data/loads/03_old_loads.json")
+        self.call_tool(
+            "load_from_json",
+            file_path="use_case_definition/data/loads/03_A_new_loads.json",
+        )
+        self.call_tool(
+            "load_second_loadset",
+            file_path="use_case_definition/data/loads/03_old_loads.json",
+        )
 
         # Compare LoadSets
         result = self.call_tool("compare_loadsets")
@@ -1049,7 +1084,10 @@ class TestMCPServerComparison:
     def test_compare_loadsets_no_comparison_loadset(self):
         """Test comparison without comparison LoadSet loaded."""
         # Load only primary LoadSet
-        self.call_tool("load_from_json", file_path="use_case_definition/data/loads/03_A_new_loads.json")
+        self.call_tool(
+            "load_from_json",
+            file_path="use_case_definition/data/loads/03_A_new_loads.json",
+        )
 
         result = self.call_tool("compare_loadsets")
 
@@ -1059,8 +1097,14 @@ class TestMCPServerComparison:
     def test_get_comparison_summary_success(self):
         """Test getting comparison summary."""
         # Load both LoadSets and compare
-        self.call_tool("load_from_json", file_path="use_case_definition/data/loads/03_A_new_loads.json")
-        self.call_tool("load_second_loadset", file_path="use_case_definition/data/loads/03_old_loads.json")
+        self.call_tool(
+            "load_from_json",
+            file_path="use_case_definition/data/loads/03_A_new_loads.json",
+        )
+        self.call_tool(
+            "load_second_loadset",
+            file_path="use_case_definition/data/loads/03_old_loads.json",
+        )
         self.call_tool("compare_loadsets")
 
         # Get summary
@@ -1095,8 +1139,14 @@ class TestMCPServerComparison:
     def test_export_comparison_json_success(self):
         """Test exporting comparison to JSON file."""
         # Load both LoadSets and compare
-        self.call_tool("load_from_json", file_path="use_case_definition/data/loads/03_A_new_loads.json")
-        self.call_tool("load_second_loadset", file_path="use_case_definition/data/loads/03_old_loads.json")
+        self.call_tool(
+            "load_from_json",
+            file_path="use_case_definition/data/loads/03_A_new_loads.json",
+        )
+        self.call_tool(
+            "load_second_loadset",
+            file_path="use_case_definition/data/loads/03_old_loads.json",
+        )
         self.call_tool("compare_loadsets")
 
         # Export to JSON
@@ -1126,8 +1176,14 @@ class TestMCPServerComparison:
     def test_generate_comparison_charts_as_files(self):
         """Test generating comparison charts as files."""
         # Load both LoadSets and compare
-        self.call_tool("load_from_json", file_path="use_case_definition/data/loads/03_A_new_loads.json")
-        self.call_tool("load_second_loadset", file_path="use_case_definition/data/loads/03_old_loads.json")
+        self.call_tool(
+            "load_from_json",
+            file_path="use_case_definition/data/loads/03_A_new_loads.json",
+        )
+        self.call_tool(
+            "load_second_loadset",
+            file_path="use_case_definition/data/loads/03_old_loads.json",
+        )
         self.call_tool("compare_loadsets")
 
         # Generate charts as files
@@ -1149,15 +1205,21 @@ class TestMCPServerComparison:
         assert len(chart_files) > 0
 
         # Verify files actually exist
-        for point_name, file_path in chart_files.items():
+        for _, file_path in chart_files.items():
             assert os.path.exists(file_path), f"Chart file {file_path} was not created"
             assert file_path.endswith(".png"), f"Chart file {file_path} should be PNG"
 
     def test_generate_comparison_charts_as_image_objects(self):
         """Test generating comparison charts as base64 strings."""
         # Load both LoadSets and compare
-        self.call_tool("load_from_json", file_path="use_case_definition/data/loads/03_A_new_loads.json")
-        self.call_tool("load_second_loadset", file_path="use_case_definition/data/loads/03_old_loads.json")
+        self.call_tool(
+            "load_from_json",
+            file_path="use_case_definition/data/loads/03_A_new_loads.json",
+        )
+        self.call_tool(
+            "load_second_loadset",
+            file_path="use_case_definition/data/loads/03_old_loads.json",
+        )
         self.call_tool("compare_loadsets")
 
         # Generate charts as base64 strings
@@ -1205,8 +1267,14 @@ class TestMCPServerComparison:
     def test_generate_comparison_charts_missing_output_dir(self):
         """Test generating charts as files without output directory."""
         # Load both LoadSets and compare
-        self.call_tool("load_from_json", file_path="use_case_definition/data/loads/03_A_new_loads.json")
-        self.call_tool("load_second_loadset", file_path="use_case_definition/data/loads/03_old_loads.json")
+        self.call_tool(
+            "load_from_json",
+            file_path="use_case_definition/data/loads/03_A_new_loads.json",
+        )
+        self.call_tool(
+            "load_second_loadset",
+            file_path="use_case_definition/data/loads/03_old_loads.json",
+        )
         self.call_tool("compare_loadsets")
 
         # Try to generate charts without output_dir
@@ -1219,13 +1287,15 @@ class TestMCPServerComparison:
         """Test complete comparison workflow."""
         # Step 1: Load primary LoadSet
         result1 = self.call_tool(
-            "load_from_json", file_path="use_case_definition/data/loads/03_A_new_loads.json"
+            "load_from_json",
+            file_path="use_case_definition/data/loads/03_A_new_loads.json",
         )
         assert result1["success"] is True
 
         # Step 2: Load comparison LoadSet
         result2 = self.call_tool(
-            "load_second_loadset", file_path="use_case_definition/data/loads/03_old_loads.json"
+            "load_second_loadset",
+            file_path="use_case_definition/data/loads/03_old_loads.json",
         )
         assert result2["success"] is True
 
@@ -1575,7 +1645,7 @@ class TestMCPEnvelope:
 
         try:
             # Load from file
-            load_result = self.provider.load_from_json(temp_file)
+            load_result = self.provider.load_from_json(Path(temp_file))
             assert load_result["success"] is True
 
             # Create envelope

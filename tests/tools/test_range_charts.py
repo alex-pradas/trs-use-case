@@ -7,7 +7,6 @@ that creates comparison images for LoadSet force and moment ranges.
 
 import pytest
 import tempfile
-import os
 from pathlib import Path
 
 from tools.loads import (
@@ -16,8 +15,6 @@ from tools.loads import (
     PointLoad,
     ForceMoment,
     Units,
-    ComparisonRow,
-    LoadSetCompare,
 )
 
 
@@ -118,7 +115,7 @@ class TestRangeChartGeneration:
         comparison = self.loadset1.compare_to(self.loadset2)
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            generated_files = comparison.generate_range_charts(temp_dir)
+            generated_files = comparison.generate_range_charts(Path(temp_dir))
 
             # Should generate files for both points
             assert len(generated_files) == 2
@@ -127,9 +124,10 @@ class TestRangeChartGeneration:
 
             # Check that files actually exist
             for point_name, file_path in generated_files.items():
-                assert file_path.exists()
-                assert file_path.suffix == ".png"
-                assert file_path.stat().st_size > 0  # File should not be empty
+                path_obj = Path(file_path)
+                assert path_obj.exists()
+                assert path_obj.suffix == ".png"
+                assert path_obj.stat().st_size > 0  # File should not be empty
 
     def test_generate_range_charts_custom_format(self):
         """Test range chart generation with different formats."""
@@ -138,12 +136,13 @@ class TestRangeChartGeneration:
         with tempfile.TemporaryDirectory() as temp_dir:
             # Test SVG format
             generated_files = comparison.generate_range_charts(
-                temp_dir, image_format="svg"
+                Path(temp_dir), image_format="svg"
             )
 
             for point_name, file_path in generated_files.items():
-                assert file_path.suffix == ".svg"
-                assert file_path.exists()
+                path_obj = Path(file_path)
+                assert path_obj.suffix == ".svg"
+                assert path_obj.exists()
 
     def test_generate_range_charts_creates_directory(self):
         """Test that generate_range_charts creates output directory if it doesn't exist."""
@@ -239,12 +238,12 @@ class TestRangeChartGeneration:
         comparison = force_only_loadset.compare_to(self.loadset1)
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            generated_files = comparison.generate_range_charts(temp_dir)
+            generated_files = comparison.generate_range_charts(Path(temp_dir))
 
             # Should still generate files, but moment subplot may show "No moment data"
             assert len(generated_files) > 0
             for file_path in generated_files.values():
-                assert file_path.exists()
+                assert Path(file_path).exists()
 
     def test_generate_range_charts_error_handling(self):
         """Test error handling in range chart generation."""
@@ -253,7 +252,7 @@ class TestRangeChartGeneration:
         # Test with invalid output directory (file instead of directory)
         with tempfile.NamedTemporaryFile() as temp_file:
             with pytest.raises(FileNotFoundError, match="not a directory"):
-                comparison.generate_range_charts(temp_file.name)
+                comparison.generate_range_charts(Path(temp_file.name))
 
     def test_generate_range_charts_base64_mode(self):
         """Test base64 generation mode."""
@@ -302,18 +301,18 @@ class TestRangeChartGeneration:
         # Valid formats should work
         with tempfile.TemporaryDirectory() as temp_dir:
             # Test PNG
-            comparison.generate_range_charts(temp_dir, image_format="png")
-            
+            comparison.generate_range_charts(Path(temp_dir), image_format="png")
+
             # Test SVG
-            comparison.generate_range_charts(temp_dir, image_format="svg")
+            comparison.generate_range_charts(Path(temp_dir), image_format="svg")
 
         # Invalid format should raise error
         with tempfile.TemporaryDirectory() as temp_dir:
             with pytest.raises(ValueError, match="Unsupported image format 'pdf'"):
-                comparison.generate_range_charts(temp_dir, image_format="pdf")
-            
+                comparison.generate_range_charts(Path(temp_dir), image_format="pdf")
+
             with pytest.raises(ValueError, match="Unsupported image format 'jpeg'"):
-                comparison.generate_range_charts(temp_dir, image_format="jpeg")
+                comparison.generate_range_charts(Path(temp_dir), image_format="jpeg")
 
 
 class TestRangeChartsWithRealData:
@@ -344,17 +343,18 @@ class TestRangeChartsWithRealData:
         comparison = old_loadset.compare_to(new_loadset)
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            generated_files = comparison.generate_range_charts(temp_dir)
+            generated_files = comparison.generate_range_charts(Path(temp_dir))
 
             # Should generate files for all points in the real data
             assert len(generated_files) > 0
 
             # Verify all files exist and have reasonable sizes
             for point_name, file_path in generated_files.items():
-                assert file_path.exists()
-                assert file_path.suffix == ".png"
+                path_obj = Path(file_path)
+                assert path_obj.exists()
+                assert path_obj.suffix == ".png"
                 assert (
-                    file_path.stat().st_size > 10000
+                    path_obj.stat().st_size > 10000
                 )  # Should be at least 10KB for a real chart
 
                 print(f"Generated chart for {point_name}: {file_path}")

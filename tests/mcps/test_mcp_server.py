@@ -117,7 +117,7 @@ class TestLoadFromJsonTool:
 
         try:
             # Get the tool function
-            tool_func = server._tool_manager._tools["load_from_json"].fn
+            tool_func = server._tool_manager._tools["load_from_json"].fn  # type: ignore  # type: ignore
 
             # Call the tool
             result = tool_func(temp_file)
@@ -141,7 +141,7 @@ class TestLoadFromJsonTool:
         server = create_mcp_server()
 
         # Get the tool function
-        tool_func = server._tool_manager._tools["load_from_json"].fn
+        tool_func = server._tool_manager._tools["load_from_json"].fn  # type: ignore
 
         # Call the tool with non-existent file
         result = tool_func("/path/that/does/not/exist.json")
@@ -162,7 +162,7 @@ class TestLoadFromJsonTool:
 
         try:
             # Get the tool function
-            tool_func = server._tool_manager._tools["load_from_json"].fn
+            tool_func = server._tool_manager._tools["load_from_json"].fn  # type: ignore  # type: ignore
 
             # Call the tool
             result = tool_func(temp_file)
@@ -190,7 +190,7 @@ class TestLoadFromJsonTool:
 
         try:
             # Get the tool function
-            tool_func = server._tool_manager._tools["load_from_json"].fn
+            tool_func = server._tool_manager._tools["load_from_json"].fn  # type: ignore  # type: ignore
 
             # Call the tool
             result = tool_func(temp_file)
@@ -214,8 +214,8 @@ class TestConvertUnitsTool:
         """Set up test data for each test method."""
         reset_global_state()  # Reset state before each test
         self.server = create_mcp_server()
-        self.load_tool = self.server._tool_manager._tools["load_from_json"].fn
-        self.convert_tool = self.server._tool_manager._tools["convert_units"].fn
+        self.load_tool = self.server._tool_manager._tools["load_from_json"].fn  # type: ignore
+        self.convert_tool = self.server._tool_manager._tools["convert_units"].fn  # type: ignore
 
         # Create test LoadSet data
         self.test_data = {
@@ -344,8 +344,8 @@ class TestScaleLoadsTool:
         """Set up test data for each test method."""
         reset_global_state()
         self.server = create_mcp_server()
-        self.load_tool = self.server._tool_manager._tools["load_from_json"].fn
-        self.scale_tool = self.server._tool_manager._tools["scale_loads"].fn
+        self.load_tool = self.server._tool_manager._tools["load_from_json"].fn  # type: ignore
+        self.scale_tool = self.server._tool_manager._tools["scale_loads"].fn  # type: ignore
 
         # Create test LoadSet data
         self.test_data = {
@@ -421,33 +421,33 @@ class TestScaleLoadsTool:
             assert scale_result["success"] is True
 
             # Export to ANSYS and verify extremes are included
-            export_tool = self.server._tool_manager._tools["export_to_ansys"].fn
-            
+            export_tool = self.server._tool_manager._tools["export_to_ansys"].fn  # type: ignore
+
             with tempfile.TemporaryDirectory() as temp_dir:
                 export_result = export_tool(temp_dir, "test")
-                
+
                 # Verify export succeeded
                 assert export_result["success"] is True
                 assert "ANSYS files exported" in export_result["message"]
-                
+
                 # Verify loadset_extremes is included in response
                 assert "loadset_extremes" in export_result
                 extremes = export_result["loadset_extremes"]
-                
+
                 # Verify structure of extremes data
                 assert isinstance(extremes, dict)
                 assert "Point 1" in extremes  # Point name from test data
-                
+
                 point_data = extremes["Point 1"]
                 assert isinstance(point_data, dict)
-                
+
                 # Verify components are present
                 for component in ["fx", "fy", "fz", "mx", "my", "mz"]:
                     assert component in point_data
-                    
+
                     component_data = point_data[component]
                     assert isinstance(component_data, dict)
-                    
+
                     # Verify min/max structure
                     for extreme_type in ["min", "max"]:
                         if extreme_type in component_data:
@@ -459,6 +459,7 @@ class TestScaleLoadsTool:
 
         finally:
             import os
+
             os.unlink(temp_file)
 
 
@@ -469,14 +470,14 @@ class TestDataBasedMethods:
         """Set up test data for each test method."""
         reset_global_state()
         self.server = create_mcp_server()
-        self.load_from_data_tool = self.server._tool_manager._tools["load_from_data"].fn
+        self.load_from_data_tool = self.server._tool_manager._tools["load_from_data"].fn  # type: ignore
         self.load_second_from_data_tool = self.server._tool_manager._tools[
             "load_second_loadset_from_data"
-        ].fn
-        self.compare_tool = self.server._tool_manager._tools["compare_loadsets"].fn
+        ].fn  # type: ignore
+        self.compare_tool = self.server._tool_manager._tools["compare_loadsets"].fn  # type: ignore
         self.chart_tool = self.server._tool_manager._tools[
             "generate_comparison_charts"
-        ].fn
+        ].fn  # type: ignore
 
         # Create test LoadSet data
         self.test_data_1 = {
@@ -613,7 +614,7 @@ class TestDataBasedMethods:
         try:
             load_second_tool = self.server._tool_manager._tools[
                 "load_second_loadset"
-            ].fn
+            ].fn  # type: ignore
             result2 = load_second_tool(temp_file)
             assert result2["success"] is True
 
@@ -706,7 +707,7 @@ class TestDataBasedMethods:
             temp_file = f.name
 
         try:
-            file_tool = self.server._tool_manager._tools["load_from_json"].fn
+            file_tool = self.server._tool_manager._tools["load_from_json"].fn  # type: ignore
             file_result = file_tool(temp_file)
             assert file_result["success"] is False
             assert "error" in file_result
@@ -729,11 +730,11 @@ class TestResourceBasedMethods:
         self.server = create_mcp_server()
         self.load_from_resource_tool = self.server._tool_manager._tools[
             "load_from_resource"
-        ].fn
+        ].fn  # type: ignore
         self.load_second_from_resource_tool = self.server._tool_manager._tools[
             "load_second_loadset_from_resource"
-        ].fn
-        self.compare_tool = self.server._tool_manager._tools["compare_loadsets"].fn
+        ].fn  # type: ignore
+        self.compare_tool = self.server._tool_manager._tools["compare_loadsets"].fn  # type: ignore
 
     def teardown_method(self):
         """Clean up after each test method."""
@@ -797,7 +798,10 @@ class TestResourceBasedMethods:
         assert result["success"] is False
         assert "error" in result
         assert "Unknown resource: unknown_file.json" in result["error"]
-        assert "Available: 03_A_new_loads.json, 03_B_new_loads.json, 03_old_loads.json" in result["error"]
+        assert (
+            "Available: 03_A_new_loads.json, 03_B_new_loads.json, 03_old_loads.json"
+            in result["error"]
+        )
 
     def test_load_from_resource_malformed_uri(self):
         """Test loading from malformed resource URI."""
@@ -883,7 +887,7 @@ class TestResourceBasedMethods:
             with open(new_loads_path, "r") as f:
                 new_loads_data = json.load(f)
 
-            data_tool = self.server._tool_manager._tools["load_from_data"].fn
+            data_tool = self.server._tool_manager._tools["load_from_data"].fn  # type: ignore
             data_result = data_tool(new_loads_data)
             assert data_result["success"] is True
 
@@ -906,7 +910,7 @@ class TestResourceBasedMethods:
 
             data_tool = self.server._tool_manager._tools[
                 "load_second_loadset_from_data"
-            ].fn
+            ].fn  # type: ignore
             result2 = data_tool(old_loads_data)
             assert result2["success"] is True
 
@@ -953,7 +957,7 @@ class TestResourceBasedMethods:
                 result = self.load_from_resource_tool(uri)
                 assert result["success"] is False
                 assert "error" in result
-            except Exception as e:
+            except Exception:
                 # Some URIs might cause exceptions, which is also acceptable
                 pass
 
@@ -977,13 +981,37 @@ class TestResourceBasedMethods:
         """Test that the expected resource files exist in the project."""
         # This test verifies the project structure
         project_root = Path(__file__).parent.parent.parent
-        new_loads_a_path = project_root / "use_case_definition" / "data" / "loads" / "03_A_new_loads.json"
-        new_loads_b_path = project_root / "use_case_definition" / "data" / "loads" / "03_B_new_loads.json"
-        old_loads_path = project_root / "use_case_definition" / "data" / "loads" / "03_old_loads.json"
+        new_loads_a_path = (
+            project_root
+            / "use_case_definition"
+            / "data"
+            / "loads"
+            / "03_A_new_loads.json"
+        )
+        new_loads_b_path = (
+            project_root
+            / "use_case_definition"
+            / "data"
+            / "loads"
+            / "03_B_new_loads.json"
+        )
+        old_loads_path = (
+            project_root
+            / "use_case_definition"
+            / "data"
+            / "loads"
+            / "03_old_loads.json"
+        )
 
-        assert new_loads_a_path.exists(), f"03_A_new_loads.json not found at {new_loads_a_path}"
-        assert new_loads_b_path.exists(), f"03_B_new_loads.json not found at {new_loads_b_path}"
-        assert old_loads_path.exists(), f"03_old_loads.json not found at {old_loads_path}"
+        assert new_loads_a_path.exists(), (
+            f"03_A_new_loads.json not found at {new_loads_a_path}"
+        )
+        assert new_loads_b_path.exists(), (
+            f"03_B_new_loads.json not found at {new_loads_b_path}"
+        )
+        assert old_loads_path.exists(), (
+            f"03_old_loads.json not found at {old_loads_path}"
+        )
 
         # Verify files are valid JSON
         with open(new_loads_a_path, "r") as f:
