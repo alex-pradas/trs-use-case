@@ -45,11 +45,13 @@ class LoadSetCompare(BaseModel):
             dict: Dictionary representation of the comparison
         """
         return {
-            "metadata": {
-                "loadset1": self.loadset1_metadata,
-                "loadset2": self.loadset2_metadata,
+            "report_metadata": {
+                "loadcases_info": {
+                    "loadset1": self.loadset1_metadata,
+                    "loadset2": self.loadset2_metadata,
+                },
             },
-            "comparison_rows": [row.model_dump() for row in self.comparison_rows],
+            "comparisons": [row.model_dump() for row in self.comparison_rows],
         }
 
     def to_json(self, indent: int = 2) -> str:
@@ -63,6 +65,116 @@ class LoadSetCompare(BaseModel):
             str: JSON representation of the comparison
         """
         return json.dumps(self.to_dict(), indent=indent)
+
+    def new_exceeds_old(self) -> bool:
+        """
+        Check if loadset2 (new) exceeds loadset1 (old) envelope in every component comparison.
+
+        For the new loads to be considered more critical than the old loads, every single
+        component comparison must show that loadset2 exceeds loadset1's bounds:
+        - For "max" type: loadset2_value > loadset1_value (higher maximum)
+        - For "min" type: loadset2_value < loadset1_value (lower minimum, more negative)
+
+        Returns:
+            bool: True if new loads should be considered for analysis (loadset2 exceeds 
+                  loadset1 envelope in all comparisons), False if previous loads are more 
+                  critical (loadset2 is enveloped by loadset1 in any comparison)
+        """
+        if not self.comparison_rows:
+            return False
+        
+        for row in self.comparison_rows:
+            if row.type == "max":
+                # For maximum values, loadset2 must be greater than loadset1
+                if row.loadset2_value <= row.loadset1_value:
+                    return False
+            elif row.type == "min":
+                # For minimum values, loadset2 must be less than loadset1 (more negative)
+                if row.loadset2_value >= row.loadset1_value:
+                    return False
+        
+        return True
+
+    def export_comparison_report(
+        self,
+        output_dir: PathLike,
+        report_name: str = "comparison_report",
+        image_format: str = "png",
+        indent: int = 2,
+    ) -> Path:
+        """
+        Export complete comparison report including JSON data and chart images.
+
+        Creates a comprehensive report with:
+        - JSON file containing comparison data and generated chart filenames
+        - Chart image files for each point comparison
+
+        Args:
+            output_dir: Directory to save the report files
+            report_name: Base name for the report files (default: "comparison_report")
+            image_format: Image format for charts (png, svg)
+            indent: JSON indentation level
+
+        Returns:
+            Path: Path to the generated JSON report file
+
+        Raises:
+            ImportError: If matplotlib is not available
+            FileNotFoundError: If output directory doesn't exist and can't be created
+            ValueError: If report generation fails
+        """
+        from pathlib import Path
+        import json
+
+        # Ensure output directory exists
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+        
+        if not output_path.is_dir():
+            raise FileNotFoundError(f"Output path exists but is not a directory: {output_dir}")
+
+        # Generate chart images in the same directory
+        try:
+            chart_files = self.generate_range_charts(
+                output_dir=output_path,
+                image_format=image_format,
+                as_base64=False
+            )
+        except Exception as e:
+            raise ValueError(f"Failed to generate charts: {e}")
+
+        # Get base comparison data
+        comparison_data = self.to_dict()
+        
+        # Add chart metadata to the comparison data
+        chart_metadata = {}
+        for point_name, file_path in chart_files.items():
+            # Convert Path to relative filename for portability
+            if isinstance(file_path, Path):
+                chart_metadata[point_name] = file_path.name
+            else:
+                chart_metadata[point_name] = str(file_path)
+
+        # Add chart information and envelope check to existing report metadata
+        comparison_data["report_metadata"].update({
+            "chart_files": chart_metadata,
+            "image_format": image_format,
+            "new_exceeds_old": self.new_exceeds_old(),
+            "total_comparisons": len(self.comparison_rows),
+            "points_analyzed": len(set(row.point_name for row in self.comparison_rows)),
+        })
+
+        # Write JSON report file
+        json_filename = f"{report_name}.json"
+        json_path = output_path / json_filename
+        
+        try:
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(comparison_data, f, indent=indent)
+        except Exception as e:
+            raise ValueError(f"Failed to write JSON report: {e}")
+
+        return json_path
 
     def generate_range_charts(
         self,
@@ -78,7 +190,7 @@ class LoadSetCompare(BaseModel):
 
         Args:
             output_dir: Directory to save the generated images (required if as_base64=False)
-            image_format: Image format (png, svg, pdf)
+            image_format: Image format (png, svg)
             as_base64: If True, return base64-encoded strings instead of saving files
 
         Returns:
@@ -101,6 +213,11 @@ class LoadSetCompare(BaseModel):
         # Validate parameters
         if not as_base64 and output_dir is None:
             raise ValueError("output_dir is required when as_base64=False")
+        
+        # Validate image format
+        supported_formats = ["png", "svg"]
+        if image_format not in supported_formats:
+            raise ValueError(f"Unsupported image format '{image_format}'. Supported formats: {supported_formats}")
 
         # Handle output directory for file saving
         output_path: Path | None = None

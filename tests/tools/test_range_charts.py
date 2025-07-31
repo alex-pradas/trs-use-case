@@ -295,6 +295,26 @@ class TestRangeChartGeneration:
         with pytest.raises(ValueError, match="output_dir is required"):
             comparison.generate_range_charts(as_base64=False)
 
+    def test_generate_range_charts_format_validation(self):
+        """Test image format validation."""
+        comparison = self.loadset1.compare_to(self.loadset2)
+
+        # Valid formats should work
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Test PNG
+            comparison.generate_range_charts(temp_dir, image_format="png")
+            
+            # Test SVG
+            comparison.generate_range_charts(temp_dir, image_format="svg")
+
+        # Invalid format should raise error
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with pytest.raises(ValueError, match="Unsupported image format 'pdf'"):
+                comparison.generate_range_charts(temp_dir, image_format="pdf")
+            
+            with pytest.raises(ValueError, match="Unsupported image format 'jpeg'"):
+                comparison.generate_range_charts(temp_dir, image_format="jpeg")
+
 
 class TestRangeChartsWithRealData:
     """Test range chart generation with real data files."""

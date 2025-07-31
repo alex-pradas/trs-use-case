@@ -1098,12 +1098,13 @@ class TestLoadSetCompare:
 
         result_dict = compare.to_dict()
 
-        assert "metadata" in result_dict
-        assert "comparison_rows" in result_dict
-        assert result_dict["metadata"]["loadset1"]["name"] == "LoadSet 1"
-        assert result_dict["metadata"]["loadset2"]["name"] == "LoadSet 2"
-        assert len(result_dict["comparison_rows"]) == 1
-        assert result_dict["comparison_rows"][0]["point_name"] == "Point_A"
+        assert "report_metadata" in result_dict
+        assert "comparisons" in result_dict
+        assert "loadcases_info" in result_dict["report_metadata"]
+        assert result_dict["report_metadata"]["loadcases_info"]["loadset1"]["name"] == "LoadSet 1"
+        assert result_dict["report_metadata"]["loadcases_info"]["loadset2"]["name"] == "LoadSet 2"
+        assert len(result_dict["comparisons"]) == 1
+        assert result_dict["comparisons"][0]["point_name"] == "Point_A"
 
     def test_loadset_compare_to_json(self):
         """Test LoadSetCompare to_json method."""
@@ -1131,8 +1132,358 @@ class TestLoadSetCompare:
         import json
 
         parsed = json.loads(json_str)
-        assert parsed["metadata"]["loadset1"]["name"] == "LoadSet 1"
-        assert len(parsed["comparison_rows"]) == 1
+        assert parsed["report_metadata"]["loadcases_info"]["loadset1"]["name"] == "LoadSet 1"
+        assert len(parsed["comparisons"]) == 1
+
+    def test_export_comparison_report(self):
+        """Test export_comparison_report method generates complete reports."""
+        import tempfile
+        import json
+        from pathlib import Path
+        
+        # Debug flag - set to True to keep files for manual inspection
+        debug = False
+        
+        # Create sample comparison data with known values
+        # Point A - Force components (fx, fy)
+        row1 = ComparisonRow(
+            point_name="Point_A",
+            component="fx",
+            type="max",
+            loadset1_value=100.0,
+            loadset2_value=120.0,  # Exceeds old max
+            loadset1_loadcase="Case1",
+            loadset2_loadcase="Case2",
+            abs_diff=20.0,
+            pct_diff=20.0,
+        )
+        
+        row2 = ComparisonRow(
+            point_name="Point_A",
+            component="fx",
+            type="min",
+            loadset1_value=80.0,
+            loadset2_value=60.0,  # Lower than old min (more negative direction)
+            loadset1_loadcase="Case3",
+            loadset2_loadcase="Case4",
+            abs_diff=20.0,
+            pct_diff=25.0,
+        )
+        
+        row3 = ComparisonRow(
+            point_name="Point_A",
+            component="fy",
+            type="max",
+            loadset1_value=150.0,
+            loadset2_value=130.0,  # LOWER than old max (within envelope)
+            loadset1_loadcase="Case1",
+            loadset2_loadcase="Case2",
+            abs_diff=20.0,
+            pct_diff=13.3,
+        )
+        
+        row4 = ComparisonRow(
+            point_name="Point_A",
+            component="fy",
+            type="min",
+            loadset1_value=-50.0,
+            loadset2_value=-35.0,  # HIGHER than old min (within envelope)
+            loadset1_loadcase="Case3",
+            loadset2_loadcase="Case4",
+            abs_diff=15.0,
+            pct_diff=30.0,
+        )
+        
+        # Point B - Moment components (mx, my, mz)
+        row5 = ComparisonRow(
+            point_name="Point_B",
+            component="mx",
+            type="max",
+            loadset1_value=500.0,
+            loadset2_value=650.0,  # Exceeds old max
+            loadset1_loadcase="Case1",
+            loadset2_loadcase="Case2",
+            abs_diff=150.0,
+            pct_diff=30.0,
+        )
+        
+        row6 = ComparisonRow(
+            point_name="Point_B",
+            component="mx",
+            type="min",
+            loadset1_value=-300.0,
+            loadset2_value=-420.0,  # Lower than old min (more negative)
+            loadset1_loadcase="Case3",
+            loadset2_loadcase="Case4",
+            abs_diff=120.0,
+            pct_diff=40.0,
+        )
+        
+        row7 = ComparisonRow(
+            point_name="Point_B",
+            component="my",
+            type="max",
+            loadset1_value=200.0,
+            loadset2_value=175.0,  # LOWER than old max (within envelope)
+            loadset1_loadcase="Case1",
+            loadset2_loadcase="Case2",
+            abs_diff=25.0,
+            pct_diff=12.5,
+        )
+        
+        row8 = ComparisonRow(
+            point_name="Point_B",
+            component="my",
+            type="min",
+            loadset1_value=-100.0,
+            loadset2_value=-85.0,  # HIGHER than old min (within envelope)
+            loadset1_loadcase="Case3",
+            loadset2_loadcase="Case4",
+            abs_diff=15.0,
+            pct_diff=15.0,
+        )
+        
+        row9 = ComparisonRow(
+            point_name="Point_B",
+            component="mz",
+            type="max",
+            loadset1_value=800.0,
+            loadset2_value=1000.0,  # Exceeds old max
+            loadset1_loadcase="Case1",
+            loadset2_loadcase="Case2",
+            abs_diff=200.0,
+            pct_diff=25.0,
+        )
+        
+        row10 = ComparisonRow(
+            point_name="Point_B",
+            component="mz",
+            type="min",
+            loadset1_value=-400.0,
+            loadset2_value=-550.0,  # Lower than old min (more negative)
+            loadset1_loadcase="Case3",
+            loadset2_loadcase="Case4",
+            abs_diff=150.0,
+            pct_diff=37.5,
+        )
+        
+        # Create LoadSetCompare instance
+        compare = LoadSetCompare(
+            loadset1_metadata={
+                "name": "Old LoadSet",
+                "version": 1,
+                "units": {"forces": "N", "moments": "Nm"}
+            },
+            loadset2_metadata={
+                "name": "New LoadSet", 
+                "version": 2,
+                "units": {"forces": "N", "moments": "Nm"}
+            },
+            comparison_rows=[row1, row2, row3, row4, row5, row6, row7, row8, row9, row10],
+        )
+        
+        if debug:
+            # For debugging - create a persistent directory in tests/temp_output
+            test_dir = Path(__file__).parent.parent / "temp_output"
+            test_dir.mkdir(parents=True, exist_ok=True)
+            temp_dir = test_dir
+            cleanup_needed = True
+        else:
+            # Normal testing - use temporary directory
+            cleanup_needed = False
+        
+        def run_test(temp_dir):
+            # Test basic export functionality
+            json_path = compare.export_comparison_report(
+                output_dir=temp_dir,
+                report_name="test_comparison",
+                image_format="png",
+                indent=2
+            )
+            
+            # Verify JSON file was created
+            assert json_path.exists()
+            assert json_path.name == "test_comparison.json"
+            assert json_path.parent == Path(temp_dir)
+            
+            # Load and verify JSON content
+            with open(json_path, "r") as f:
+                report_data = json.load(f)
+            
+            # Check original comparison data is preserved
+            assert "report_metadata" in report_data
+            assert "comparisons" in report_data
+            assert "loadcases_info" in report_data["report_metadata"]
+            assert report_data["report_metadata"]["loadcases_info"]["loadset1"]["name"] == "Old LoadSet"
+            assert report_data["report_metadata"]["loadcases_info"]["loadset2"]["name"] == "New LoadSet"
+            assert len(report_data["comparisons"]) == 10
+            
+            # Check report metadata contains all expected fields
+            report_meta = report_data["report_metadata"]
+            
+            # Verify chart files metadata
+            assert "chart_files" in report_meta
+            assert "image_format" in report_meta
+            assert "new_exceeds_old" in report_meta
+            assert "total_comparisons" in report_meta
+            assert "points_analyzed" in report_meta
+            
+            # Check statistical summary
+            assert report_meta["total_comparisons"] == 10
+            assert report_meta["points_analyzed"] == 2  # Point_A and Point_B
+            assert report_meta["image_format"] == "png"
+            
+            # Verify new_exceeds_old calculation (should be False since some values are within envelope)
+            assert report_meta["new_exceeds_old"] is False
+            
+            # Check chart files were actually generated
+            chart_files = report_meta["chart_files"]
+            assert len(chart_files) == 2  # Point_A and Point_B
+            assert "Point_A" in chart_files
+            assert "Point_B" in chart_files
+            
+            # Verify actual chart files exist
+            for point_name, filename in chart_files.items():
+                chart_path = Path(temp_dir) / filename
+                assert chart_path.exists()
+                assert chart_path.suffix == ".png"
+                assert chart_path.stat().st_size > 0  # File should not be empty
+                
+                # Verify filename pattern
+                expected_pattern = f"{point_name.replace(' ', '_')}_ranges.png"
+                assert filename == expected_pattern
+                
+            return json_path, chart_files
+        
+        if debug:
+            json_path, chart_files = run_test(temp_dir)
+            print(f"\nDEBUG: Files saved to {temp_dir}")
+            print(f"JSON report: {json_path}")
+            print(f"Chart files: {list(chart_files.values())}")
+            
+            if cleanup_needed:
+                # For debug mode, we usually want to KEEP files, so skip cleanup
+                # Uncomment the next lines if you want to clean up debug files:
+                # import shutil
+                # shutil.rmtree(temp_dir)
+                pass
+        else:
+            # Use temporary directory with automatic cleanup
+            with tempfile.TemporaryDirectory() as temp_dir:
+                run_test(temp_dir)
+        
+        # Test with custom parameters
+        with tempfile.TemporaryDirectory() as temp_dir:
+            json_path = compare.export_comparison_report(
+                output_dir=temp_dir,  # type: ignore
+                report_name="custom_report",
+                image_format="svg",
+                indent=4
+            )
+            
+            # Verify custom parameters were applied
+            assert json_path.name == "custom_report.json"
+            
+            with open(json_path, "r") as f:
+                content = f.read()
+                # Check indentation (4 spaces)
+                lines = content.split('\n')
+                indented_lines = [line for line in lines if line.startswith('    ')]
+                assert len(indented_lines) > 0  # Should have 4-space indented lines
+            
+            with open(json_path, "r") as f:
+                report_data = json.load(f)
+                assert report_data["report_metadata"]["image_format"] == "svg"
+            
+            # Check SVG files were created
+            chart_files = report_data["report_metadata"]["chart_files"]
+            for filename in chart_files.values():
+                chart_path = Path(temp_dir) / filename
+                assert chart_path.exists()
+                assert chart_path.suffix == ".svg"
+
+    def test_new_exceeds_old(self):
+        """Test new_exceeds_old method for envelope checking."""
+        # Test case where new loads exceed old loads in all comparisons
+        exceeding_rows = [
+            ComparisonRow(
+                point_name="Point_A", component="fx", type="max",
+                loadset1_value=100.0, loadset2_value=120.0,  # New max higher
+                loadset1_loadcase="Case1", loadset2_loadcase="Case2",
+                abs_diff=20.0, pct_diff=20.0,
+            ),
+            ComparisonRow(
+                point_name="Point_A", component="fx", type="min",
+                loadset1_value=80.0, loadset2_value=60.0,  # New min lower
+                loadset1_loadcase="Case3", loadset2_loadcase="Case4",
+                abs_diff=20.0, pct_diff=25.0,
+            ),
+        ]
+        
+        exceeding_compare = LoadSetCompare(
+            loadset1_metadata={"name": "Old"}, 
+            loadset2_metadata={"name": "New"},
+            comparison_rows=exceeding_rows,
+        )
+        
+        assert exceeding_compare.new_exceeds_old() is True
+        
+        # Test case where new loads do NOT exceed old loads
+        non_exceeding_rows = [
+            ComparisonRow(
+                point_name="Point_A", component="fx", type="max",
+                loadset1_value=100.0, loadset2_value=90.0,  # New max lower
+                loadset1_loadcase="Case1", loadset2_loadcase="Case2",
+                abs_diff=10.0, pct_diff=10.0,
+            ),
+            ComparisonRow(
+                point_name="Point_A", component="fx", type="min",
+                loadset1_value=80.0, loadset2_value=85.0,  # New min higher
+                loadset1_loadcase="Case3", loadset2_loadcase="Case4",
+                abs_diff=5.0, pct_diff=6.25,
+            ),
+        ]
+        
+        non_exceeding_compare = LoadSetCompare(
+            loadset1_metadata={"name": "Old"}, 
+            loadset2_metadata={"name": "New"},
+            comparison_rows=non_exceeding_rows,
+        )
+        
+        assert non_exceeding_compare.new_exceeds_old() is False
+        
+        # Test mixed case - some exceed, some don't (should return False)
+        mixed_rows = [
+            ComparisonRow(
+                point_name="Point_A", component="fx", type="max",
+                loadset1_value=100.0, loadset2_value=120.0,  # Exceeds
+                loadset1_loadcase="Case1", loadset2_loadcase="Case2",
+                abs_diff=20.0, pct_diff=20.0,
+            ),
+            ComparisonRow(
+                point_name="Point_A", component="fy", type="max",
+                loadset1_value=200.0, loadset2_value=180.0,  # Doesn't exceed
+                loadset1_loadcase="Case1", loadset2_loadcase="Case2",
+                abs_diff=20.0, pct_diff=10.0,
+            ),
+        ]
+        
+        mixed_compare = LoadSetCompare(
+            loadset1_metadata={"name": "Old"}, 
+            loadset2_metadata={"name": "New"},
+            comparison_rows=mixed_rows,
+        )
+        
+        assert mixed_compare.new_exceeds_old() is False
+        
+        # Test empty comparison rows
+        empty_compare = LoadSetCompare(
+            loadset1_metadata={"name": "Old"}, 
+            loadset2_metadata={"name": "New"},
+            comparison_rows=[],
+        )
+        
+        assert empty_compare.new_exceeds_old() is False
 
 
 class TestLoadSetPointExtremes:
