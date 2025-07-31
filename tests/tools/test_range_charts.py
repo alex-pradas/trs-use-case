@@ -323,42 +323,41 @@ class TestRangeChartsWithRealData:
         """Set up real data LoadSets."""
         self.old_loads_path = (
             Path(__file__).parent.parent.parent
-            / "solution"
+            / "use_case_definition"
+            / "data"
             / "loads"
-            / "old_loads.json"
+            / "03_old_loads.json"
         )
         self.new_loads_path = (
             Path(__file__).parent.parent.parent
-            / "solution"
+            / "use_case_definition"
+            / "data"
             / "loads"
-            / "new_loads.json"
+            / "03_A_new_loads.json"
         )
 
     def test_real_data_range_charts(self):
-        """Test range chart generation with real old_loads vs new_loads data."""
-        if self.old_loads_path.exists() and self.new_loads_path.exists():
-            old_loadset = LoadSet.read_json(self.old_loads_path)
-            new_loadset = LoadSet.read_json(self.new_loads_path)
+        """Test range chart generation with real 03_old_loads vs 03_A_new_loads data."""
+        old_loadset = LoadSet.read_json(self.old_loads_path)
+        new_loadset = LoadSet.read_json(self.new_loads_path)
 
-            comparison = old_loadset.compare_to(new_loadset)
+        comparison = old_loadset.compare_to(new_loadset)
 
-            with tempfile.TemporaryDirectory() as temp_dir:
-                generated_files = comparison.generate_range_charts(temp_dir)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            generated_files = comparison.generate_range_charts(temp_dir)
 
-                # Should generate files for all points in the real data
-                assert len(generated_files) > 0
+            # Should generate files for all points in the real data
+            assert len(generated_files) > 0
 
-                # Verify all files exist and have reasonable sizes
-                for point_name, file_path in generated_files.items():
-                    assert file_path.exists()
-                    assert file_path.suffix == ".png"
-                    assert (
-                        file_path.stat().st_size > 10000
-                    )  # Should be at least 10KB for a real chart
+            # Verify all files exist and have reasonable sizes
+            for point_name, file_path in generated_files.items():
+                assert file_path.exists()
+                assert file_path.suffix == ".png"
+                assert (
+                    file_path.stat().st_size > 10000
+                )  # Should be at least 10KB for a real chart
 
-                    print(f"Generated chart for {point_name}: {file_path}")
-        else:
-            pytest.skip("Real data files not found, skipping test")
+                print(f"Generated chart for {point_name}: {file_path}")
 
 
 if __name__ == "__main__":

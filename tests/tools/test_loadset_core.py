@@ -1751,74 +1751,72 @@ class TestLoadSetComparisonWithRealData:
         """Set up real data LoadSets."""
         self.old_loads_path = (
             Path(__file__).parent.parent.parent
-            / "solution"
+            / "use_case_definition"
+            / "data"
             / "loads"
-            / "old_loads.json"
+            / "03_old_loads.json"
         )
         self.new_loads_path = (
             Path(__file__).parent.parent.parent
-            / "solution"
+            / "use_case_definition"
+            / "data"
             / "loads"
-            / "new_loads.json"
+            / "03_A_new_loads.json"
         )
 
     def test_load_real_data_files(self):
         """Test loading the real data files."""
-        if self.old_loads_path.exists() and self.new_loads_path.exists():
-            old_loadset = LoadSet.read_json(self.old_loads_path)
-            new_loadset = LoadSet.read_json(self.new_loads_path)
+        old_loadset = LoadSet.read_json(self.old_loads_path)
+        new_loadset = LoadSet.read_json(self.new_loads_path)
 
-            # Verify basic properties
-            assert old_loadset.name is not None
-            assert new_loadset.name is not None
-            assert len(old_loadset.load_cases) > 0
-            assert len(new_loadset.load_cases) > 0
+        # Verify basic properties
+        assert old_loadset.name is not None
+        assert new_loadset.name is not None
+        assert len(old_loadset.load_cases) > 0
+        assert len(new_loadset.load_cases) > 0
 
     def test_compare_real_data_files(self):
-        """Test comparing real old_loads.json and new_loads.json files."""
-        if self.old_loads_path.exists() and self.new_loads_path.exists():
-            old_loadset = LoadSet.read_json(self.old_loads_path)
-            new_loadset = LoadSet.read_json(self.new_loads_path)
+        """Test comparing real 03_old_loads.json and 03_A_new_loads.json files."""
+        old_loadset = LoadSet.read_json(self.old_loads_path)
+        new_loadset = LoadSet.read_json(self.new_loads_path)
 
-            # Perform comparison
-            comparison = old_loadset.compare_to(new_loadset)
+        # Perform comparison
+        comparison = old_loadset.compare_to(new_loadset)
 
-            # Verify comparison results
-            assert comparison.loadset1_metadata["name"] == old_loadset.name
-            assert comparison.loadset2_metadata["name"] == new_loadset.name
-            assert len(comparison.comparison_rows) > 0
+        # Verify comparison results
+        assert comparison.loadset1_metadata["name"] == old_loadset.name
+        assert comparison.loadset2_metadata["name"] == new_loadset.name
+        assert len(comparison.comparison_rows) > 0
 
-            # Verify we can export to JSON
-            json_output = comparison.to_json()
-            assert isinstance(json_output, str)
-            assert len(json_output) > 0
+        # Verify we can export to JSON
+        json_output = comparison.to_json()
+        assert isinstance(json_output, str)
+        assert len(json_output) > 0
 
-            # Verify we can parse the JSON back
-            import json
+        # Verify we can parse the JSON back
+        import json
 
-            parsed_data = json.loads(json_output)
-            assert "metadata" in parsed_data
-            assert "comparison_rows" in parsed_data
-            assert len(parsed_data["comparison_rows"]) > 0
+        parsed_data = json.loads(json_output)
+        assert "report_metadata" in parsed_data
+        assert "comparisons" in parsed_data
+        assert len(parsed_data["comparisons"]) > 0
 
-            # Print some stats for verification
-            print(f"\nComparison results:")
-            print(f"Total comparison rows: {len(comparison.comparison_rows)}")
+        # Print some stats for verification
+        print(f"\nComparison results:")
+        print(f"Total comparison rows: {len(comparison.comparison_rows)}")
 
-            # Group by point and component for summary
-            points = set(row.point_name for row in comparison.comparison_rows)
-            components = set(row.component for row in comparison.comparison_rows)
-            print(f"Points compared: {len(points)}")
-            print(f"Components compared: {len(components)}")
+        # Group by point and component for summary
+        points = set(row.point_name for row in comparison.comparison_rows)
+        components = set(row.component for row in comparison.comparison_rows)
+        print(f"Points compared: {len(points)}")
+        print(f"Components compared: {len(components)}")
 
-            # Show a sample of the data
-            if len(comparison.comparison_rows) >= 2:
-                sample_row = comparison.comparison_rows[0]
-                print(
-                    f"Sample row: {sample_row.point_name}.{sample_row.component}.{sample_row.type} - LoadSet1: {sample_row.loadset1_value}, LoadSet2: {sample_row.loadset2_value}, Diff: {sample_row.pct_diff:.1f}%"
-                )
-        else:
-            pytest.skip("Real data files not found, skipping test")
+        # Show a sample of the data
+        if len(comparison.comparison_rows) >= 2:
+            sample_row = comparison.comparison_rows[0]
+            print(
+                f"Sample row: {sample_row.point_name}.{sample_row.component}.{sample_row.type} - LoadSet1: {sample_row.loadset1_value}, LoadSet2: {sample_row.loadset2_value}, Diff: {sample_row.pct_diff:.1f}%"
+            )
 
     def test_compare_to_edge_cases(self):
         """Test comparison edge cases."""
