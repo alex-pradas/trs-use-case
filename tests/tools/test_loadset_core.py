@@ -228,7 +228,7 @@ class TestLoadSetReadJson:
     def test_read_json_actual_new_loads_file(self):
         """Test reading the actual new_loads file."""
         new_loads_path = (
-            Path(__file__).parent.parent / "solution" / "loads" / "new_loads.json"
+            Path(__file__).parent.parent.parent / "use_case_definition" / "data" / "loads" / "03_A_new_loads.json"
         )
 
         if new_loads_path.exists():

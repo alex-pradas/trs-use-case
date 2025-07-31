@@ -58,13 +58,13 @@ async def demo_basic_evaluation():
     eval_case = EvalCase(
         name="ultimate_load_test",
         prompt="""
-Process loads from solution/loads/new_loads.json for ultimate load analysis.
+Process loads from use_case_definition/data/loads/new_loads.json for ultimate load analysis.
 Apply the appropriate safety factor for ultimate loads.
         """.strip(),
         expected_tool_calls=[
             {
                 "name": "load_from_json",
-                "args": {"file_path": "solution/loads/new_loads.json"},
+                "args": {"file_path": "use_case_definition/data/loads/new_loads.json"},
             },
             {"name": "scale_loads", "args": {"factor": 1.5}},
         ],
@@ -119,7 +119,7 @@ async def demo_evaluation_suite():
     test_cases = [
         EvalCase(
             name="basic_ultimate_loads",
-            prompt="Process solution/loads/new_loads.json for ultimate load analysis",
+            prompt="Process use_case_definition/data/loads/new_loads.json for ultimate load analysis",
             expected_tool_calls=[
                 {"name": "load_from_json", "args": {}},
                 {"name": "scale_loads", "args": {"factor": 1.5}},
@@ -127,7 +127,7 @@ async def demo_evaluation_suite():
         ),
         EvalCase(
             name="explicit_safety_factor",
-            prompt="Load solution/loads/new_loads.json and apply safety factor 1.5",
+            prompt="Load use_case_definition/data/loads/new_loads.json and apply safety factor 1.5",
             expected_tool_calls=[
                 {"name": "load_from_json", "args": {}},
                 {"name": "scale_loads", "args": {"factor": 1.5}},

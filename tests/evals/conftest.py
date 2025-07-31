@@ -100,8 +100,8 @@ def loadset_agent_with_custom_prompt(custom_system_prompt):
 def test_data_paths():
     """Provide paths to test data files."""
     return {
-        "new_loads": "solution/loads/new_loads.json",
-        "old_loads": "solution/loads/old_loads.json",
+        "new_loads": "use_case_definition/data/loads/new_loads.json",
+        "old_loads": "use_case_definition/data/loads/old_loads.json",
         "output_dir": "solution/output/",
     }
 
@@ -135,22 +135,22 @@ def sample_eval_cases():
     return [
         EvalCase(
             name="basic_load_processing",
-            prompt="Load the file solution/loads/new_loads.json and process it.",
+            prompt="Load the file use_case_definition/data/loads/new_loads.json and process it.",
             expected_tool_calls=[
                 {
                     "name": "load_from_json",
-                    "args": {"file_path": "solution/loads/new_loads.json"},
+                    "args": {"file_path": "use_case_definition/data/loads/new_loads.json"},
                 }
             ],
             description="Test basic load file loading",
         ),
         EvalCase(
             name="ultimate_load_processing",
-            prompt="Load solution/loads/new_loads.json and apply ultimate load factor of 1.5.",
+            prompt="Load use_case_definition/data/loads/new_loads.json and apply ultimate load factor of 1.5.",
             expected_tool_calls=[
                 {
                     "name": "load_from_json",
-                    "args": {"file_path": "solution/loads/new_loads.json"},
+                    "args": {"file_path": "use_case_definition/data/loads/new_loads.json"},
                 },
                 {"name": "scale_loads", "args": {"factor": 1.5}},
             ],
@@ -158,11 +158,11 @@ def sample_eval_cases():
         ),
         EvalCase(
             name="full_workflow",
-            prompt="Process loads from solution/loads/new_loads.json with ultimate factor 1.5, convert to klbf, and export to ANSYS.",
+            prompt="Process loads from use_case_definition/data/loads/new_loads.json with ultimate factor 1.5, convert to klbf, and export to ANSYS.",
             expected_tool_calls=[
                 {
                     "name": "load_from_json",
-                    "args": {"file_path": "solution/loads/new_loads.json"},
+                    "args": {"file_path": "use_case_definition/data/loads/new_loads.json"},
                 },
                 {"name": "scale_loads", "args": {"factor": 1.5}},
                 {"name": "convert_units", "args": {"target_units": "klbf"}},

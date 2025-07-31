@@ -211,7 +211,7 @@ class TestMCPStdioIntegration:
         # Run agent with the same prompt as loads_agent.py
         async with self.agent.mcp_server:
             result = await self.agent.agent.run(
-                f"""Please help me process the loads in solution/loads/new_loads.json. 
+                f"""Please help me process the loads in use_case_definition/data/loads/new_loads.json. 
                 Factor them by 1.5 and convert to klbf. Generate files for ansys in a subfolder called {self.output_folder}.
                 
                 Use export_to_ansys with folder_path="{self.output_folder}" and name_stem="processed_loads"
@@ -234,7 +234,7 @@ class TestMCPStdioIntegration:
         content = ansys_file.read_text()
 
         # Read original values from new_loads.json for Take_off_004, Point A
-        original_loadset = LoadSet.read_json(Path("solution/loads/new_loads.json"))
+        original_loadset = LoadSet.read_json(Path("use_case_definition/data/loads/new_loads.json"))
 
         # Find Take_off_004 load case
         take_off_004 = None
@@ -296,7 +296,7 @@ class TestMCPStdioIntegration:
         # Run agent workflow
         async with self.agent.mcp_server:
             result = await self.agent.agent.run(
-                f"""Please help me process the loads in solution/loads/new_loads.json. 
+                f"""Please help me process the loads in use_case_definition/data/loads/new_loads.json. 
                 Factor by 2.0 and convert to kN. Generate files for ansys in {self.output_folder}.
                 
                 Use export_to_ansys with folder_path="{self.output_folder}" and name_stem="test_loads"
@@ -306,7 +306,7 @@ class TestMCPStdioIntegration:
         assert result.output, "Agent workflow failed or returned empty output"
 
         # Load original data to verify number of files
-        original_loadset = LoadSet.read_json(Path("solution/loads/new_loads.json"))
+        original_loadset = LoadSet.read_json(Path("use_case_definition/data/loads/new_loads.json"))
         expected_files = len(original_loadset.load_cases)
 
         # Check that all load cases were processed
@@ -324,7 +324,7 @@ class TestMCPStdioIntegration:
     def test_mathematical_calculations(self):
         """Test the mathematical calculation functions used for validation."""
         # Read test values from Take_off_004, Point A
-        original_loadset = LoadSet.read_json(Path("solution/loads/new_loads.json"))
+        original_loadset = LoadSet.read_json(Path("use_case_definition/data/loads/new_loads.json"))
 
         # Find Take_off_004 load case and Point A
         take_off_004 = next(
@@ -412,7 +412,7 @@ class TestMCPHTTPIntegration:
             async with self.agent.mcp_server:
                 result = await self.agent.agent.run(
                     """
-                    Load the JSON file from solution/loads/new_loads.json and provide a summary.
+                    Load the JSON file from use_case_definition/data/loads/new_loads.json and provide a summary.
                     """
                 )
 
@@ -434,7 +434,7 @@ class TestMCPHTTPIntegration:
     async def test_agent_http_final_value_validation(self):
         """Test HTTP transport with final value validation using known data."""
         # Get original values from the JSON for validation
-        original_loadset = LoadSet.read_json(Path("solution/loads/new_loads.json"))
+        original_loadset = LoadSet.read_json(Path("use_case_definition/data/loads/new_loads.json"))
         first_load_case = original_loadset.load_cases[0]
         first_point_load = first_load_case.point_loads[0]
 
@@ -460,7 +460,7 @@ class TestMCPHTTPIntegration:
                     result = await self.agent.agent.run(
                         f"""
                         Please perform these operations in sequence:
-                        1. Load the JSON file from solution/loads/new_loads.json
+                        1. Load the JSON file from use_case_definition/data/loads/new_loads.json
                         2. Scale all loads by a factor of 1.5
                         3. Convert the units to klbf (for forces)
                         4. Export to ANSYS format in {temp_dir} with name stem 'scaled_loads'
@@ -544,7 +544,7 @@ class TestMCPHTTPIntegration:
             async with self.agent.mcp_server:
                 result = await self.agent.agent.run(
                     """
-                    Load the JSON file from solution/loads/new_loads.json and list all available load cases.
+                    Load the JSON file from use_case_definition/data/loads/new_loads.json and list all available load cases.
                     Provide the names and descriptions of each load case.
                     """
                 )
@@ -572,7 +572,7 @@ class TestMCPHTTPIntegration:
             async with self.agent.mcp_server:
                 result = await self.agent.agent.run(
                     """
-                    Load the JSON file from solution/loads/new_loads.json.
+                    Load the JSON file from use_case_definition/data/loads/new_loads.json.
                     Get the current units and then convert to kN units.
                     Provide information about the original and new units.
                     """

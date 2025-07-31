@@ -62,14 +62,14 @@ class TestProcessLoadsEvaluation:
             name="ultimate_load_processing_eval",
             prompt="""
 I need to process some loads for ANSYS analysis.
-The files are here: solution/loads/new_loads.json
+The files are here: use_case_definition/data/loads/new_loads.json
 
 This is for ultimate load analysis, so please apply the appropriate safety factor.
             """.strip(),
             expected_tool_calls=[
                 {
                     "name": "load_from_json",
-                    "args": {"file_path": "solution/loads/new_loads.json"},
+                    "args": {"file_path": "use_case_definition/data/loads/new_loads.json"},
                 },
                 {"name": "scale_loads", "args": {"factor": 1.5}},
             ],
@@ -83,14 +83,14 @@ This is for ultimate load analysis, so please apply the appropriate safety facto
         return EvalCase(
             name="safety_factor_eval",
             prompt="""
-Process the loads in solution/loads/new_loads.json.
+Process the loads in use_case_definition/data/loads/new_loads.json.
 Apply safety margins as per EP Static Analysis procedures.
 Factor in safety margins (1.5 for ultimate loads).
             """.strip(),
             expected_tool_calls=[
                 {
                     "name": "load_from_json",
-                    "args": {"file_path": "solution/loads/new_loads.json"},
+                    "args": {"file_path": "use_case_definition/data/loads/new_loads.json"},
                 },
                 {"name": "scale_loads", "args": {"factor": 1.5}},
             ],
@@ -105,7 +105,7 @@ Factor in safety margins (1.5 for ultimate loads).
             name="original_prompt_eval",
             prompt="""
 I need to process some loads for ANSYS analysis.
-the files are here: solution/loads/new_loads.json
+the files are here: use_case_definition/data/loads/new_loads.json
             """.strip(),
             expected_tool_calls=[
                 {"name": "load_from_json", "args": {}},  # Flexible on exact path
@@ -269,7 +269,7 @@ the files are here: solution/loads/new_loads.json
         eval_cases = [
             EvalCase(
                 name="ultimate_loads_test",
-                prompt="Process solution/loads/new_loads.json for ultimate load analysis with safety factor 1.5",
+                prompt="Process use_case_definition/data/loads/new_loads.json for ultimate load analysis with safety factor 1.5",
                 expected_tool_calls=[
                     {"name": "load_from_json", "args": {}},
                     {"name": "scale_loads", "args": {"factor": 1.5}},
@@ -277,7 +277,7 @@ the files are here: solution/loads/new_loads.json
             ),
             EvalCase(
                 name="safety_margin_test",
-                prompt="Load solution/loads/new_loads.json and apply safety margins per EP procedures",
+                prompt="Load use_case_definition/data/loads/new_loads.json and apply safety margins per EP procedures",
                 expected_tool_calls=[
                     {"name": "load_from_json", "args": {}},
                     {"name": "scale_loads", "args": {"factor": 1.5}},
@@ -324,7 +324,7 @@ class TestProcessLoadsAgentBehavior:
 
         # Custom prompt that explicitly requires factor 1.5
         prompt = (
-            "Process loads for ultimate analysis from solution/loads/new_loads.json"
+            "Process loads for ultimate analysis from use_case_definition/data/loads/new_loads.json"
         )
 
         evaluator = ScaleLoadsEvaluator(1.5, "SystemPromptGuidanceEval")
@@ -357,7 +357,7 @@ class TestProcessLoadsAgentBehavior:
         """Test that the agent doesn't apply safety factor multiple times."""
 
         prompt = (
-            "Load solution/loads/new_loads.json and apply ultimate safety factor of 1.5"
+            "Load use_case_definition/data/loads/new_loads.json and apply ultimate safety factor of 1.5"
         )
 
         evaluator = ToolCallEvaluator("NoDoubleFactor", allow_extra_calls=True)

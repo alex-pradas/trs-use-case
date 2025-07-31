@@ -199,7 +199,7 @@ Passed: True
 Score: 1.0
 Message: ✅ scale_loads called with factor 1.5 as expected
 Tool calls made: 3
-  1. load_from_json({'file_path': 'solution/loads/new_loads.json'}) -> success
+  1. load_from_json({'file_path': 'use_case_definition/data/loads/new_loads.json'}) -> success
   2. scale_loads({'factor': 1.5}) -> success  
   3. export_to_ansys(...) -> success
 ```

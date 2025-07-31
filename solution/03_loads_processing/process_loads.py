@@ -41,8 +41,8 @@ def load_system_prompt() -> str:
     base_path = Path(__file__).parent.parent.parent / "use_case_definition"
 
     try:
-        problem_def = (base_path / "00_problem definition").read_text()
-        static_analysis = (base_path / "01_EP_Static_Analysis").read_text()
+        problem_def = (base_path / "documents" / "00_problem definition").read_text()
+        static_analysis = (base_path / "documents" / "01_EP_Static_Analysis").read_text()
     except FileNotFoundError as e:
         raise ValueError(f"Could not load use case definition files: {e}") from e
 
@@ -86,14 +86,14 @@ Remember to call tool get_point_extremes!!!
 
 USER_PROMPT_1 = """\
 I need to process some loads for ANSYS analysis.
-the files are here: /Users/alex/repos/trs-use-case/solution/loads/03_01_new_loads.json
+the files are here: /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_A_new_loads.json
 I do not have any previous loads to compare against.
 """
 
 USER_PROMPT_2 = """\
 I need to process some loads for ANSYS analysis.
-the files are here: /Users/alex/repos/trs-use-case/solution/loads/03_02_new_loads.json
-old files are here: /Users/alex/repos/trs-use-case/solution/loads/03_03_old_loads.json
+the files are here: /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_B_new_loads.json
+old files are here: /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_old_loads.json
 """
 
 def main() -> None:

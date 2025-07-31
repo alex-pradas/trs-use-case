@@ -15,7 +15,7 @@ delete_output = True
 # Activity configurations
 ACTIVITIES = {
     "03A": {
-        "input_file": "solution/loads/03_01_new_loads.json",
+        "input_file": "use_case_definition/data/loads/03_A_new_loads.json",
         "old_loads_file": None,  # Path to old loads if needed for comparison
         "expected_values": {
             "Point A": {
@@ -28,7 +28,7 @@ ACTIVITIES = {
         },
     },
     "03B": {
-        "input_file": "solution/loads/03_02_new_loads.json",
+        "input_file": "use_case_definition/data/loads/03_B_new_loads.json",
         "old_loads_file": None,  # Path to old loads if needed for comparison
         "expected_values": {
             "Point A": {

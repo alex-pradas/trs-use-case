@@ -21,6 +21,13 @@ This project uses a **simplified dual architecture** for LoadSet processing:
 - ❌ `create_python_agent` and `create_script_agent` - Use alternative approaches
 - ❌ `tools/dependencies.py` and `tools/response_models.py` - No longer needed
 
+## Data Files Location
+
+LoadSet data files are located in `use_case_definition/data/loads/`:
+- `03_A_new_loads.json` - New loads data set A (Newton units)
+- `03_B_new_loads.json` - New loads data set B (lbf units)  
+- `03_old_loads.json` - Original loads data (Newton units)
+
 ## External Resources and Guidance
 
 - **FastMCP Information**: If you need to know about FastMCP, fetch the info from https://gofastmcp.com/llms-full.txt
