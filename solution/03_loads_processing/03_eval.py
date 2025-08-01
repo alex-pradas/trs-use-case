@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 from pathlib import Path
 import sys
+from typing import Any
+
+from pyparsing import with_attribute
 
 # Add tools to path so we can import dependencies
 project_root = Path(__file__).parent.parent.parent
@@ -18,63 +21,101 @@ from tools.mcps.loads_mcp_server import LoadSetMCPProvider
 
 @dataclass
 class AgentCalledTool(Evaluator):
-    """Evaluator to check if a specific tool was called by the agent."""
-    agent_name: str
-    tool_name: str
-
-    def evaluate(self, ctx: EvaluatorContext) -> bool:
-        import logfire
-        
-        with logfire.span(f"evaluate_agent_called_tool_{self.tool_name}"):
-            result = ctx.span_tree.any(
-                SpanQuery(
-                    name_equals='agent run',
-                    has_attributes={'agent_name': self.agent_name},
-                    stop_recursing_when=SpanQuery(name_equals='agent run'),
-                    some_descendant_has=SpanQuery(
-                        name_equals='running tool',
-                        has_attributes={'gen_ai.tool.name': self.tool_name},
-                    ),
-                )
-            )
-            
-            logfire.info(
-                f"AgentCalledTool evaluation for '{self.tool_name}'",
-                agent_name=self.agent_name,
-                tool_name=self.tool_name,
-                result=result
-            )
-            
-            return result
-
-
-@dataclass
-class AgentCalledToolSimple(Evaluator):
     """Simplified evaluator to check if a specific tool was called (without agent name)."""
     tool_name: str
+    tool_arguments: dict[str, Any] | None = None
+
+    def _extract_tool_arguments(self, span) -> dict[str, Any] | None:
+        """Extract and parse tool_arguments from span attributes."""
+        if not (hasattr(span, 'attributes') and 'tool_arguments' in span.attributes):
+            return None
+            
+        tool_arguments_attr = span.attributes['tool_arguments']
+        
+        # Handle different attribute value types
+        if isinstance(tool_arguments_attr, dict):
+            return tool_arguments_attr
+        elif isinstance(tool_arguments_attr, str):
+            try:
+                import json
+                return json.loads(tool_arguments_attr)
+            except json.JSONDecodeError:
+                return None
+        
+        return None
 
     def evaluate(self, ctx: EvaluatorContext) -> bool:
         import logfire
         
         with logfire.span(f"evaluate_tool_called_{self.tool_name}"):
-            result = ctx.span_tree.any(
+            # If no tool_arguments specified, use the original simple logic
+            if self.tool_arguments is None:
+                result = ctx.span_tree.any(
+                    SpanQuery(
+                        name_equals='agent run',
+                        stop_recursing_when=SpanQuery(name_equals='agent run'),
+                        some_descendant_has=SpanQuery(
+                            name_equals='running tool',
+                            has_attributes={'gen_ai.tool.name': self.tool_name},
+                        ),
+                    )
+                )
+                
+                logfire.info(
+                    f"AgentCalledTool evaluation for '{self.tool_name}' (no argument checking)",
+                    tool_name=self.tool_name,
+                    result=result
+                )
+                
+                return result
+            
+            # If tool_arguments are specified, we need to find spans and check arguments manually
+            tool_spans = ctx.span_tree.find(
                 SpanQuery(
-                    name_equals='agent run',
-                    stop_recursing_when=SpanQuery(name_equals='agent run'),
-                    some_descendant_has=SpanQuery(
-                        name_equals='running tool',
-                        has_attributes={'gen_ai.tool.name': self.tool_name},
-                    ),
+                    name_equals='running tool',
+                    has_attributes={'gen_ai.tool.name': self.tool_name},
                 )
             )
             
+            if not tool_spans:
+                logfire.info(
+                    f"AgentCalledTool evaluation for '{self.tool_name}' - no tool spans found",
+                    tool_name=self.tool_name,
+                    expected_arguments=self.tool_arguments,
+                    result=False
+                )
+                return False
+            
+            # Check if any of the tool calls have the expected arguments
+            for span in tool_spans:
+                actual_arguments = self._extract_tool_arguments(span)
+                
+                if actual_arguments:
+                    # Check if all expected arguments match
+                    arguments_match = all(
+                        actual_arguments.get(key) == expected_value
+                        for key, expected_value in self.tool_arguments.items()
+                    )
+                    
+                    if arguments_match:
+                        logfire.info(
+                            f"AgentCalledTool evaluation for '{self.tool_name}' - arguments match found",
+                            tool_name=self.tool_name,
+                            expected_arguments=self.tool_arguments,
+                            actual_arguments=actual_arguments,
+                            result=True
+                        )
+                        return True
+            
+            # No matching tool call with correct arguments found
             logfire.info(
-                f"AgentCalledToolSimple evaluation for '{self.tool_name}'",
+                f"AgentCalledTool evaluation for '{self.tool_name}' - tool was called but no matching arguments found",
                 tool_name=self.tool_name,
-                result=result
+                expected_arguments=self.tool_arguments,
+                result=False
             )
             
-            return result
+            return False
 
 
 @dataclass
@@ -266,20 +307,60 @@ class LoadSetExtremesEvaluator(Evaluator):
 
 
 # Define shared case variables
-SCENARIO_1_INPUTS = """\
+ACTIVITY_03A_INPUTS = """\
 I need to process some loads for ANSYS analysis.
 the files are here: /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_A_new_loads.json
 output directory for ansys files: /Users/alex/repos/trs-use-case/output
 I do not have any previous loads to compare against.
 """
 
-SCENARIO_1_EVALUATORS = (
+ACTIVITY_03B_INPUTS = """\
+I need to process some loads for ANSYS analysis.
+the files are here: /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_B_new_loads.json
+output directory for ansys files: /Users/alex/repos/trs-use-case/output
+I have the following previous loads to compare against:
+- /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_old_loads.json
+"""
+
+ACTIVITY_03A_EVALUATORS = (
     # Tool call validations
-    AgentCalledToolSimple(tool_name="scale_loads"),  # Check factor(1.5) operation
-    AgentCalledToolSimple(tool_name="export_to_ansys"),  # Check ANSYS export
-    AgentCalledToolSimple(tool_name="load_from_json"),  # Check load operation
+    AgentCalledTool(tool_name="scale_loads", tool_arguments={"factor": 1.5}),  # Check factor(1.5) operation
+    AgentCalledTool(tool_name="export_to_ansys"),  # Check ANSYS export
+    AgentCalledTool(tool_name="load_from_json"),  # Check load operation
     AgentDidNotCallTool(tool_name="convert_units"),  # Check units not converted
-    AgentCalledToolSimple(tool_name="envelope_loadset"),  # Check envelope operation
+    AgentCalledTool(tool_name="envelope_loadset"),  # Check envelope operation
+   
+    # Numerical validation of point extremes (using LoadSet data from tool call response)
+    LoadSetExtremesEvaluator(
+        point_name="Point A",
+        component="fx",
+        extreme_type="max",
+        expected_value=1.4958699,
+        expected_loadcase="landing_011"
+    ),
+    LoadSetExtremesEvaluator(
+        point_name="Point A", 
+        component="my",
+        extreme_type="min",
+        expected_value=0.213177015,
+        expected_loadcase="cruise2_098"
+    ),
+    LoadSetExtremesEvaluator(
+        point_name="Point B",
+        component="fy", 
+        extreme_type="max",
+        expected_value=1.462682895,
+        expected_loadcase="landing_012"
+    ),
+)
+
+ACTIVITY_03B_EVALUATORS = (
+    # Tool call validations
+    AgentCalledTool(tool_name="load_from_json"),  # Check load operation
+    AgentDidNotCallTool(tool_name="scale_loads"),  # Check factor(1.5) operation
+    AgentDidNotCallTool(tool_name="convert_units"),  # Check units not converted
+    AgentCalledTool(tool_name="envelope_loadset"),  # Check envelope operation
+    AgentCalledTool(tool_name="export_to_ansys"),  # Check ANSYS export
    
     # Numerical validation of point extremes (using LoadSet data from tool call response)
     LoadSetExtremesEvaluator(
@@ -308,18 +389,18 @@ SCENARIO_1_EVALUATORS = (
 # Create test cases using list comprehension
 
 k=10  # Number of iterations for test cases (pass^k)
-cases = [
+cases_03A = [
     Case(
-        name=f"Scenario 1 - iteration {i}",
-        inputs=SCENARIO_1_INPUTS,
-        evaluators=SCENARIO_1_EVALUATORS
+        name=f"Activity 03A - iteration {i}",
+        inputs=ACTIVITY_03A_INPUTS,
+        evaluators=ACTIVITY_03A_EVALUATORS
     )
     for i in range(1, k+1)
 ]
 
 # Create dataset
-dataset = Dataset(
-    cases=list(cases),
+dataset_03A = Dataset(
+    cases=list(cases_03A),
     evaluators=[]
 )
 
@@ -402,12 +483,12 @@ async def main():
         # Log evaluation setup
         logfire.info(
             "Evaluation setup",
-            dataset_cases=len(dataset.cases),
-            evaluators=[type(e).__name__ for e in SCENARIO_1_EVALUATORS]
+            dataset_cases=len(dataset_03A.cases),
+            evaluators=[type(e).__name__ for e in ACTIVITY_03A_EVALUATORS]
         )
         
         # Evaluate the dataset against the agent task
-        report = await dataset.evaluate(agent_task)
+        report = await dataset_03A.evaluate(agent_task)
         
         # Log evaluation results
         logfire.info(
