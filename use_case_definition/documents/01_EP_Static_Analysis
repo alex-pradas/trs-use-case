@@ -27,7 +27,7 @@ If no information about the loads exist, they should be assumed that they are li
 
 Paying attention to loads units is critical. Our FEM models uses SI units (N N/m). If loads are provided in other units, they must always be converted to N and Nm for forces and moments respectively. The conversion factor is 1 klb = 4448.22 N and 1 klb-ft = 1.35582 Nm.
 
-It is standard practice to always check new loads and compare it with a pre-existing set of previous applicable loads delivered by the customer. If they exceed, we need to perform a new analysis. But if none of the loads exceed and the geometry and all other inputs are the same, a complete analysis is not needed, simply the loads comparison results and an statement instead. The output loads table should be stored in `.../01_loads/output/loads_comparison.json`.
+It is standard practice to always check new loads and compare it with a pre-existing set of previous applicable loads delivered by the customer. If they exceed, we need to perform a new analysis. But if none of the loads exceed and the geometry and all other inputs are the same, a complete analysis is not needed, simply the loads comparison results and an statement instead. 
 
 If the new loads exceed in any direction, then the envelope of old and new files need to be performed and that will be the collection of load cases that will be evaluated in the FEM analysis. If no loads exceed, no new analysis is needed and the final report shall contain the load comparison results and a statement indicating that no further analysis is needed.
 

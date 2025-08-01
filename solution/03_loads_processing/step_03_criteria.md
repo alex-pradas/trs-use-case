@@ -1,4 +1,7 @@
-# Case 1: Just the new loads have been passed
+# Activity definition and evaluation criteria for Loads Processing
+Each activity have their own inputs and evaluation criteria.
+
+## Activity 03 A: Just the new loads have been passed
 - Pass just the new loads to the agent
 - Explicitely mentioned that previous loads have not been provided.
 - There is no limit/ultimate definition of the loads.
@@ -29,22 +32,29 @@ USER_PROMPT_1
   - The ID of the loadcases is correct
 
 ### Final value check
+
 - Number of loads files is correct at the provided location.
 - The final value of the loads for a given loadcase point and component is correct (perform check on 3 combination of different: loadcases, points and components).
 
 
-## Case 2:
+## Activity 03B:
 Same as Case 1, but key differences: 
 - old loads provided.
 - The loads are in (klbs, lb-ft) units.
+- The loads are Ultimate
 
 ### Inputs
-USER_PROMPT_2
+- loads: /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_B_new_loads.json
+- old loads: /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_old_loads.json
 
-### Criteria to evaluate the loads processing step
-- The loads are converted to the correct units
-- The agent compares the loads to the previous ones.
-- The results of the comparison loads is correct. (Check overall response and values at 3 different loadcase points and components)
+
+### Evaluation Criteria
+- The agent has called the tool to read the loads
+- The agent called the tool to change untits to N, Nmm
+- The agent does not multiply the loads by 1.5, as they are Ultimate loads.
+- The agent called the tool to read the old loads.
+- The agent called the comparison loads tool.
+- The agent decides that no further analysis is required.
 
 
 <!-- Unclear if Scenario 3 will be implemented -->
