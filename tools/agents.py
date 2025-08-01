@@ -22,12 +22,16 @@ from tools.mcps.loads_mcp_server import LoadSetMCPProvider
 
 def create_loadset_agent(
     system_prompt: str | None = None,
+    model_override: str | None = None,
 ) -> Agent[LoadSetMCPProvider, str]:
     """Create a LoadSet processing agent using LoadSetMCPProvider directly."""
     default_prompt = "You are an expert aerospace structural loads analyst with access to LoadSet processing tools. Use available tools for operations and provide clear explanations."
 
+    # Use model override if provided, otherwise use default
+    model_name = model_override if model_override else get_model_name()
+    
     agent = Agent(
-        get_model_name(),
+        model_name,
         deps_type=LoadSetMCPProvider,
         system_prompt=system_prompt or default_prompt,
     )
@@ -39,12 +43,12 @@ def create_loadset_agent(
         """Load a LoadSet from a JSON file."""
         return ctx.deps.load_from_json(Path(file_path))
 
-    @agent.tool
-    def load_from_resource(
-        ctx: RunContext[LoadSetMCPProvider], resource_uri: str
-    ) -> dict:
-        """Load a LoadSet from a resource URI (e.g., 'loadsets://new_loads.json')."""
-        return ctx.deps.load_from_resource(resource_uri)
+    # @agent.tool
+    # def load_from_resource(
+    #     ctx: RunContext[LoadSetMCPProvider], resource_uri: str
+    # ) -> dict:
+    #     """Load a LoadSet from a resource URI (e.g., 'loadsets://new_loads.json')."""
+    #     return ctx.deps.load_from_resource(resource_uri)
 
     @agent.tool
     def convert_units(
@@ -80,12 +84,12 @@ def create_loadset_agent(
         """List all load cases in the current LoadSet."""
         return ctx.deps.list_load_cases()
 
-    @agent.tool
-    def load_second_loadset_from_resource(
-        ctx: RunContext[LoadSetMCPProvider], resource_uri: str
-    ) -> dict:
-        """Load a second LoadSet from a resource URI for comparison."""
-        return ctx.deps.load_second_loadset_from_resource(resource_uri)
+    # @agent.tool
+    # def load_second_loadset_from_resource(
+    #     ctx: RunContext[LoadSetMCPProvider], resource_uri: str
+    # ) -> dict:
+    #     """Load a second LoadSet from a resource URI for comparison."""
+    #     return ctx.deps.load_second_loadset_from_resource(resource_uri)
 
     @agent.tool
     def compare_loadsets(ctx: RunContext[LoadSetMCPProvider]) -> dict:
