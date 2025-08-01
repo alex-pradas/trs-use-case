@@ -1,11 +1,12 @@
 {
-  "name": "Aerospace Structural Load Cases",
-  "version": 1,
+  "$schema": "./loadset_schema.json",
+  "name": "Concept Development - Provisional",
+  "version": 3,
   "units": {
     "forces": "lbf",
     "moments": "lbf-ft"
   },
-  "description": "Load cases for aerospace structural component analysis",
+  "description": "Load cases during early concept development phase for First Engine To Test (FETT).",
   "load_cases": [
     {
       "name": "Take_off_004",

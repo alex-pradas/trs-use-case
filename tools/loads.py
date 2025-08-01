@@ -607,6 +607,82 @@ class LoadSet(BaseModel):
     load_cases: list[LoadCase]
 
     @classmethod
+    def generate_json_schema(cls, output_file: PathLike | None = None) -> dict:
+        """
+        Generate JSON Schema for LoadSet model.
+
+        Args:
+            output_file: Optional path to save the schema file
+
+        Returns:
+            dict: JSON Schema for LoadSet model
+
+        Raises:
+            FileNotFoundError: If output directory doesn't exist
+            ValueError: If schema generation fails
+        """
+        try:
+            # Generate schema using Pydantic's built-in method
+            schema = cls.model_json_schema()
+            
+            # Add JSON Schema metadata at the top level
+            schema = {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "$id": "loadset_schema.json",
+                **schema
+            }
+            
+            # Enhance with additional metadata
+            if "title" not in schema:
+                schema["title"] = "LoadSet Schema"
+            if "description" not in schema:
+                schema["description"] = "JSON Schema for LoadSet - a model representing aerospace structural load cases"
+            
+            # Add examples section
+            schema["examples"] = [{
+                "name": "Example LoadSet",
+                "version": 1,
+                "units": {
+                    "forces": "N",
+                    "moments": "Nm"
+                },
+                "description": "Example load cases for structural analysis",
+                "load_cases": [{
+                    "name": "Example_Case",
+                    "description": "Example load case",
+                    "point_loads": [{
+                        "name": "Point A",
+                        "force_moment": {
+                            "fx": 100.0,
+                            "fy": 0.0,
+                            "fz": 0.0,
+                            "mx": 0.0,
+                            "my": 0.0,
+                            "mz": 0.0
+                        }
+                    }]
+                }]
+            }]
+            
+            # Save to file if path provided
+            if output_file is not None:
+                output_path = Path(output_file)
+                
+                # Create parent directory if it doesn't exist
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                
+                try:
+                    with open(output_path, "w", encoding="utf-8") as f:
+                        json.dump(schema, f, indent=2, ensure_ascii=False)
+                except Exception as e:
+                    raise ValueError(f"Failed to write schema file: {e}")
+            
+            return schema
+            
+        except Exception as e:
+            raise ValueError(f"Failed to generate JSON schema: {e}")
+
+    @classmethod
     def read_json(cls, file_path: PathLike) -> "LoadSet":
         """
         Read a LoadSet from a JSON file.

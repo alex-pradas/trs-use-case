@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "loadset_schema.json",
+  "$defs": {
+    "ForceMoment": {
+      "description": "ForceMoment is a model that represents a force and a moment.\nIt is used to calculate the force and moment at a point in space.",
+      "properties": {
+        "fx": {
+          "default": 0.0,
+          "title": "Fx",
+          "type": "number"
+        },
+        "fy": {
+          "default": 0.0,
+          "title": "Fy",
+          "type": "number"
+        },
+        "fz": {
+          "default": 0.0,
+          "title": "Fz",
+          "type": "number"
+        },
+        "mx": {
+          "default": 0.0,
+          "title": "Mx",
+          "type": "number"
+        },
+        "my": {
+          "default": 0.0,
+          "title": "My",
+          "type": "number"
+        },
+        "mz": {
+          "default": 0.0,
+          "title": "Mz",
+          "type": "number"
+        }
+      },
+      "title": "ForceMoment",
+      "type": "object"
+    },
+    "LoadCase": {
+      "description": "LoadCase is a model that represents a load case in a simulation.\nIt is used to define the loads acting on a structure.",
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "point_loads": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PointLoad"
+          },
+          "title": "Point Loads",
+          "type": "array"
+        }
+      },
+      "title": "LoadCase",
+      "type": "object"
+    },
+    "PointLoad": {
+      "description": "PointLoad is a model that represents a point load in a simulation.\nIt is used to define the loads acting on a structure at a specific point.",
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "force_moment": {
+          "$ref": "#/$defs/ForceMoment"
+        }
+      },
+      "required": [
+        "force_moment"
+      ],
+      "title": "PointLoad",
+      "type": "object"
+    },
+    "Units": {
+      "description": "Units is a model that represents the units used in the load set.",
+      "properties": {
+        "forces": {
+          "default": "N",
+          "enum": [
+            "N",
+            "kN",
+            "lbf",
+            "klbf"
+          ],
+          "title": "Forces",
+          "type": "string"
+        },
+        "moments": {
+          "default": "Nm",
+          "enum": [
+            "Nm",
+            "kNm",
+            "lbf-ft"
+          ],
+          "title": "Moments",
+          "type": "string"
+        }
+      },
+      "title": "Units",
+      "type": "object"
+    }
+  },
+  "description": "LoadSet is a model that represents a set of load cases in a simulation.\nIt is used to group multiple load cases together.",
+  "properties": {
+    "name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Name"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "version": {
+      "title": "Version",
+      "type": "integer"
+    },
+    "units": {
+      "$ref": "#/$defs/Units"
+    },
+    "loads_type": {
+      "anyOf": [
+        {
+          "enum": [
+            "limit",
+            "ultimate"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Loads Type"
+    },
+    "load_cases": {
+      "items": {
+        "$ref": "#/$defs/LoadCase"
+      },
+      "title": "Load Cases",
+      "type": "array"
+    }
+  },
+  "required": [
+    "name",
+    "version",
+    "units",
+    "load_cases"
+  ],
+  "title": "LoadSet",
+  "type": "object",
+  "examples": [
+    {
+      "name": "Example LoadSet",
+      "version": 1,
+      "units": {
+        "forces": "N",
+        "moments": "Nm"
+      },
+      "description": "Example load cases for structural analysis",
+      "load_cases": [
+        {
+          "name": "Example_Case",
+          "description": "Example load case",
+          "point_loads": [
+            {
+              "name": "Point A",
+              "force_moment": {
+                "fx": 100.0,
+                "fy": 0.0,
+                "fz": 0.0,
+                "mx": 0.0,
+                "my": 0.0,
+                "mz": 0.0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

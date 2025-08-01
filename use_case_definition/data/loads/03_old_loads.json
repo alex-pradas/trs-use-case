@@ -1,4 +1,5 @@
 {
+  "$schema": "./loadset_schema.json",
   "name": "Aerospace Structural Load Cases",
   "version": 1,
   "units": {
