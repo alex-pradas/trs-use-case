@@ -2,6 +2,7 @@
   "$schema": "./loadset_schema.json",
   "name": "Concept Development - Provisional",
   "version": 3,
+  "loads_type": "ultimate",
   "units": {
     "forces": "lbf",
     "moments": "lbf-ft"
