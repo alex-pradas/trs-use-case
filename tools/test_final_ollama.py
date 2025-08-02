@@ -10,10 +10,10 @@ class CityLocation(BaseModel):
 
 async def test_tool_support():
     """Quick test of working Ollama configuration."""
-    
-    # SOLUTION: Use magistral:24b which supports tools
-    model_name = "qwen3:30b"  
-    
+
+    # SOLUTION: Use hf.co/unsloth/Qwen3-30B-A3B-Thinking-2507-GGUF:latest which supports tools
+    model_name = "hf.co/unsloth/Qwen3-30B-A3B-Thinking-2507-GGUF:latest"
+
     print(f"✅ Using {model_name} (supports tools)")
     
     ollama_model = OpenAIModel(
