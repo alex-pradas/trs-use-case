@@ -43,12 +43,6 @@ def create_loadset_agent(
         """Load a LoadSet from a JSON file."""
         return ctx.deps.load_from_json(Path(file_path))
 
-    # @agent.tool
-    # def load_from_resource(
-    #     ctx: RunContext[LoadSetMCPProvider], resource_uri: str
-    # ) -> dict:
-    #     """Load a LoadSet from a resource URI (e.g., 'loadsets://new_loads.json')."""
-    #     return ctx.deps.load_from_resource(resource_uri)
 
     @agent.tool
     def convert_units(
@@ -84,12 +78,6 @@ def create_loadset_agent(
         """List all load cases in the current LoadSet."""
         return ctx.deps.list_load_cases()
 
-    # @agent.tool
-    # def load_second_loadset_from_resource(
-    #     ctx: RunContext[LoadSetMCPProvider], resource_uri: str
-    # ) -> dict:
-    #     """Load a second LoadSet from a resource URI for comparison."""
-    #     return ctx.deps.load_second_loadset_from_resource(resource_uri)
 
     @agent.tool
     def compare_loadsets(ctx: RunContext[LoadSetMCPProvider]) -> dict:
@@ -117,6 +105,19 @@ def create_loadset_agent(
     ) -> dict:
         """Load a second LoadSet from a JSON file for comparison."""
         return ctx.deps.load_second_loadset(Path(file_path))
+
+    @agent.tool
+    def export_comparison_report(
+        ctx: RunContext[LoadSetMCPProvider], 
+        output_dir: str,
+        report_name: str = "comparison_report",
+        image_format: str = "png",
+        indent: int = 2,
+    ) -> dict:
+        """Export complete comparison report including JSON data and chart images."""
+        return ctx.deps.generate_comparison_report(
+            output_dir=Path(output_dir),
+        )
 
     return agent
 

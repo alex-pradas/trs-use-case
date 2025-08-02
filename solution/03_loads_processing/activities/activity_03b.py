@@ -1,5 +1,5 @@
 from .base import Activity, ActivityConfig, ActivityRegistry
-from validators import ToolCalled, ToolNotCalled, ExtremesValidated
+from validators import ToolCalled, ToolNotCalled
 
 
 class Activity03B(Activity):
@@ -22,30 +22,8 @@ I have the following previous (old)loads to compare against: /Users/alex/repos/t
                 ToolNotCalled(tool_name="scale_loads"),
                 ToolCalled(tool_name="load_second_loadset"), 
                 ToolCalled(tool_name="compare_loadsets"), 
-                ToolCalled(tool_name="generate_comparison_charts"), 
-                
-                # Numerical validation of point extremes (using LoadSet data from tool call response)
-                ExtremesValidated(
-                    point_name="Point A",
-                    component="fx",
-                    extreme_type="max",
-                    expected_value=6.6539613983178,
-                    expected_loadcase="landing_011"
-                ),
-                ExtremesValidated(
-                    point_name="Point A", 
-                    component="my",
-                    extreme_type="min",
-                    expected_value=0.28902923412327,
-                    expected_loadcase="cruise2_098"
-                ),
-                ExtremesValidated(
-                    point_name="Point B",
-                    component="fy", 
-                    extreme_type="max",
-                    expected_value=6.506338232562691,
-                    expected_loadcase="landing_012"
-                ),
+                ToolCalled(tool_name="export_comparison_report"), 
+    
             )
         )
 

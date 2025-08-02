@@ -62,7 +62,7 @@ def process_loads(new_loads_path, output_path, old_loads_path=None):
     if old_loads_path:
         old_loadset = LoadSet.read_json(old_loads_path)
         comparison = new_loadset.compare_to(old_loadset)
-        comparison.export_comparison_report(output_path)
+        comparison.generate_comparison_report(output_path)
 
     # Check if conversion to N and Nm is needed
     if new_loadset.units != "N":

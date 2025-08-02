@@ -95,7 +95,7 @@ class LoadSetCompare(BaseModel):
         
         return True
 
-    def export_comparison_report(
+    def generate_comparison_report(
         self,
         output_dir: PathLike,
         report_name: str = "comparison_report",
@@ -203,6 +203,8 @@ class LoadSetCompare(BaseModel):
             ValueError: If output_dir is None and as_base64=False
         """
         try:
+            import matplotlib
+            matplotlib.use('Agg')  # Use non-interactive backend to avoid GUI threading issues
             import matplotlib.pyplot as plt
             import matplotlib.patches as mpatches
         except ImportError:

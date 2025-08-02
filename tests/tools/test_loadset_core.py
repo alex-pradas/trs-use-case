@@ -1326,7 +1326,7 @@ class TestLoadSetCompare:
 
         def run_test(temp_dir):
             # Test basic export functionality
-            json_path = compare.export_comparison_report(
+            json_path = compare.generate_comparison_report(
                 output_dir=temp_dir,
                 report_name="test_comparison",
                 image_format="png",
@@ -1412,7 +1412,7 @@ class TestLoadSetCompare:
 
         # Test with custom parameters
         with tempfile.TemporaryDirectory() as temp_dir:
-            json_path = compare.export_comparison_report(
+            json_path = compare.generate_comparison_report(
                 output_dir=temp_dir,  # type: ignore
                 report_name="custom_report",
                 image_format="svg",

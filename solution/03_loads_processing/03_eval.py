@@ -87,8 +87,8 @@ Key Operations required:
 1. Process loads from customer format and convert units IF REQUIRED to our internal convention of N and Nm.
 2. Factor in safety margins (1.5 for ultimate loads) if appropriate
 3. Envelope loadset to reduce the number of load cases
-4. If old loads are provided by user, compare new loads with previous applicable loads and generate comparison charts.
-5. Determine if detailed analysis is needed (if old loads are provided)
+4. If old loads are provided by user, compare new loads with previous applicable loads.
+5. Determine if detailed analysis is needed based on load exceedance (if old loads are provided)
     6a. If a new analysis is needed, create an envelope of the loadset and generate the ANSYS input files
     6b. If no exceedances, provide comparison results and no-analysis statement
 
