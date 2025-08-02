@@ -87,13 +87,15 @@ Key Operations required:
 1. Process loads from customer format and convert units IF REQUIRED to our internal convention of N and Nm.
 2. Factor in safety margins (1.5 for ultimate loads) if appropriate
 3. Envelope loadset to reduce the number of load cases
-4. Compare new loads with previous applicable loads, if old loads are provided by user.
+4. If old loads are provided by user, compare new loads with previous applicable loads and generate comparison charts.
 5. Determine if detailed analysis is needed (if old loads are provided)
     6a. If a new analysis is needed, create an envelope of the loadset and generate the ANSYS input files
     6b. If no exceedances, provide comparison results and no-analysis statement
+
+DO NOT ASK QUESTIONS. USE THE PROVIDED TOOLS TO PROCESS LOADS AND GENERATE OUTPUTS.
 """
 
-async def agent_task(inputs: str):
+async def agent_task(inputs: str, model_override: str | None = None):
     """Task function that runs the agent with the given inputs."""
     # Import the updated system prompt function from process_loads
     import sys
@@ -105,9 +107,8 @@ async def agent_task(inputs: str):
         sys.path.insert(0, str(process_loads_dir))
     
     # Using SIMPLE_SYSTEM_PROMPT for consistent behavior
-    
     system_prompt = SIMPLE_SYSTEM_PROMPT
-    agent = create_loadset_agent(system_prompt=system_prompt)
+    agent = create_loadset_agent(system_prompt=system_prompt, model_override=model_override)
     provider = LoadSetMCPProvider()
     
     # Run the agent asynchronously
@@ -115,7 +116,7 @@ async def agent_task(inputs: str):
     return result.output
 
 
-async def main(activities: list[str] | None = None):
+async def main(activities: list[str] | None = None, model_name: str | None = None):
     """Main function to run the evaluation for specified activities."""
     import logfire
     import asyncio
@@ -130,7 +131,7 @@ async def main(activities: list[str] | None = None):
         print(f"Running evaluation for activities: {', '.join(activities)}")
         
         reports = {}
-        wait_time = 120  # Waiting time to avoid hitting token limits at anthropic
+        wait_time = 0  # Waiting time to avoid hitting token limits at anthropic
         
         for i, activity in enumerate(activities):
             try:
@@ -151,7 +152,16 @@ async def main(activities: list[str] | None = None):
                     evaluators=[type(e).__name__ for e in evaluators]
                 )
                 
-                report = await dataset.evaluate(agent_task)
+                # Create a wrapper function with model override if specified
+                if model_name:
+                    # Create a wrapper that captures the model_name
+                    current_model = model_name  # Capture in closure
+                    async def task_func(inputs: str):
+                        return await agent_task(inputs, model_override=current_model)
+                else:
+                    task_func = agent_task
+                
+                report = await dataset.evaluate(task_func)
                 
                 logfire.info(
                     f"Activity {activity} evaluation completed",
@@ -184,10 +194,38 @@ if __name__ == "__main__":
     # Instrument pydantic-ai for detailed agent tracing
     logfire.instrument_pydantic_ai()
     
+    # ===============================================
+    # MODEL CONFIGURATION
+    # ===============================================
+    # Uncomment ONE of the following model configurations:
+    
+    # 1. Anthropic Claude Haiku (Current Default)
+    model_name = "anthropic:claude-3-haiku-20240307"  # Uses default from environment
+    
+    # 2. Anthropic Sonnet 4
+    # model_name = "anthropic:claude-4-sonnet-20250514"
+    
+    # 3. Built-in Local Model (Ollama example)
+    # model_name = "openai:qwen2.5-coder:7b"
+    # Note: You need to configure Ollama and update OpenAIProvider base_url
+    
+    # 4. Kimi K2 (requires proper provider configuration)
+    # model_name = "openai:kimi-k2"
+    # Note: You need to configure the provider for Kimi API
+    
+    # ===============================================
+    # ACTIVITY CONFIGURATION
+    # ===============================================
     # Configure which activities to run
-    activities = ["03A", "03B"]  # Run specific activities
+    activities = ["03B"]  # Run specific activities
     # activities = ["03A"]      # Run only Activity 03A
     # activities = ["03B"]      # Run only Activity 03B
     # activities = None         # Auto-discover all available activities
     
-    asyncio.run(main(activities))
+    # Print configuration
+    if model_name:
+        print(f"🤖 Using model override: {model_name}")
+    else:
+        print("🤖 Using default model from environment")
+    
+    asyncio.run(main(activities, model_name))

@@ -329,6 +329,7 @@ class LoadSetMCPProvider:
                     "forces": self._comparison_loadset.units.forces,
                     "moments": self._comparison_loadset.units.moments,
                 },
+                "loads_type": self._comparison_loadset.loads_type,
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -454,6 +455,7 @@ class LoadSetMCPProvider:
                 "loadset1_name": self._current_loadset.name,
                 "loadset2_name": self._comparison_loadset.name,
                 "total_comparison_rows": len(self._current_comparison.comparison_rows),
+                "new_loadset_exceeds_old": self._current_comparison.new_exceeds_old,
                 "comparison_data": comparison_dict,
             }
         except Exception as e:

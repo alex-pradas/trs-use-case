@@ -110,6 +110,13 @@ def create_loadset_agent(
     def get_point_extremes(ctx: RunContext[LoadSetMCPProvider]) -> dict:
         """Get extreme values (min/max) for each point and component in the current LoadSet."""
         return ctx.deps.get_point_extremes()
+    
+    @agent.tool
+    def load_second_loadset(
+        ctx: RunContext[LoadSetMCPProvider], file_path: str
+    ) -> dict:
+        """Load a second LoadSet from a JSON file for comparison."""
+        return ctx.deps.load_second_loadset(Path(file_path))
 
     return agent
 
