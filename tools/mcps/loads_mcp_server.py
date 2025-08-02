@@ -53,6 +53,7 @@ class LoadSetMCPProvider:
                 "success": True,
                 "message": f"LoadSet loaded from {file_path}",
                 "loadset_name": self._current_loadset.name,
+                "loads_type": self._current_loadset.loads_type,
                 "num_load_cases": len(self._current_loadset.load_cases),
                 "units": {
                     "forces": self._current_loadset.units.forces,
@@ -90,59 +91,6 @@ class LoadSetMCPProvider:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def load_from_resource(self, resource_uri: str) -> dict:
-        """
-        Load a LoadSet from a resource URI.
-
-        Args:
-            resource_uri: Resource URI (e.g., "loadsets://03_A_new_loads.json")
-
-        Returns:
-            dict: Success message and LoadSet summary
-
-        Raises:
-            ValueError: If resource cannot be loaded or parsed
-        """
-        try:
-            # Parse the resource URI to get the resource path
-            if resource_uri.startswith("loadsets://"):
-                resource_name = resource_uri.replace("loadsets://", "")
-                
-                # Get the project root directory (two levels up from tools/mcps)
-                project_root = Path(__file__).parent.parent.parent
-                
-                if resource_name == "03_A_new_loads.json":
-                    file_path = project_root / "use_case_definition" / "data" / "loads" / "03_A_new_loads.json"
-                elif resource_name == "03_B_new_loads.json":
-                    file_path = project_root / "use_case_definition" / "data" / "loads" / "03_B_new_loads.json"
-                elif resource_name == "03_old_loads.json":
-                    file_path = project_root / "use_case_definition" / "data" / "loads" / "03_old_loads.json"
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Unknown resource: {resource_name}. Available: 03_A_new_loads.json, 03_B_new_loads.json, 03_old_loads.json",
-                    }
-                
-                # Load the LoadSet from the file
-                self._current_loadset = LoadSet.read_json(file_path)
-                
-                return {
-                    "success": True,
-                    "message": f"LoadSet loaded from resource {resource_uri}",
-                    "loadset_name": self._current_loadset.name,
-                    "num_load_cases": len(self._current_loadset.load_cases),
-                    "units": {
-                        "forces": self._current_loadset.units.forces,
-                        "moments": self._current_loadset.units.moments,
-                    },
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": f"Unsupported resource URI scheme. Expected 'loadsets://', got: {resource_uri}",
-                }
-        except Exception as e:
-            return {"success": False, "error": str(e)}
 
     def convert_units(self, target_units: ForceUnit) -> dict:
         """
@@ -328,6 +276,7 @@ class LoadSetMCPProvider:
                     "forces": self._comparison_loadset.units.forces,
                     "moments": self._comparison_loadset.units.moments,
                 },
+                "loads_type": self._comparison_loadset.loads_type,
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -363,61 +312,6 @@ class LoadSetMCPProvider:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def load_second_loadset_from_resource(self, resource_uri: str) -> dict:
-        """
-        Load a second LoadSet from a resource URI for comparison.
-
-        Args:
-            resource_uri: Resource URI (e.g., "loadsets://03_old_loads.json")
-
-        Returns:
-            dict: Success message and LoadSet summary
-
-        Raises:
-            ValueError: If resource cannot be loaded or parsed
-        """
-        try:
-            # Parse the resource URI to get the resource path
-            if resource_uri.startswith("loadsets://"):
-                resource_name = resource_uri.replace("loadsets://", "")
-                
-                # Get the project root directory (two levels up from tools/mcps)
-                project_root = Path(__file__).parent.parent.parent
-                
-                if resource_name == "03_A_new_loads.json":
-                    file_path = project_root / "use_case_definition" / "data" / "loads" / "03_A_new_loads.json"
-                elif resource_name == "03_B_new_loads.json":
-                    file_path = project_root / "use_case_definition" / "data" / "loads" / "03_B_new_loads.json"
-                elif resource_name == "03_old_loads.json":
-                    file_path = project_root / "use_case_definition" / "data" / "loads" / "03_old_loads.json"
-                else:
-                    return {
-                        "success": False,
-                        "error": f"Unknown resource: {resource_name}. Available: 03_A_new_loads.json, 03_B_new_loads.json, 03_old_loads.json",
-                    }
-                
-                # Load the comparison LoadSet from the file
-                self._comparison_loadset = LoadSet.read_json(file_path)
-                # Reset any existing comparison when loading new comparison loadset
-                self._current_comparison = None
-                
-                return {
-                    "success": True,
-                    "message": f"Comparison LoadSet loaded from resource {resource_uri}",
-                    "loadset_name": self._comparison_loadset.name,
-                    "num_load_cases": len(self._comparison_loadset.load_cases),
-                    "units": {
-                        "forces": self._comparison_loadset.units.forces,
-                        "moments": self._comparison_loadset.units.moments,
-                    },
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": f"Unsupported resource URI scheme. Expected 'loadsets://', got: {resource_uri}",
-                }
-        except Exception as e:
-            return {"success": False, "error": str(e)}
 
     def compare_loadsets(self) -> dict:
         """
@@ -453,6 +347,7 @@ class LoadSetMCPProvider:
                 "loadset1_name": self._current_loadset.name,
                 "loadset2_name": self._comparison_loadset.name,
                 "total_comparison_rows": len(self._current_comparison.comparison_rows),
+                "new_loadset_exceeds_old": self._current_comparison.new_exceeds_old(),
                 "comparison_data": comparison_dict,
             }
         except Exception as e:
@@ -672,6 +567,68 @@ class LoadSetMCPProvider:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    def generate_comparison_report(
+        self,
+        output_dir: PathLike,
+    ) -> dict:
+        """
+        Export complete comparison report including JSON data and chart images.
+
+        Args:
+            output_dir: Directory to save the report files
+
+        Returns:
+            dict: Success message with report location and info, or error with missing loadset details
+        """
+        # Check if both loadsets are available
+        if self._current_loadset is None and self._comparison_loadset is None:
+            return {
+                "success": False,
+                "error": "No LoadSets loaded. Both current and comparison LoadSets are required. Use load_from_json and load_second_loadset first.",
+                "missing_loadsets": ["current", "comparison"]
+            }
+        elif self._current_loadset is None:
+            return {
+                "success": False,
+                "error": "Current LoadSet not loaded. Use load_from_json first.",
+                "missing_loadsets": ["current"]
+            }
+        elif self._comparison_loadset is None:
+            return {
+                "success": False,
+                "error": "Comparison LoadSet not loaded. Use load_second_loadset first.",
+                "missing_loadsets": ["comparison"]
+            }
+
+        # Check if comparison has been performed
+        if self._current_comparison is None:
+            return {
+                "success": False,
+                "error": "No comparison available. Use compare_loadsets first to generate comparison data.",
+            }
+
+        try:
+            # Export the complete comparison report
+            from pathlib import Path
+            
+            report_path = self._current_comparison.generate_comparison_report(
+                output_dir=output_dir,
+            )
+
+            return {
+                "success": True,
+                "message": f"Complete comparison report exported successfully",
+                "report_path": str(report_path),
+                "output_directory": str(Path(output_dir)),
+                "loadset1_name": self._current_loadset.name,
+                "loadset2_name": self._comparison_loadset.name,
+                "total_comparisons": len(self._current_comparison.comparison_rows),
+                "points_analyzed": len(set(row.point_name for row in self._current_comparison.comparison_rows)),
+                "new_exceeds_old": self._current_comparison.new_exceeds_old(),
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
 
 def create_mcp_server() -> FastMCP:
     """
@@ -686,7 +643,6 @@ def create_mcp_server() -> FastMCP:
     # Register all methods as tools
     mcp.tool(provider.load_from_json)
     mcp.tool(provider.load_from_data)
-    mcp.tool(provider.load_from_resource)
     mcp.tool(provider.convert_units)
     mcp.tool(provider.scale_loads)
     mcp.tool(provider.export_to_ansys)
@@ -694,68 +650,14 @@ def create_mcp_server() -> FastMCP:
     mcp.tool(provider.list_load_cases)
     mcp.tool(provider.load_second_loadset)
     mcp.tool(provider.load_second_loadset_from_data)
-    mcp.tool(provider.load_second_loadset_from_resource)
     mcp.tool(provider.compare_loadsets)
     mcp.tool(provider.generate_comparison_charts)
     mcp.tool(provider.export_comparison_json)
     mcp.tool(provider.get_comparison_summary)
     mcp.tool(provider.envelope_loadset)
     mcp.tool(provider.get_point_extremes)
+    mcp.tool(provider.generate_comparison_report)
 
-    # Register resource definitions for JSON load files
-    @mcp.resource("loadsets://03_A_new_loads.json")
-    def get_03_A_new_loads():
-        """
-        Get the 03_A_new_loads JSON file content.
-        
-        Returns:
-            dict: Contents of use_case_definition/data/loads/03_A_new_loads.json
-        """
-        try:
-            # Get the project root directory (two levels up from tools/mcps)
-            project_root = Path(__file__).parent.parent.parent
-            new_loads_path = project_root / "use_case_definition" / "data" / "loads" / "03_A_new_loads.json"
-            
-            with open(new_loads_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            return {"error": f"Failed to load 03_A_new_loads.json: {str(e)}"}
-
-    @mcp.resource("loadsets://03_B_new_loads.json")
-    def get_03_B_new_loads():
-        """
-        Get the 03_B_new_loads JSON file content.
-        
-        Returns:
-            dict: Contents of use_case_definition/data/loads/03_B_new_loads.json
-        """
-        try:
-            # Get the project root directory (two levels up from tools/mcps)
-            project_root = Path(__file__).parent.parent.parent
-            new_loads_path = project_root / "use_case_definition" / "data" / "loads" / "03_B_new_loads.json"
-            
-            with open(new_loads_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            return {"error": f"Failed to load 03_B_new_loads.json: {str(e)}"}
-
-    @mcp.resource("loadsets://03_old_loads.json")
-    def get_03_old_loads():
-        """
-        Get the 03_old_loads JSON file content.
-        
-        Returns:
-            dict: Contents of use_case_definition/data/loads/03_old_loads.json
-        """
-        try:
-            # Get the project root directory (two levels up from tools/mcps)
-            project_root = Path(__file__).parent.parent.parent
-            old_loads_path = project_root / "use_case_definition" / "data" / "loads" / "03_old_loads.json"
-            
-            with open(old_loads_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            return {"error": f"Failed to load 03_old_loads.json: {str(e)}"}
 
     return mcp
 

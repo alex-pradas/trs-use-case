@@ -8,123 +8,15 @@ tools_dir = project_root / "tools"
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(tools_dir))
 
-from pydantic_evals import Case, Dataset
+# pydantic_evals imports are now handled by the activities package
 
 from tools.agents import create_loadset_agent
 from tools.mcps.loads_mcp_server import LoadSetMCPProvider
-from validators import ToolCalled, ToolNotCalled, ExtremesValidated
+from activities import ActivityRegistry  # This triggers auto-registration of all activities
 
 
-
-# Define shared case variables
-ACTIVITY_03A_INPUTS = """\
-I need to process some loads for ANSYS analysis.
-the files are here: /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_A_new_loads.json
-output directory for ansys files: /Users/alex/repos/trs-use-case/output
-I do not have any previous loads to compare against.
-"""
-
-ACTIVITY_03B_INPUTS = """\
-I need to process some loads for ANSYS analysis.
-the files are here: /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_B_new_loads.json
-output directory for ansys files: /Users/alex/repos/trs-use-case/output
-I have the following previous (old)loads to compare against: /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_old_loads.json
-"""
-
-ACTIVITY_03A_EVALUATORS = (
-    # Tool call validations
-    ToolCalled(tool_name="scale_loads", tool_arguments={"factor": 1.5}),  # Check factor(1.5) operation
-    ToolCalled(tool_name="export_to_ansys"),  # Check ANSYS export
-    ToolCalled(tool_name="load_from_json"),  # Check load operation
-    ToolNotCalled(tool_name="convert_units"),  # Check units not converted
-    ToolCalled(tool_name="envelope_loadset"),  # Check envelope operation
-   
-    # Numerical validation of point extremes (using LoadSet data from tool call response)
-    ExtremesValidated(
-        point_name="Point A",
-        component="fx",
-        extreme_type="max",
-        expected_value=1.4958699,
-        expected_loadcase="landing_011"
-    ),
-    ExtremesValidated(
-        point_name="Point A", 
-        component="my",
-        extreme_type="min",
-        expected_value=0.213177015,
-        expected_loadcase="cruise2_098"
-    ),
-    ExtremesValidated(
-        point_name="Point B",
-        component="fy", 
-        extreme_type="max",
-        expected_value=1.462682895,
-        expected_loadcase="landing_012"
-    ),
-)
-
-ACTIVITY_03B_EVALUATORS = (
-    # Tool call validations
-    ToolCalled(tool_name="load_from_json"),  
-    ToolCalled(tool_name="convert_units"),  
-    ToolNotCalled(tool_name="scale_loads"),
-    ToolCalled(tool_name="load_second_loadset"), 
-    ToolCalled(tool_name="compare_loadsets"), 
-    ToolCalled(tool_name="generate_comparison_charts"), 
-   
-    # Numerical validation of point extremes (using LoadSet data from tool call response)
-    ExtremesValidated(
-        point_name="Point A",
-        component="fx",
-        extreme_type="max",
-        expected_value=6.6539613983178,
-        expected_loadcase="landing_011"
-    ),
-    ExtremesValidated(
-        point_name="Point A", 
-        component="my",
-        extreme_type="min",
-        expected_value=0.28902923412327,
-        expected_loadcase="cruise2_098"
-    ),
-    ExtremesValidated(
-        point_name="Point B",
-        component="fy", 
-        extreme_type="max",
-        expected_value=6.506338232562691,
-        expected_loadcase="landing_012"
-    ),
-)
-
-# Create test cases using list comprehension
-
-k=5  # Number of iterations for test cases (pass^k)
-cases_03A = [
-    Case(
-        name=f"Activity 03A - iteration {i}",
-        inputs=ACTIVITY_03A_INPUTS,
-    )
-    for i in range(1, k+1)
-]
-
-cases_03B = [
-    Case(
-        name=f"Activity 03B - iteration {i}",
-        inputs=ACTIVITY_03B_INPUTS,
-    )
-    for i in range(1, k+1)
-]
-
-# Create datasets
-dataset_03A = Dataset(
-    cases=list(cases_03A),
-    evaluators=ACTIVITY_03A_EVALUATORS
-)
-
-dataset_03B = Dataset(
-    cases=list(cases_03B),
-    evaluators=ACTIVITY_03B_EVALUATORS
-)
+# All activity definitions are now in the activities/ package
+# Activities are auto-registered when the activities package is imported
 
 
 def load_system_prompt() -> str:
@@ -195,13 +87,15 @@ Key Operations required:
 1. Process loads from customer format and convert units IF REQUIRED to our internal convention of N and Nm.
 2. Factor in safety margins (1.5 for ultimate loads) if appropriate
 3. Envelope loadset to reduce the number of load cases
-4. Compare new loads with previous applicable loads, if old loads are provided by user.
-5. Determine if detailed analysis is needed (if old loads are provided)
+4. If old loads are provided by user, compare new loads with previous applicable loads.
+5. Determine if detailed analysis is needed based on load exceedance (if old loads are provided)
     6a. If a new analysis is needed, create an envelope of the loadset and generate the ANSYS input files
     6b. If no exceedances, provide comparison results and no-analysis statement
+
+DO NOT ASK QUESTIONS. USE THE PROVIDED TOOLS TO PROCESS LOADS AND GENERATE OUTPUTS.
 """
 
-async def agent_task(inputs: str):
+async def agent_task(inputs: str, model_override: str | None = None):
     """Task function that runs the agent with the given inputs."""
     # Import the updated system prompt function from process_loads
     import sys
@@ -212,11 +106,9 @@ async def agent_task(inputs: str):
     if str(process_loads_dir) not in sys.path:
         sys.path.insert(0, str(process_loads_dir))
     
-    # Import the load_system_prompt function from process_loads.py
-    from process_loads import load_system_prompt as load_updated_system_prompt
-    
+    # Using SIMPLE_SYSTEM_PROMPT for consistent behavior
     system_prompt = SIMPLE_SYSTEM_PROMPT
-    agent = create_loadset_agent(system_prompt=system_prompt)
+    agent = create_loadset_agent(system_prompt=system_prompt, model_override=model_override)
     provider = LoadSetMCPProvider()
     
     # Run the agent asynchronously
@@ -224,63 +116,66 @@ async def agent_task(inputs: str):
     return result.output
 
 
-async def main(activities: list[str] = ["03A", "03B"]):
+async def main(activities: list[str] | None = None, model_name: str | None = None):
     """Main function to run the evaluation for specified activities."""
     import logfire
     import asyncio
     
-    # Activity mapping
-    activity_config = {
-        "03A": {
-            "dataset": dataset_03A,
-            "evaluators": ACTIVITY_03A_EVALUATORS
-        },
-        "03B": {
-            "dataset": dataset_03B,
-            "evaluators": ACTIVITY_03B_EVALUATORS
-        }
-    }
+    # Auto-discover available activities if none specified
+    if activities is None:
+        activities = ActivityRegistry.list_activities()
+        print(f"Auto-discovered activities: {activities}")
     
     with logfire.span("load_processing_evaluation"):
         logfire.info("Starting evaluation for load processing agent", activities=activities)
         print(f"Running evaluation for activities: {', '.join(activities)}")
         
         reports = {}
-        wait_time = 120  # Waiting time to avoid hitting token limits at anthropic
+        wait_time = 0  # Waiting time to avoid hitting token limits at anthropic
         
         for i, activity in enumerate(activities):
-            if activity not in activity_config:
-                print(f"Warning: Unknown activity '{activity}', skipping...")
-                continue
+            try:
+                # Get dataset and evaluators from registry
+                dataset = ActivityRegistry.create_dataset(activity)
+                evaluators = ActivityRegistry.get_evaluators(activity)
                 
-            config = activity_config[activity]
-            dataset = config["dataset"]
-            evaluators = config["evaluators"]
-            
-            # Add wait time between activities (but not before the first one)
-            if i > 0:
-                print(f"Waiting {wait_time} seconds before starting Activity {activity}...")
-                await asyncio.sleep(wait_time)
-            
-            # Evaluate the activity
-            print(f"\n=== Activity {activity} Evaluation ===")
-            logfire.info(
-                f"Activity {activity} evaluation setup",
-                dataset_cases=len(dataset.cases),
-                evaluators=[type(e).__name__ for e in evaluators]
-            )
-            
-            report = await dataset.evaluate(agent_task)
-            
-            logfire.info(
-                f"Activity {activity} evaluation completed",
-                total_cases=len(report.cases)
-            )
-            
-            print(f"\n=== Activity {activity} Report ===")
-            report.print()
-            
-            reports[activity] = report
+                # Add wait time between activities (but not before the first one)
+                if i > 0:
+                    print(f"Waiting {wait_time} seconds before starting Activity {activity}...")
+                    await asyncio.sleep(wait_time)
+                
+                # Evaluate the activity
+                print(f"\n=== Activity {activity} Evaluation ===")
+                logfire.info(
+                    f"Activity {activity} evaluation setup",
+                    dataset_cases=len(dataset.cases),
+                    evaluators=[type(e).__name__ for e in evaluators]
+                )
+                
+                # Create a wrapper function with model override if specified
+                if model_name:
+                    # Create a wrapper that captures the model_name
+                    current_model = model_name  # Capture in closure
+                    async def task_func(inputs: str):
+                        return await agent_task(inputs, model_override=current_model)
+                else:
+                    task_func = agent_task
+                
+                report = await dataset.evaluate(task_func)
+                
+                logfire.info(
+                    f"Activity {activity} evaluation completed",
+                    total_cases=len(report.cases)
+                )
+                
+                print(f"\n=== Activity {activity} Report ===")
+                report.print()
+                
+                reports[activity] = report
+                
+            except ValueError as e:
+                print(f"Error: {e}")
+                continue
         
         return reports
 
@@ -299,9 +194,38 @@ if __name__ == "__main__":
     # Instrument pydantic-ai for detailed agent tracing
     logfire.instrument_pydantic_ai()
     
-    # Configure which activities to run
-    # activities = ["03A", "03B"]  # Change this list to run specific activities
-    # activities = ["03A"]      # Run only Activity 03A
-    activities = ["03B"]      # Run only Activity 03B
+    # ===============================================
+    # MODEL CONFIGURATION
+    # ===============================================
+    # Uncomment ONE of the following model configurations:
     
-    asyncio.run(main(activities))
+    # 1. Anthropic Claude Haiku (Current Default)
+    model_name = "anthropic:claude-3-haiku-20240307"  # Uses default from environment
+    
+    # 2. Anthropic Sonnet 4
+    # model_name = "anthropic:claude-4-sonnet-20250514"
+    
+    # 3. Built-in Local Model (Ollama example)
+    # model_name = "openai:qwen2.5-coder:7b"
+    # Note: You need to configure Ollama and update OpenAIProvider base_url
+    
+    # 4. Kimi K2 (requires proper provider configuration)
+    # model_name = "openai:kimi-k2"
+    # Note: You need to configure the provider for Kimi API
+    
+    # ===============================================
+    # ACTIVITY CONFIGURATION
+    # ===============================================
+    # Configure which activities to run
+    activities = ["03C"]  # Run specific activities
+    # activities = ["03A"]      # Run only Activity 03A
+    # activities = ["03B"]      # Run only Activity 03B
+    # activities = None         # Auto-discover all available activities
+    
+    # Print configuration
+    if model_name:
+        print(f"🤖 Using model override: {model_name}")
+    else:
+        print("🤖 Using default model from environment")
+    
+    asyncio.run(main(activities, model_name))

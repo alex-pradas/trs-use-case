@@ -1,0 +1,713 @@
+{
+  "$schema": "./loadset_schema.json",
+  "name": "Concept Development - Provisional",
+  "version": 3,
+  "loads_type": "limit",
+  "units": {
+    "forces": "lbf",
+    "moments": "lbf-ft"
+  },
+  "description": "Load cases during early concept development phase for First Engine To Test (FETT).",
+  "load_cases": [
+    {
+      "name": "Take_off_004",
+      "description": "Takeoff load case 004",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.7608804,
+            "fy": 0.87435622,
+            "fz": 0.74486445,
+            "mx": 0.89091106,
+            "my": 0.68659942,
+            "mz": 0.9301353
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.25933381,
+            "fy": 0.73415377,
+            "fz": 0.0,
+            "mx": 0.0209783,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "Take_off_005",
+      "description": "Takeoff load case 005",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.31951407,
+            "fy": 0.48238762,
+            "fz": 0.29491056,
+            "mx": 0.12620526,
+            "my": 0.04469277,
+            "mz": 0.73648996
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.47893356,
+            "fy": 0.73645005,
+            "fz": 0.0,
+            "mx": 0.28430101,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "Take_off_009",
+      "description": "Takeoff load case 009",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.36768913,
+            "fy": 0.02068434,
+            "fz": 0.90011992,
+            "mx": 0.02988334,
+            "my": 0.69695544,
+            "mz": 0.91520882
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.24436064,
+            "fy": 0.40548478,
+            "fz": 0.0,
+            "mx": 0.19634519,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "Take_off_010",
+      "description": "Takeoff load case 010",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.67387736,
+            "fy": 0.76361401,
+            "fz": 0.13793905,
+            "mx": 0.27152647,
+            "my": 0.76620154,
+            "mz": 0.218736
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.7727553,
+            "fy": 0.94848124,
+            "fz": 0.0,
+            "mx": 0.6979841,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "Take_off_011",
+      "description": "Takeoff load case 011",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.59536016,
+            "fy": 0.1946617,
+            "fz": 0.93773501,
+            "mx": 0.49512274,
+            "my": 0.7286625,
+            "mz": 0.11969158
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.61504064,
+            "fy": 0.84231234,
+            "fz": 0.0,
+            "mx": 0.98079141,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "cruise1_007",
+      "description": "Cruise load case 007",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.49695467,
+            "fy": 0.01006604,
+            "fz": 0.2774027,
+            "mx": 0.12979303,
+            "my": 0.95631843,
+            "mz": 0.77767972
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.27851934,
+            "fy": 0.16678269,
+            "fz": 0.0,
+            "mx": 0.37987255,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "cruise1_108",
+      "description": "Cruise load case 108",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.74695382,
+            "fy": 0.98239255,
+            "fz": 0.36365427,
+            "mx": 0.94940984,
+            "my": 0.70971804,
+            "mz": 0.65300295
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.40296795,
+            "fy": 0.11882981,
+            "fz": 0.0,
+            "mx": 0.42355136,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "cruise1_109",
+      "description": "Cruise load case 109",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.19348533,
+            "fy": 0.07023802,
+            "fz": 0.50399916,
+            "mx": 0.2494156,
+            "my": 0.4077997,
+            "mz": 0.0999324
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.46951866,
+            "fy": 0.33351569,
+            "fz": 0.0,
+            "mx": 0.15089901,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "cruise2_073",
+      "description": "Cruise load case 073",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.62605179,
+            "fy": 0.03474321,
+            "fz": 0.99698351,
+            "mx": 0.43738485,
+            "my": 0.47705728,
+            "mz": 0.86038199
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.63701941,
+            "fy": 0.14541867,
+            "fz": 0.0,
+            "mx": 0.96858335,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "cruise2_074",
+      "description": "Cruise load case 074",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.60526548,
+            "fy": 0.82855651,
+            "fz": 0.78900067,
+            "mx": 0.63639606,
+            "my": 0.04381798,
+            "mz": 0.23849748
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.05831172,
+            "fy": 0.52222127,
+            "fz": 0.0,
+            "mx": 0.67324749,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "cruise2_098",
+      "description": "Cruise load case 098",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.31410966,
+            "fy": 0.93579181,
+            "fz": 0.97621391,
+            "mx": 0.34794776,
+            "my": 0.14211801,
+            "mz": 0.9354795
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.82563485,
+            "fy": 0.01958523,
+            "fz": 0.0,
+            "mx": 0.73443403,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "cruise2_116",
+      "description": "Cruise load case 116",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.90663395,
+            "fy": 0.53400152,
+            "fz": 0.63076106,
+            "mx": 0.04926242,
+            "my": 0.7834831,
+            "mz": 0.30840938
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.66955761,
+            "fy": 0.82208287,
+            "fz": 0.0,
+            "mx": 0.74271899,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "cruise2_117",
+      "description": "Cruise load case 117",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.09855754,
+            "fy": 0.44165961,
+            "fz": 0.12909507,
+            "mx": 0.13272669,
+            "my": 0.57661574,
+            "mz": 0.6624044
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.90776596,
+            "fy": 0.47278967,
+            "fz": 0.0,
+            "mx": 0.05535978,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "cruise2_118",
+      "description": "Cruise load case 118",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.55683536,
+            "fy": 0.37562498,
+            "fz": 0.81245556,
+            "mx": 0.18697409,
+            "my": 0.7318705,
+            "mz": 0.58192597
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.06081627,
+            "fy": 0.71788622,
+            "fz": 0.0,
+            "mx": 0.76781957,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "cruise2_123",
+      "description": "Cruise load case 123",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.54749727,
+            "fy": 0.7969887,
+            "fz": 0.65170219,
+            "mx": 0.95680628,
+            "my": 0.55431996,
+            "mz": 0.47610391
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.15989867,
+            "fy": 0.4166553,
+            "fz": 0.0,
+            "mx": 0.31323235,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "cruise2_129",
+      "description": "Cruise load case 129",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.73905196,
+            "fy": 0.65004048,
+            "fz": 0.66524181,
+            "mx": 0.83439435,
+            "my": 0.8936867,
+            "mz": 0.58074134
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.2029274,
+            "fy": 0.03590053,
+            "fz": 0.0,
+            "mx": 0.72715567,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "cruise2_140",
+      "description": "Cruise load case 140",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.22537502,
+            "fy": 0.24744334,
+            "fz": 0.62703856,
+            "mx": 0.26328721,
+            "my": 0.00474238,
+            "mz": 0.83669312
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.04066989,
+            "fy": 0.06630632,
+            "fz": 0.0,
+            "mx": 0.49081841,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "landing_010",
+      "description": "Landing load case 010",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.45069188,
+            "fy": 0.15313532,
+            "fz": 0.12611906,
+            "mx": 0.80124529,
+            "my": 0.40648999,
+            "mz": 0.72416327
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.82628659,
+            "fy": 0.0255961,
+            "fz": 0.0,
+            "mx": 0.0889231,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "landing_011",
+      "description": "Landing load case 011",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.9972466,
+            "fy": 0.68970092,
+            "fz": 0.50175677,
+            "mx": 0.12917452,
+            "my": 0.84286731,
+            "mz": 0.64684309
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.6900616,
+            "fy": 0.21304058,
+            "fz": 0.0,
+            "mx": 0.61483037,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "landing_012",
+      "description": "Landing load case 012",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.52388373,
+            "fy": 0.2541293,
+            "fz": 0.24632146,
+            "mx": 0.5152029,
+            "my": 0.28515426,
+            "mz": 0.80517514
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.64348082,
+            "fy": 0.97512193,
+            "fz": 0.0,
+            "mx": 0.53282499,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "landing_013",
+      "description": "Landing load case 013",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.38893229,
+            "fy": 0.07054908,
+            "fz": 0.96343895,
+            "mx": 0.86186768,
+            "my": 0.10458877,
+            "mz": 0.80355272
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.23989163,
+            "fy": 0.0656837,
+            "fz": 0.0,
+            "mx": 0.63959535,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "landing_014",
+      "description": "Landing load case 014",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.61219246,
+            "fy": 0.68052719,
+            "fz": 0.66052244,
+            "mx": 0.95518728,
+            "my": 0.28759944,
+            "mz": 0.31874451
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.79435861,
+            "fy": 0.70838299,
+            "fz": 0.0,
+            "mx": 0.79079915,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "landing_015",
+      "description": "Landing load case 015",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.97832504,
+            "fy": 0.71091722,
+            "fz": 0.02123356,
+            "mx": 0.26901946,
+            "my": 0.96910863,
+            "mz": 0.80524149
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.31199126,
+            "fy": 0.39748783,
+            "fz": 0.0,
+            "mx": 0.70082417,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "landing_016",
+      "description": "Landing load case 016",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.41563905,
+            "fy": 0.87595968,
+            "fz": 0.05390651,
+            "mx": 0.9064175,
+            "my": 0.78105311,
+            "mz": 0.58817735
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.45818655,
+            "fy": 0.73549705,
+            "fz": 0.0,
+            "mx": 0.45800813,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "name": "landing_017",
+      "description": "Landing load case 017",
+      "point_loads": [
+        {
+          "name": "Point A",
+          "force_moment": {
+            "fx": 0.3154247,
+            "fy": 0.90972265,
+            "fz": 0.98944332,
+            "mx": 0.80800305,
+            "my": 0.26699633,
+            "mz": 0.0155405
+          }
+        },
+        {
+          "name": "Point B",
+          "force_moment": {
+            "fx": 0.21132281,
+            "fy": 0.83902992,
+            "fz": 0.0,
+            "mx": 0.4532037,
+            "my": 0.0,
+            "mz": 0.0
+          }
+        }
+      ]
+    }
+  ]
+}
