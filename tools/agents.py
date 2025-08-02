@@ -16,6 +16,7 @@ from pydantic_ai import Agent, RunContext
 from pathlib import Path
 from loads import ForceUnit
 from tools.model_config import get_model_name
+from tools.model_configs import create_model_from_key, is_valid_model_key
 from tools.mcps.loads_mcp_server import LoadSetMCPProvider
 # No need for response models - using raw dict responses
 
@@ -122,9 +123,128 @@ def create_loadset_agent(
     return agent
 
 
+def create_loadset_agent_with_model(
+    model_key: str,
+    system_prompt: str | None = None,
+) -> Agent[LoadSetMCPProvider, str]:
+    """
+    Create a LoadSet processing agent using a simple model key.
+    
+    Args:
+        model_key: Simple string key for model (e.g., 'haiku', 'kimi', 'qwen-thinking')
+        system_prompt: Optional custom system prompt
+        
+    Returns:
+        Configured agent with appropriate model setup
+        
+    Raises:
+        ValueError: If model_key is not recognized
+    """
+    if not is_valid_model_key(model_key):
+        from tools.model_configs import list_available_models
+        available = list(list_available_models().keys())
+        raise ValueError(f"Unknown model key: {model_key}. Available: {available}")
+    
+    # Create model instance based on key
+    model = create_model_from_key(model_key)
+    
+    default_prompt = "You are an expert aerospace structural loads analyst with access to LoadSet processing tools. Use available tools for operations and provide clear explanations."
+    
+    agent = Agent(
+        model,
+        deps_type=LoadSetMCPProvider,
+        system_prompt=system_prompt or default_prompt,
+    )
+
+    # Register all the same tools as the original agent
+    @agent.tool
+    def load_from_json(
+        ctx: RunContext[LoadSetMCPProvider], file_path: str
+    ) -> dict:
+        """Load a LoadSet from a JSON file."""
+        return ctx.deps.load_from_json(Path(file_path))
+
+    @agent.tool
+    def convert_units(
+        ctx: RunContext[LoadSetMCPProvider], target_units: ForceUnit
+    ) -> dict:
+        """Convert the current LoadSet to different units (N, kN, lbf, klbf)."""
+        return ctx.deps.convert_units(target_units) 
+
+    @agent.tool
+    def scale_loads(
+        ctx: RunContext[LoadSetMCPProvider], factor: float
+    ) -> dict:
+        """Scale all loads in the current LoadSet by a factor."""
+        return ctx.deps.scale_loads(factor)
+
+    @agent.tool
+    def export_to_ansys(
+        ctx: RunContext[LoadSetMCPProvider], folder_path: str | None = None, name_stem: str | None = None
+    ) -> dict:
+        """Export the current LoadSet to ANSYS format files. Both parameters are optional."""
+        if folder_path is None:
+            return ctx.deps.export_to_ansys(None, name_stem)
+        else:
+            return ctx.deps.export_to_ansys(Path(folder_path), name_stem)
+
+    @agent.tool
+    def get_load_summary(ctx: RunContext[LoadSetMCPProvider]) -> dict:
+        """Get summary information about the current LoadSet."""
+        return ctx.deps.get_load_summary()
+
+    @agent.tool
+    def list_load_cases(ctx: RunContext[LoadSetMCPProvider]) -> dict:
+        """List all load cases in the current LoadSet."""
+        return ctx.deps.list_load_cases()
+
+    @agent.tool
+    def compare_loadsets(ctx: RunContext[LoadSetMCPProvider]) -> dict:
+        """Compare two LoadSets with detailed analysis. Requires loading two loadsets first."""
+        return ctx.deps.compare_loadsets()
+
+    @agent.tool
+    def get_comparison_summary(ctx: RunContext[LoadSetMCPProvider]) -> dict:
+        """Get a high-level summary of the current comparison."""
+        return ctx.deps.get_comparison_summary()
+
+    @agent.tool
+    def envelope_loadset(ctx: RunContext[LoadSetMCPProvider]) -> dict:
+        """Create an envelope LoadSet containing only load cases with extreme values."""
+        return ctx.deps.envelope_loadset()
+
+    @agent.tool
+    def get_point_extremes(ctx: RunContext[LoadSetMCPProvider]) -> dict:
+        """Get extreme values (min/max) for each point and component in the current LoadSet."""
+        return ctx.deps.get_point_extremes()
+    
+    @agent.tool
+    def load_second_loadset(
+        ctx: RunContext[LoadSetMCPProvider], file_path: str
+    ) -> dict:
+        """Load a second LoadSet from a JSON file for comparison."""
+        return ctx.deps.load_second_loadset(Path(file_path))
+
+    @agent.tool
+    def export_comparison_report(
+        ctx: RunContext[LoadSetMCPProvider], 
+        output_dir: str,
+        report_name: str = "comparison_report",
+        image_format: str = "png",
+        indent: int = 2,
+    ) -> dict:
+        """Export complete comparison report including JSON data and chart images."""
+        return ctx.deps.generate_comparison_report(
+            output_dir=Path(output_dir),
+        )
+
+    return agent
+
+
 # DEPRECATED AGENTS REMOVED - Use alternative approaches for Python execution and script generation
 
 
 __all__ = [
     "create_loadset_agent",
+    "create_loadset_agent_with_model",
 ]

@@ -23,14 +23,20 @@ class Activity(ABC):
         """Return the configuration for this activity."""
         pass
     
-    def create_dataset(self) -> Dataset:
-        """Create a dataset for this activity."""
+    def create_dataset(self, iterations_override: int | None = None) -> Dataset:
+        """Create a dataset for this activity.
+        
+        Args:
+            iterations_override: If provided, override the activity's default iterations
+        """
         config = self.config
+        # Use override if provided, otherwise use the activity's configured iterations
+        iterations = iterations_override if iterations_override is not None else config.iterations
         cases = [
             Case(
                 name=f"Activity {config.name} - iteration {i}",
                 inputs=config.inputs,
-            ) for i in range(1, config.iterations + 1)
+            ) for i in range(1, iterations + 1)
         ]
         return Dataset(cases=cases, evaluators=config.evaluators)
 
@@ -62,10 +68,15 @@ class ActivityRegistry:
         return list(cls._activities.keys())
     
     @classmethod
-    def create_dataset(cls, name: str) -> Dataset:
-        """Create a dataset for the specified activity."""
+    def create_dataset(cls, name: str, iterations_override: int | None = None) -> Dataset:
+        """Create a dataset for the specified activity.
+        
+        Args:
+            name: Activity name
+            iterations_override: If provided, override the activity's default iterations
+        """
         activity = cls.get(name)
-        return activity.create_dataset()
+        return activity.create_dataset(iterations_override=iterations_override)
     
     @classmethod
     def get_evaluators(cls, name: str) -> Tuple:

@@ -12,7 +12,7 @@ class Activity03C(Activity):
         return ActivityConfig(
             name="03C",
             description="New loads with old loads comparison, unit conversion, no scaling and exceeding old loads",
-            iterations=5,
+            iterations=1,
             inputs="""I need to process some loads for ANSYS analysis.
 the files are here:  /Users/alex/repos/trs-use-case/use_case_definition/data/03_C_new_loads.json
 output directory for ansys files: /Users/alex/repos/trs-use-case/output

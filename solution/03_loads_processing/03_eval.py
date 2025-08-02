@@ -10,7 +10,8 @@ sys.path.insert(0, str(tools_dir))
 
 # pydantic_evals imports are now handled by the activities package
 
-from tools.agents import create_loadset_agent
+from tools.agents import create_loadset_agent, create_loadset_agent_with_model
+from tools.model_configs import is_valid_model_key
 from tools.mcps.loads_mcp_server import LoadSetMCPProvider
 from activities import ActivityRegistry  # This triggers auto-registration of all activities
 
@@ -96,7 +97,14 @@ DO NOT ASK QUESTIONS. USE THE PROVIDED TOOLS TO PROCESS LOADS AND GENERATE OUTPU
 """
 
 async def agent_task(inputs: str, model_override: str | None = None):
-    """Task function that runs the agent with the given inputs."""
+    """
+    Task function that runs the agent with the given inputs.
+    
+    Args:
+        inputs: The input prompt for the agent
+        model_override: Either a full model name (e.g., "anthropic:claude-3-haiku-20240307") 
+                       or a simple model key (e.g., "haiku", "kimi", "qwen-thinking")
+    """
     # Import the updated system prompt function from process_loads
     import sys
     from pathlib import Path
@@ -108,7 +116,15 @@ async def agent_task(inputs: str, model_override: str | None = None):
     
     # Using SIMPLE_SYSTEM_PROMPT for consistent behavior
     system_prompt = SIMPLE_SYSTEM_PROMPT
-    agent = create_loadset_agent(system_prompt=system_prompt, model_override=model_override)
+    
+    # Check if model_override is a simple key or full model name
+    if model_override and is_valid_model_key(model_override):
+        # Use the new factory function for simple model keys
+        agent = create_loadset_agent_with_model(model_key=model_override, system_prompt=system_prompt)
+    else:
+        # Use the original function for full model names or default
+        agent = create_loadset_agent(system_prompt=system_prompt, model_override=model_override)
+    
     provider = LoadSetMCPProvider()
     
     # Run the agent asynchronously
@@ -116,8 +132,14 @@ async def agent_task(inputs: str, model_override: str | None = None):
     return result.output
 
 
-async def main(activities: list[str] | None = None, model_name: str | None = None):
-    """Main function to run the evaluation for specified activities."""
+async def main(activities: list[str] | None = None, model_name: str | None = None, global_iterations: int | None = None):
+    """Main function to run the evaluation for specified activities.
+    
+    Args:
+        activities: List of activity names to run (None for auto-discovery)
+        model_name: Model name or key to use
+        global_iterations: Global iterations override for all activities (None to use activity defaults)
+    """
     import logfire
     import asyncio
     
@@ -136,7 +158,7 @@ async def main(activities: list[str] | None = None, model_name: str | None = Non
         for i, activity in enumerate(activities):
             try:
                 # Get dataset and evaluators from registry
-                dataset = ActivityRegistry.create_dataset(activity)
+                dataset = ActivityRegistry.create_dataset(activity, iterations_override=global_iterations)
                 evaluators = ActivityRegistry.get_evaluators(activity)
                 
                 # Add wait time between activities (but not before the first one)
@@ -197,35 +219,38 @@ if __name__ == "__main__":
     # ===============================================
     # MODEL CONFIGURATION
     # ===============================================
-    # Uncomment ONE of the following model configurations:
+    # Option 1: Use simple model keys (recommended)
+    # model_name = "haiku"  # Simple key for Claude 3 Haiku
+    # model_name = "sonnet4"      # Simple key for Claude 4 Sonnet  
+    model_name = "kimi"         # Simple key for Kimi K2 via Fireworks
+    # model_name = "qwen-coder"   # Simple key for Qwen3 Coder via Fireworks
+    # model_name = "qwen-thinking" # Simple key for Qwen3 Thinking via Ollama
     
-    # 1. Anthropic Claude Haiku (Current Default)
-    model_name = "anthropic:claude-3-haiku-20240307"  # Uses default from environment
-    
-    # 2. Anthropic Sonnet 4
+    # Option 2: Use full model names (backward compatibility)
+    # model_name = "anthropic:claude-3-haiku-20240307"
     # model_name = "anthropic:claude-4-sonnet-20250514"
     
-    # 3. Built-in Local Model (Ollama example)
-    # model_name = "openai:qwen2.5-coder:7b"
-    # Note: You need to configure Ollama and update OpenAIProvider base_url
+    # Option 3: Loop through multiple models
+    # model_keys = ["haiku", "kimi", "qwen-thinking"]  # List of models to test
+    # for model_key in model_keys:
+    #     print(f"\n🤖 Testing with model: {model_key}")
+    #     asyncio.run(main(activities, model_key))
     
-    # 4. Kimi K2 (requires proper provider configuration)
-    # model_name = "openai:kimi-k2"
-    # Note: You need to configure the provider for Kimi API
+    # ===============================================
+    # ITERATIONS CONFIGURATION
+    # ===============================================
+    # Global iterations setting for all activities
+    global_iterations = 3    # Override iterations for all activities
+    # global_iterations = None  # Use each activity's default iterations (1 for most)
     
     # ===============================================
     # ACTIVITY CONFIGURATION
     # ===============================================
     # Configure which activities to run
-    activities = ["03C"]  # Run specific activities
+    # activities = ["03C"]  # Run specific activities
     # activities = ["03A"]      # Run only Activity 03A
     # activities = ["03B"]      # Run only Activity 03B
-    # activities = None         # Auto-discover all available activities
+    activities = None         # Auto-discover all available activities
     
-    # Print configuration
-    if model_name:
-        print(f"🤖 Using model override: {model_name}")
-    else:
-        print("🤖 Using default model from environment")
-    
-    asyncio.run(main(activities, model_name))
+  
+    asyncio.run(main(activities, model_name, global_iterations))
