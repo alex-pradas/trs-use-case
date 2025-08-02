@@ -217,7 +217,7 @@ if __name__ == "__main__":
     # ACTIVITY CONFIGURATION
     # ===============================================
     # Configure which activities to run
-    activities = ["03B"]  # Run specific activities
+    activities = ["03C"]  # Run specific activities
     # activities = ["03A"]      # Run only Activity 03A
     # activities = ["03B"]      # Run only Activity 03B
     # activities = None         # Auto-discover all available activities
