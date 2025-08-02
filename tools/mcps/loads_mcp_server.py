@@ -53,6 +53,7 @@ class LoadSetMCPProvider:
                 "success": True,
                 "message": f"LoadSet loaded from {file_path}",
                 "loadset_name": self._current_loadset.name,
+                "loads_type": self._current_loadset.loads_type,
                 "num_load_cases": len(self._current_loadset.load_cases),
                 "units": {
                     "forces": self._current_loadset.units.forces,
