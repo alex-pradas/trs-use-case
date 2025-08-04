@@ -1,4 +1,3 @@
-from os import system
 from pathlib import Path
 from pydantic_ai import Agent, BinaryContent
 from pydantic_ai.messages import ImageMediaType
