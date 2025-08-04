@@ -1,7 +1,5 @@
-from json import tool
-from mcp import Tool
 from .base import Activity, ActivityConfig, ActivityRegistry
-from validators import ToolCalled, ToolNotCalled, ExtremesValidated
+from validators import ToolCalled, ExtremesValidated
 
 
 class Activity03C(Activity):
@@ -14,7 +12,7 @@ class Activity03C(Activity):
             description="New loads with old loads comparison, unit conversion, no scaling and exceeding old loads",
             iterations=1,
             inputs="""I need to process some loads for ANSYS analysis.
-the files are here:  /Users/alex/repos/trs-use-case/use_case_definition/data/03_C_new_loads.json
+the files are here:  /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_C_new_loads.json
 output directory for ansys files: /Users/alex/repos/trs-use-case/output
 I have the following previous (old)loads to compare against: /Users/alex/repos/trs-use-case/use_case_definition/data/loads/03_old_loads.json""",
             evaluators=(
