@@ -1,0 +1,10 @@
+# Requirements for standalone LoadSet evaluation script
+
+# Core dependencies
+pydantic-ai>=0.1.0
+pydantic>=2.0.0
+
+# The loads package should be available from the parent directory
+# Ensure you have the following in your environment:
+# - loads package (from ../loads)
+# - Any dependencies required by the loads package
