@@ -34,7 +34,7 @@ class LoadSetMCPProvider:
         self._comparison_loadset = None
         self._current_comparison = None
 
-    def load_from_json(self, file_path: PathLike) -> dict:
+    def load_from_json(self, file_path: PathLike | str) -> dict:
         """
         Load a LoadSet from a JSON file.
 
@@ -249,7 +249,7 @@ class LoadSetMCPProvider:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def load_second_loadset(self, file_path: PathLike) -> dict:
+    def load_second_loadset(self, file_path: PathLike | str) -> dict:
         """
         Load a second LoadSet from a JSON file for comparison.
 
@@ -570,12 +570,18 @@ class LoadSetMCPProvider:
     def generate_comparison_report(
         self,
         output_dir: PathLike,
+        report_name: str = "comparison_report",
+        image_format: str = "png",
+        indent: int = 2,
     ) -> dict:
         """
         Export complete comparison report including JSON data and chart images.
 
         Args:
             output_dir: Directory to save the report files
+            report_name: Base name for the report files
+            image_format: Image format for charts (png, svg)
+            indent: JSON indentation level
 
         Returns:
             dict: Success message with report location and info, or error with missing loadset details
@@ -613,6 +619,9 @@ class LoadSetMCPProvider:
             
             report_path = self._current_comparison.generate_comparison_report(
                 output_dir=output_dir,
+                report_name=report_name,
+                image_format=image_format,
+                indent=indent,
             )
 
             return {
