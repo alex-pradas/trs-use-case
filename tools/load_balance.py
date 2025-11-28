@@ -315,12 +315,5 @@ if __name__ == "__main__":
         name="Engine Mount Balanced Loads",
     )
 
-    print(f"Generated LoadSet: {loadset.name}")
-    print(f"Number of load cases: {len(loadset.load_cases)}")
-    print(f"Units: {loadset.units.forces} / {loadset.units.moments}")
-
-    for load_case in loadset.load_cases:
-        print(f"\n{load_case.name}:")
-        for point_load in load_case.point_loads:
-            fm = point_load.force_moment
-            print(f"  {point_load.name}: Fy={fm.fy:.1f} N, Fz={fm.fz:.1f} N")
+    # Pretty print the generated loadset
+    loadset.print_table()

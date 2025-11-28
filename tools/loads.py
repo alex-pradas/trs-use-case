@@ -1258,6 +1258,293 @@ class LoadSet(BaseModel):
             load_cases=envelope_load_cases,
         )
 
+    def _format_value(
+        self,
+        value: float,
+        is_extreme: bool = False,
+    ) -> str:
+        """
+        Format a numeric value with optional bold highlighting.
+
+        Args:
+            value: The numeric value to format
+            is_extreme: True if this is max positive or min negative within load case
+
+        Returns:
+            str: Rich-formatted string
+        """
+        # Format number
+        if value == 0.0:
+            return "[dim]0.000[/dim]"
+        elif abs(value) >= 10000 or abs(value) < 0.01:
+            formatted = f"{value:.3e}"
+        else:
+            formatted = f"{value:.3f}"
+
+        # Apply bold if extreme value
+        if is_extreme:
+            return f"[bold]{formatted}[/bold]"
+        else:
+            return formatted
+
+    def _get_loadcase_extremes(
+        self, load_case: LoadCase
+    ) -> dict[str, dict[str, int | float]]:
+        """
+        Get max/min indices for each coordinate within a single load case.
+
+        Args:
+            load_case: The LoadCase to analyze
+
+        Returns:
+            dict: {"fx": {"max_idx": 0, "min_idx": 2, "max": val, "min": val}, ...}
+        """
+        components = ["fx", "fy", "fz", "mx", "my", "mz"]
+        extremes: dict[str, dict[str, int | float]] = {}
+
+        for comp in components:
+            values = [
+                getattr(pl.force_moment, comp) for pl in load_case.point_loads
+            ]
+            if values:
+                max_val = max(values)
+                min_val = min(values)
+                # Store indices for exact matching (avoids float precision issues)
+                extremes[comp] = {
+                    "max_idx": values.index(max_val),
+                    "min_idx": values.index(min_val),
+                    "max": max_val,
+                    "min": min_val,
+                }
+
+        return extremes
+
+    def print_head(self, n: int = 5) -> None:
+        """
+        Print a preview of the first N load cases in a formatted table.
+
+        Args:
+            n: Number of load cases to display (default: 5)
+        """
+        from rich.console import Console
+        from rich.table import Table
+        from rich.panel import Panel
+
+        console = Console()
+
+        # Header panel with metadata
+        header_text = f"[bold cyan]{self.name or 'Unnamed LoadSet'}[/bold cyan]\n"
+        header_text += f"Version: {self.version} | "
+        header_text += f"Units: {self.units.forces}, {self.units.moments}"
+        if self.description:
+            header_text += f"\n{self.description}"
+        console.print(Panel(header_text, title="LoadSet", border_style="cyan"))
+
+        # Create table
+        table = Table(show_header=True, header_style="bold cyan")
+        table.add_column("Load Case", style="bold")
+        table.add_column("Point")
+        table.add_column("Fx", justify="right")
+        table.add_column("Fy", justify="right")
+        table.add_column("Fz", justify="right")
+        table.add_column("Mx", justify="right")
+        table.add_column("My", justify="right")
+        table.add_column("Mz", justify="right")
+
+        # Add rows for first n load cases
+        cases_to_show = self.load_cases[:n]
+        for load_case in cases_to_show:
+            case_name = load_case.name or "Unnamed"
+            local_extremes = self._get_loadcase_extremes(load_case)
+
+            for i, point_load in enumerate(load_case.point_loads):
+                fm = point_load.force_moment
+                point_name = point_load.name or "Unnamed"
+                display_case = case_name if i == 0 else ""
+
+                # Format each component with highlighting
+                formatted = []
+                for comp in ["fx", "fy", "fz", "mx", "my", "mz"]:
+                    val = getattr(fm, comp)
+                    local = local_extremes.get(comp, {})
+
+                    # Highlight if max positive or min negative within load case
+                    # Skip if all values are the same (max_idx == min_idx)
+                    max_idx = local.get("max_idx", -1)
+                    min_idx = local.get("min_idx", -1)
+                    max_val = local.get("max", 0.0)
+                    min_val = local.get("min", 0.0)
+
+                    is_extreme = False
+                    if max_idx != min_idx:  # Values differ
+                        # Bold if max positive value
+                        if i == max_idx and max_val > 0:
+                            is_extreme = True
+                        # Bold if min negative value
+                        elif i == min_idx and min_val < 0:
+                            is_extreme = True
+
+                    formatted.append(self._format_value(val, is_extreme))
+
+                table.add_row(display_case, point_name, *formatted)
+
+            # Add separator between load cases
+            if load_case != cases_to_show[-1]:
+                table.add_row("", "", "", "", "", "", "", "", end_section=True)
+
+        console.print(table)
+
+        # Footer with count
+        total = len(self.load_cases)
+        if n < total:
+            console.print(f"[dim]Showing {n} of {total} load cases[/dim]")
+        else:
+            console.print(f"[dim]Showing all {total} load cases[/dim]")
+
+    def print_table(self) -> None:
+        """
+        Print all load cases in a formatted table.
+        """
+        from rich.console import Console
+        from rich.table import Table
+        from rich.panel import Panel
+
+        console = Console()
+
+        # Header panel with metadata
+        header_text = f"[bold cyan]{self.name or 'Unnamed LoadSet'}[/bold cyan]\n"
+        header_text += f"Version: {self.version} | "
+        header_text += f"Units: {self.units.forces}, {self.units.moments}"
+        if self.description:
+            header_text += f"\n{self.description}"
+        console.print(Panel(header_text, title="LoadSet", border_style="cyan"))
+
+        # Create table
+        table = Table(show_header=True, header_style="bold cyan")
+        table.add_column("Load Case", style="bold")
+        table.add_column("Point")
+        table.add_column("Fx", justify="right")
+        table.add_column("Fy", justify="right")
+        table.add_column("Fz", justify="right")
+        table.add_column("Mx", justify="right")
+        table.add_column("My", justify="right")
+        table.add_column("Mz", justify="right")
+
+        # Add rows for all load cases
+        for idx, load_case in enumerate(self.load_cases):
+            case_name = load_case.name or "Unnamed"
+            local_extremes = self._get_loadcase_extremes(load_case)
+
+            for i, point_load in enumerate(load_case.point_loads):
+                fm = point_load.force_moment
+                point_name = point_load.name or "Unnamed"
+                display_case = case_name if i == 0 else ""
+
+                # Format each component with highlighting
+                formatted = []
+                for comp in ["fx", "fy", "fz", "mx", "my", "mz"]:
+                    val = getattr(fm, comp)
+                    local = local_extremes.get(comp, {})
+
+                    # Highlight if max positive or min negative within load case
+                    # Skip if all values are the same (max_idx == min_idx)
+                    max_idx = local.get("max_idx", -1)
+                    min_idx = local.get("min_idx", -1)
+                    max_val = local.get("max", 0.0)
+                    min_val = local.get("min", 0.0)
+
+                    is_extreme = False
+                    if max_idx != min_idx:  # Values differ
+                        # Bold if max positive value
+                        if i == max_idx and max_val > 0:
+                            is_extreme = True
+                        # Bold if min negative value
+                        elif i == min_idx and min_val < 0:
+                            is_extreme = True
+
+                    formatted.append(self._format_value(val, is_extreme))
+
+                table.add_row(display_case, point_name, *formatted)
+
+            # Add separator between load cases
+            if idx < len(self.load_cases) - 1:
+                table.add_row("", "", "", "", "", "", "", "", end_section=True)
+
+        console.print(table)
+        console.print(f"[dim]Total: {len(self.load_cases)} load cases[/dim]")
+
+    def print_extremes(self) -> None:
+        """
+        Print extreme values (max/min) for each point and component.
+
+        Uses get_point_extremes() to show only the envelope bounds.
+        """
+        from rich.console import Console
+        from rich.table import Table
+        from rich.panel import Panel
+
+        console = Console()
+
+        # Header panel with metadata
+        name = self.name or 'Unnamed LoadSet'
+        header_text = f"[bold cyan]{name}[/bold cyan] - Extreme Values\n"
+        header_text += f"Version: {self.version} | "
+        header_text += f"Units: {self.units.forces}, {self.units.moments}"
+        console.print(Panel(header_text, title="LoadSet Extremes", border_style="cyan"))
+
+        extremes = self.get_point_extremes()
+
+        if not extremes:
+            console.print("[yellow]No extreme values found (all zero)[/yellow]")
+            return
+
+        # Create table
+        table = Table(show_header=True, header_style="bold cyan")
+        table.add_column("Point", style="bold")
+        table.add_column("Component")
+        table.add_column("Type")
+        table.add_column("Value", justify="right")
+        table.add_column("Load Case")
+
+        for point_name in sorted(extremes.keys()):
+            point_data = extremes[point_name]
+            first_row = True
+            for component in ["fx", "fy", "fz", "mx", "my", "mz"]:
+                if component not in point_data:
+                    continue
+                comp_data = point_data[component]
+
+                # Max row
+                max_val = comp_data["max"]["value"]
+                max_case = comp_data["max"]["loadcase"]
+                display_point = point_name if first_row else ""
+                table.add_row(
+                    display_point,
+                    component.upper(),
+                    "[bold green]max[/bold green]",
+                    f"[bold green]{self._format_value(max_val)}[/bold green]",
+                    max_case,
+                )
+                first_row = False
+
+                # Min row
+                min_val = comp_data["min"]["value"]
+                min_case = comp_data["min"]["loadcase"]
+                table.add_row(
+                    "",
+                    component.upper(),
+                    "[bold red]min[/bold red]",
+                    f"[bold red]{self._format_value(min_val)}[/bold red]",
+                    min_case,
+                )
+
+            # Add separator between points
+            table.add_row("", "", "", "", "", end_section=True)
+
+        console.print(table)
+        n_cases = len(self.load_cases)
+        console.print(f"[dim]Points: {len(extremes)} | From {n_cases} load cases[/dim]")
+
     @classmethod
     def read_ansys(
         cls, file_path: PathLike, units: Units, name: str | None = None, version: int = 1
