@@ -7,11 +7,14 @@ tools_dir = project_root / "tools"
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(tools_dir))
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from pydantic_ai.mcp import MCPServerStdio
+
 # pydantic_evals imports are now handled by the activities package
 
 from tools.agents import create_loadset_agent, create_loadset_agent_with_model
 from tools.model_configs import is_valid_model_key
-from tools.mcps.loads_mcp_server import LoadSetMCPProvider
 from activities import ActivityRegistry  # This triggers auto-registration of all activities
 
 
@@ -95,7 +98,7 @@ Key Operations required:
 DO NOT ASK QUESTIONS. USE THE PROVIDED TOOLS TO PROCESS LOADS AND GENERATE OUTPUTS.
 """
 
-async def agent_task(inputs: str, model_override: str | None = None):
+async def agent_task(inputs: str, model_override: str | None = None, server: "MCPServerStdio | None" = None):
     """
     Task function that runs the agent with the given inputs.
     
@@ -103,6 +106,7 @@ async def agent_task(inputs: str, model_override: str | None = None):
         inputs: The input prompt for the agent
         model_override: Either a full model name (e.g., "anthropic:claude-3-haiku-20240307") 
                        or a simple model key (e.g., "haiku", "kimi", "qwen-thinking")
+        server: Optional MCPServerStdio instance to use
     """
     # Import the updated system prompt function from process_loads
     import sys
@@ -119,15 +123,14 @@ async def agent_task(inputs: str, model_override: str | None = None):
     # Check if model_override is a simple key or full model name
     if model_override and is_valid_model_key(model_override):
         # Use the new factory function for simple model keys
-        agent = create_loadset_agent_with_model(model_key=model_override, system_prompt=system_prompt)
+        agent = create_loadset_agent_with_model(model_key=model_override, system_prompt=system_prompt, server=server)
     else:
         # Use the original function for full model names or default
-        agent = create_loadset_agent(system_prompt=system_prompt, model_override=model_override)
-    
-    provider = LoadSetMCPProvider()
+        agent = create_loadset_agent(system_prompt=system_prompt, model_override=model_override, server=server)
     
     # Run the agent asynchronously
-    result = await agent.run(inputs, deps=provider)
+    # Note: deps are no longer needed as tools are handled by MCPServerStdio
+    result = await agent.run(inputs)
     return result.output
 
 
@@ -147,58 +150,67 @@ async def main(activities: list[str] | None = None, model_name: str | None = Non
         activities = ActivityRegistry.list_activities()
         print(f"Auto-discovered activities: {activities}")
     
-    with logfire.span("load_processing_evaluation"):
-        logfire.info("Starting evaluation for load processing agent", activities=activities)
-        print(f"Running evaluation for activities: {', '.join(activities)}")
-        
-        reports = {}
-        wait_time = 0  # Waiting time to avoid hitting token limits at anthropic
-        
-        for i, activity in enumerate(activities):
-            try:
-                # Get dataset and evaluators from registry
-                dataset = ActivityRegistry.create_dataset(activity, iterations_override=global_iterations)
-                evaluators = ActivityRegistry.get_evaluators(activity)
-                
-                # Add wait time between activities (but not before the first one)
-                if i > 0:
-                    print(f"Waiting {wait_time} seconds before starting Activity {activity}...")
-                    await asyncio.sleep(wait_time)
-                
-                # Evaluate the activity
-                print(f"\n=== Activity {activity} Evaluation ===")
-                logfire.info(
-                    f"Activity {activity} evaluation setup",
-                    dataset_cases=len(dataset.cases),
-                    evaluators=[type(e).__name__ for e in evaluators]
-                )
-                
-                # Create a wrapper function with model override if specified
-                if model_name:
-                    # Create a wrapper that captures the model_name
-                    current_model = model_name  # Capture in closure
-                    async def task_func(inputs: str):
-                        return await agent_task(inputs, model_override=current_model)
-                else:
-                    task_func = agent_task
-                
-                report = await dataset.evaluate(task_func)
-                
-                logfire.info(
-                    f"Activity {activity} evaluation completed",
-                    total_cases=len(report.cases)
-                )
-                
-                print(f"\n=== Activity {activity} Report ===")
-                report.print()
-                
-                reports[activity] = report
-                
-            except ValueError as e:
-                print(f"Error: {e}")
-                continue
-        
-        return reports
+    # Create shared MCP server instance
+    from tools.agents import create_default_server
+    server = create_default_server()
+    
+    # Use context manager to manage server lifecycle
+    async with server:
+        with logfire.span("load_processing_evaluation"):
+            logfire.info("Starting evaluation for load processing agent", activities=activities)
+            print(f"Running evaluation for activities: {', '.join(activities)}")
+            
+            reports = {}
+            wait_time = 0  # Waiting time to avoid hitting token limits at anthropic
+            
+            for i, activity in enumerate(activities):
+                try:
+                    # Get dataset and evaluators from registry
+                    dataset = ActivityRegistry.create_dataset(activity, iterations_override=global_iterations)
+                    evaluators = ActivityRegistry.get_evaluators(activity)
+                    
+                    # Add wait time between activities (but not before the first one)
+                    if i > 0:
+                        print(f"Waiting {wait_time} seconds before starting Activity {activity}...")
+                        await asyncio.sleep(wait_time)
+                    
+                    # Evaluate the activity
+                    print(f"\n=== Activity {activity} Evaluation ===")
+                    logfire.info(
+                        f"Activity {activity} evaluation setup",
+                        dataset_cases=len(dataset.cases),
+                        evaluators=[type(e).__name__ for e in evaluators]
+                    )
+                    
+                    # Create a wrapper function with model override if specified
+                    # We also need to pass the server to agent_task
+                    if model_name:
+                        # Create a wrapper that captures the model_name and server
+                        current_model = model_name  # Capture in closure
+                        async def task_func(inputs: str):
+                            return await agent_task(inputs, model_override=current_model, server=server)
+                    else:
+                        # Create a wrapper that captures just the server
+                        async def task_func(inputs: str):
+                            return await agent_task(inputs, server=server)
+                    
+                    report = await dataset.evaluate(task_func)
+                    
+                    logfire.info(
+                        f"Activity {activity} evaluation completed",
+                        total_cases=len(report.cases)
+                    )
+                    
+                    print(f"\n=== Activity {activity} Report ===")
+                    report.print()
+                    
+                    reports[activity] = report
+                    
+                except ValueError as e:
+                    print(f"Error: {e}")
+                    continue
+            
+            return reports
 
 
 if __name__ == "__main__":
