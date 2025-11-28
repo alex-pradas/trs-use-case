@@ -10,6 +10,11 @@ Unspecified loads are solved using minimum-norm optimization.
 import numpy as np
 from numpy.typing import NDArray
 
+try:
+    from tools.loads import LoadSet, LoadCase, PointLoad, ForceMoment, Units
+except ModuleNotFoundError:
+    from loads import LoadSet, LoadCase, PointLoad, ForceMoment, Units
+
 
 # Component ordering for consistent indexing
 COMPONENTS = ["Fx", "Fy", "Fz", "Mx", "My", "Mz"]
@@ -20,7 +25,9 @@ def generate_balanced_loadset(
     load_ranges: dict[str, dict[str, tuple[float, float]]] | None = None,
     num_cases: int = 50,
     seed: int | None = None,
-) -> dict:
+    name: str | None = None,
+    description: str | None = None,
+) -> LoadSet:
     """
     Generate multiple balanced load cases with specified ranges.
 
@@ -31,9 +38,11 @@ def generate_balanced_loadset(
                      Values in N for forces, N·mm for moments.
         num_cases: Number of load cases to generate
         seed: Random seed for reproducibility
+        name: Optional name for the LoadSet
+        description: Optional description for the LoadSet
 
     Returns:
-        Dict with load_cases list and metadata
+        LoadSet with generated balanced load cases
     """
     if seed is not None:
         np.random.seed(seed)
@@ -48,11 +57,11 @@ def generate_balanced_loadset(
     A = _build_equilibrium_matrix(interfaces, interface_names)
 
     # Identify which variables are constrained (have ranges) vs free
-    constrained_mask, constrained_indices, free_indices = _identify_constrained_variables(
+    _, constrained_indices, free_indices = _identify_constrained_variables(
         interface_names, load_ranges
     )
 
-    load_cases = []
+    load_cases: list[LoadCase] = []
 
     for case_idx in range(num_cases):
         # Sample constrained variables from their ranges
@@ -65,27 +74,17 @@ def generate_balanced_loadset(
             A, sampled_values, constrained_indices, free_indices, n_interfaces
         )
 
-        # Build output structure
-        case_data = _build_case_output(
-            case_idx + 1, interface_names, interfaces, all_values
-        )
+        # Build LoadCase
+        load_case = _build_load_case(case_idx + 1, interface_names, all_values)
+        load_cases.append(load_case)
 
-        # Verify equilibrium
-        verification = _verify_equilibrium(A, all_values)
-        case_data["verification"] = verification
-
-        load_cases.append(case_data)
-
-    return {
-        "load_cases": load_cases,
-        "metadata": {
-            "num_cases": num_cases,
-            "interfaces": {name: {"x": pos[0], "y": pos[1], "z": pos[2]}
-                         for name, pos in interfaces.items()},
-            "specified_ranges": load_ranges,
-            "units": {"force": "N", "moment": "N·mm", "length": "mm"},
-        }
-    }
+    return LoadSet(
+        name=name or "Balanced LoadSet",
+        description=description or f"Generated {num_cases} balanced load cases",
+        version=1,
+        units=Units(forces="N", moments="Nm"),
+        load_cases=load_cases,
+    )
 
 
 def _build_equilibrium_matrix(
@@ -238,30 +237,31 @@ def _solve_for_balance(
     return result
 
 
-def _build_case_output(
+def _build_load_case(
     case_id: int,
     interface_names: list[str],
-    interfaces: dict[str, tuple[float, float, float]],
     all_values: NDArray[np.float64],
-) -> dict:
-    """Build the output dict for a single load case."""
-    case_interfaces = {}
+) -> LoadCase:
+    """Build a LoadCase from the solved values."""
+    point_loads: list[PointLoad] = []
 
     for i, name in enumerate(interface_names):
         col_base = 6 * i
-        case_interfaces[name] = {
-            "Fx": float(all_values[col_base + 0]),
-            "Fy": float(all_values[col_base + 1]),
-            "Fz": float(all_values[col_base + 2]),
-            "Mx": float(all_values[col_base + 3]),
-            "My": float(all_values[col_base + 4]),
-            "Mz": float(all_values[col_base + 5]),
-        }
+        force_moment = ForceMoment(
+            fx=float(all_values[col_base + 0]),
+            fy=float(all_values[col_base + 1]),
+            fz=float(all_values[col_base + 2]),
+            mx=float(all_values[col_base + 3]),
+            my=float(all_values[col_base + 4]),
+            mz=float(all_values[col_base + 5]),
+        )
+        point_loads.append(PointLoad(name=name, force_moment=force_moment))
 
-    return {
-        "case_id": case_id,
-        "interfaces": case_interfaces,
-    }
+    return LoadCase(
+        name=f"Case_{case_id:03d}",
+        description=f"Balanced load case {case_id}",
+        point_loads=point_loads,
+    )
 
 
 def _verify_equilibrium(
@@ -302,21 +302,25 @@ DEFAULT_INTERFACES = {
 if __name__ == "__main__":
     # Example usage
     load_ranges = {
-        "Engine Mount (Port)": {"Fy": (3000, 7000), "Fz": (3000, 7000)},
-        "Engine Mount (Starboard)": {"Fy": (3000, 7000), "Fz": (3000, 7000)},
-        "Forward Outer Flange": {"My": (500000, 600000)},
+        "Engine Mount (Port)": {"Fy": (3000.0, 7000.0), "Fz": (3000.0, 7000.0)},
+        "Engine Mount (Starboard)": {"Fy": (3000.0, 7000.0), "Fz": (3000.0, 7000.0)},
+        "Forward Outer Flange": {"My": (500000.0, 600000.0)},
     }
 
-    result = generate_balanced_loadset(
+    loadset = generate_balanced_loadset(
         DEFAULT_INTERFACES,
         load_ranges,
         num_cases=5,
         seed=42,
+        name="Engine Mount Balanced Loads",
     )
 
-    print(f"Generated {result['metadata']['num_cases']} load cases")
-    for case in result["load_cases"]:
-        print(f"\nCase {case['case_id']}:")
-        print(f"  Balanced: {case['verification']['is_balanced']}")
-        for name, loads in case["interfaces"].items():
-            print(f"  {name}: Fy={loads['Fy']:.1f} N, Fz={loads['Fz']:.1f} N")
+    print(f"Generated LoadSet: {loadset.name}")
+    print(f"Number of load cases: {len(loadset.load_cases)}")
+    print(f"Units: {loadset.units.forces} / {loadset.units.moments}")
+
+    for load_case in loadset.load_cases:
+        print(f"\n{load_case.name}:")
+        for point_load in load_case.point_loads:
+            fm = point_load.force_moment
+            print(f"  {point_load.name}: Fy={fm.fy:.1f} N, Fz={fm.fz:.1f} N")

@@ -9,10 +9,20 @@ from tools.load_balance import (
     DEFAULT_INTERFACES,
     COMPONENTS,
 )
+from tools.loads import LoadSet
 
 
 class TestGenerateBalancedLoadset:
     """Tests for the main generate_balanced_loadset function."""
+
+    def test_returns_loadset(self):
+        """Should return a LoadSet object."""
+        result = generate_balanced_loadset(
+            DEFAULT_INTERFACES,
+            num_cases=5,
+            seed=42,
+        )
+        assert isinstance(result, LoadSet)
 
     def test_generates_correct_number_of_cases(self):
         """Should generate the requested number of load cases."""
@@ -21,13 +31,13 @@ class TestGenerateBalancedLoadset:
             num_cases=10,
             seed=42,
         )
-        assert len(result["load_cases"]) == 10
+        assert len(result.load_cases) == 10
 
     def test_all_cases_are_balanced(self):
         """All generated cases should satisfy equilibrium."""
         load_ranges = {
-            "Engine Mount (Port)": {"Fy": (3000, 7000), "Fz": (3000, 7000)},
-            "Engine Mount (Starboard)": {"Fy": (3000, 7000), "Fz": (3000, 7000)},
+            "Engine Mount (Port)": {"Fy": (3000.0, 7000.0), "Fz": (3000.0, 7000.0)},
+            "Engine Mount (Starboard)": {"Fy": (3000.0, 7000.0), "Fz": (3000.0, 7000.0)},
         }
 
         result = generate_balanced_loadset(
@@ -37,21 +47,26 @@ class TestGenerateBalancedLoadset:
             seed=42,
         )
 
-        for case in result["load_cases"]:
-            assert case["verification"]["is_balanced"], f"Case {case['case_id']} is not balanced"
-            # Check residuals are near zero
-            assert abs(case["verification"]["sum_Fx"]) < 1e-6
-            assert abs(case["verification"]["sum_Fy"]) < 1e-6
-            assert abs(case["verification"]["sum_Fz"]) < 1e-6
-            assert abs(case["verification"]["sum_Mx"]) < 1e-6
-            assert abs(case["verification"]["sum_My"]) < 1e-6
-            assert abs(case["verification"]["sum_Mz"]) < 1e-6
+        # Build equilibrium matrix to verify balance
+        interface_names = list(DEFAULT_INTERFACES.keys())
+        A = _build_equilibrium_matrix(DEFAULT_INTERFACES, interface_names)
+
+        for load_case in result.load_cases:
+            # Extract values in order
+            values = []
+            for name in interface_names:
+                point_load = next(p for p in load_case.point_loads if p.name == name)
+                fm = point_load.force_moment
+                values.extend([fm.fx, fm.fy, fm.fz, fm.mx, fm.my, fm.mz])
+
+            verification = _verify_equilibrium(A, np.array(values))
+            assert verification["is_balanced"], f"{load_case.name} is not balanced"
 
     def test_constrained_values_within_ranges(self):
         """Constrained values should fall within specified ranges."""
         load_ranges = {
-            "Engine Mount (Port)": {"Fy": (3000, 7000), "Fz": (4000, 5000)},
-            "Forward Outer Flange": {"My": (500000, 600000)},
+            "Engine Mount (Port)": {"Fy": (3000.0, 7000.0), "Fz": (4000.0, 5000.0)},
+            "Forward Outer Flange": {"My": (500000.0, 600000.0)},
         }
 
         result = generate_balanced_loadset(
@@ -61,19 +76,19 @@ class TestGenerateBalancedLoadset:
             seed=42,
         )
 
-        for case in result["load_cases"]:
+        for load_case in result.load_cases:
             # Check Engine Mount (Port) ranges
-            em_port = case["interfaces"]["Engine Mount (Port)"]
-            assert 3000 <= em_port["Fy"] <= 7000, f"Fy out of range: {em_port['Fy']}"
-            assert 4000 <= em_port["Fz"] <= 5000, f"Fz out of range: {em_port['Fz']}"
+            em_port = next(p for p in load_case.point_loads if p.name == "Engine Mount (Port)")
+            assert 3000 <= em_port.force_moment.fy <= 7000, f"Fy out of range: {em_port.force_moment.fy}"
+            assert 4000 <= em_port.force_moment.fz <= 5000, f"Fz out of range: {em_port.force_moment.fz}"
 
             # Check Forward Outer Flange My
-            fof = case["interfaces"]["Forward Outer Flange"]
-            assert 500000 <= fof["My"] <= 600000, f"My out of range: {fof['My']}"
+            fof = next(p for p in load_case.point_loads if p.name == "Forward Outer Flange")
+            assert 500000 <= fof.force_moment.my <= 600000, f"My out of range: {fof.force_moment.my}"
 
     def test_seed_reproducibility(self):
         """Same seed should produce identical results."""
-        load_ranges = {"Engine Mount (Port)": {"Fy": (1000, 5000)}}
+        load_ranges = {"Engine Mount (Port)": {"Fy": (1000.0, 5000.0)}}
 
         result1 = generate_balanced_loadset(
             DEFAULT_INTERFACES, load_ranges, num_cases=5, seed=12345
@@ -82,10 +97,14 @@ class TestGenerateBalancedLoadset:
             DEFAULT_INTERFACES, load_ranges, num_cases=5, seed=12345
         )
 
-        for c1, c2 in zip(result1["load_cases"], result2["load_cases"]):
-            for interface in DEFAULT_INTERFACES:
-                for comp in COMPONENTS:
-                    assert c1["interfaces"][interface][comp] == c2["interfaces"][interface][comp]
+        for lc1, lc2 in zip(result1.load_cases, result2.load_cases):
+            for p1, p2 in zip(lc1.point_loads, lc2.point_loads):
+                assert p1.force_moment.fx == p2.force_moment.fx
+                assert p1.force_moment.fy == p2.force_moment.fy
+                assert p1.force_moment.fz == p2.force_moment.fz
+                assert p1.force_moment.mx == p2.force_moment.mx
+                assert p1.force_moment.my == p2.force_moment.my
+                assert p1.force_moment.mz == p2.force_moment.mz
 
     def test_no_constraints_produces_zero_solution(self):
         """With no constraints, minimum norm solution should be zeros."""
@@ -95,27 +114,31 @@ class TestGenerateBalancedLoadset:
             num_cases=1,
         )
 
-        case = result["load_cases"][0]
-        for interface in DEFAULT_INTERFACES:
-            for comp in COMPONENTS:
-                assert case["interfaces"][interface][comp] == 0.0
+        load_case = result.load_cases[0]
+        for point_load in load_case.point_loads:
+            fm = point_load.force_moment
+            assert fm.fx == 0.0
+            assert fm.fy == 0.0
+            assert fm.fz == 0.0
+            assert fm.mx == 0.0
+            assert fm.my == 0.0
+            assert fm.mz == 0.0
 
-    def test_metadata_structure(self):
-        """Metadata should contain expected fields."""
-        load_ranges = {"Engine Mount (Port)": {"Fx": (100, 200)}}
+    def test_loadset_structure(self):
+        """LoadSet should have expected structure."""
+        load_ranges = {"Engine Mount (Port)": {"Fx": (100.0, 200.0)}}
 
         result = generate_balanced_loadset(
             DEFAULT_INTERFACES,
             load_ranges,
             num_cases=3,
+            name="Test LoadSet",
         )
 
-        assert "metadata" in result
-        assert result["metadata"]["num_cases"] == 3
-        assert "interfaces" in result["metadata"]
-        assert "specified_ranges" in result["metadata"]
-        assert result["metadata"]["units"]["force"] == "N"
-        assert result["metadata"]["units"]["moment"] == "N·mm"
+        assert result.name == "Test LoadSet"
+        assert len(result.load_cases) == 3
+        assert result.units.forces == "N"
+        assert result.units.moments == "Nm"
 
     def test_all_interfaces_in_output(self):
         """All interfaces should appear in each load case output."""
@@ -124,12 +147,10 @@ class TestGenerateBalancedLoadset:
             num_cases=1,
         )
 
-        case = result["load_cases"][0]
+        load_case = result.load_cases[0]
+        point_names = {p.name for p in load_case.point_loads}
         for interface in DEFAULT_INTERFACES:
-            assert interface in case["interfaces"]
-            # Check all components present
-            for comp in COMPONENTS:
-                assert comp in case["interfaces"][interface]
+            assert interface in point_names
 
 
 class TestEquilibriumMatrix:
@@ -198,35 +219,47 @@ class TestCustomInterfaces:
 
     def test_two_interfaces_opposite_forces(self):
         """Two interfaces should balance with opposite forces."""
-        interfaces = {"A": (0, 0, 0), "B": (100, 0, 0)}
+        interfaces = {"A": (0.0, 0.0, 0.0), "B": (100.0, 0.0, 0.0)}
 
         # Constrain Fz at A, solver should find balancing values
         result = generate_balanced_loadset(
             interfaces,
-            load_ranges={"A": {"Fz": (1000, 2000)}},
+            load_ranges={"A": {"Fz": (1000.0, 2000.0)}},
             num_cases=5,
             seed=42,
         )
 
-        for case in result["load_cases"]:
-            assert case["verification"]["is_balanced"]
+        interface_names = list(interfaces.keys())
+        A_matrix = _build_equilibrium_matrix(interfaces, interface_names)
+
+        for load_case in result.load_cases:
+            # Extract values in order
+            values = []
+            for name in interface_names:
+                point_load = next(p for p in load_case.point_loads if p.name == name)
+                fm = point_load.force_moment
+                values.extend([fm.fx, fm.fy, fm.fz, fm.mx, fm.my, fm.mz])
+
+            verification = _verify_equilibrium(A_matrix, np.array(values))
+            assert verification["is_balanced"]
+
             # Fz at A and B should be opposite (sum to zero)
-            fz_a = case["interfaces"]["A"]["Fz"]
-            fz_b = case["interfaces"]["B"]["Fz"]
-            assert 1000 <= fz_a <= 2000  # Constrained range
-            assert abs(fz_a + fz_b) < 1e-6  # Force balance
+            pt_a = next(p for p in load_case.point_loads if p.name == "A")
+            pt_b = next(p for p in load_case.point_loads if p.name == "B")
+            assert 1000 <= pt_a.force_moment.fz <= 2000  # Constrained range
+            assert abs(pt_a.force_moment.fz + pt_b.force_moment.fz) < 1e-6  # Force balance
 
     def test_colinear_interfaces(self):
         """Interfaces along a line should still produce balanced loads."""
         interfaces = {
-            "A": (0, 0, 0),
-            "B": (0, 0, 100),
-            "C": (0, 0, 200),
+            "A": (0.0, 0.0, 0.0),
+            "B": (0.0, 0.0, 100.0),
+            "C": (0.0, 0.0, 200.0),
         }
 
         load_ranges = {
-            "A": {"Fz": (1000, 2000)},
-            "C": {"Fz": (500, 1000)},
+            "A": {"Fz": (1000.0, 2000.0)},
+            "C": {"Fz": (500.0, 1000.0)},
         }
 
         result = generate_balanced_loadset(
@@ -236,5 +269,15 @@ class TestCustomInterfaces:
             seed=42,
         )
 
-        for case in result["load_cases"]:
-            assert case["verification"]["is_balanced"]
+        interface_names = list(interfaces.keys())
+        A_matrix = _build_equilibrium_matrix(interfaces, interface_names)
+
+        for load_case in result.load_cases:
+            values = []
+            for name in interface_names:
+                point_load = next(p for p in load_case.point_loads if p.name == name)
+                fm = point_load.force_moment
+                values.extend([fm.fx, fm.fy, fm.fz, fm.mx, fm.my, fm.mz])
+
+            verification = _verify_equilibrium(A_matrix, np.array(values))
+            assert verification["is_balanced"]
