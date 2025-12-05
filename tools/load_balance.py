@@ -19,27 +19,35 @@ except ModuleNotFoundError:
 # Component ordering for consistent indexing
 COMPONENTS = ["Fx", "Fy", "Fz", "Mx", "My", "Mz"]
 
+# Type alias: fixed value (float) or range (tuple)
+LoadSpec = float | tuple[float, float]
+
 
 def generate_balanced_loadset(
     interfaces: dict[str, tuple[float, float, float]],
-    load_ranges: dict[str, dict[str, tuple[float, float]]] | None = None,
+    load_ranges: dict[str, dict[str, LoadSpec]] | None = None,
     num_cases: int = 50,
     seed: int | None = None,
     name: str | None = None,
     description: str | None = None,
+    tolerance: float = 1e-3,
 ) -> LoadSet:
     """
     Generate multiple balanced load cases with specified ranges.
 
     Args:
         interfaces: Dict mapping interface name to (x, y, z) position in mm
-        load_ranges: Dict mapping interface name to component ranges.
-                     Example: {"Engine Mount": {"Fy": (3000, 7000), "Fz": (3000, 7000)}}
+        load_ranges: Dict mapping interface name to component constraints.
+                     Each component can be:
+                     - A tuple (min, max) for random sampling within range
+                     - A single float for a fixed value
+                     Example: {"Engine Mount": {"Fx": 0.0, "Fy": (3000, 7000)}}
                      Values in N for forces, N·mm for moments.
         num_cases: Number of load cases to generate
         seed: Random seed for reproducibility
         name: Optional name for the LoadSet
         description: Optional description for the LoadSet
+        tolerance: Tolerance for equilibrium verification (default: 1e-3)
 
     Returns:
         LoadSet with generated balanced load cases
@@ -62,6 +70,12 @@ def generate_balanced_loadset(
     )
 
     load_cases: list[LoadCase] = []
+    failed_cases: list[int] = []
+
+    print(f"\n{'='*80}")
+    print(f"Generating {num_cases} balanced load cases")
+    print(f"Equilibrium tolerance: {tolerance:.2e}")
+    print(f"{'='*80}\n")
 
     for case_idx in range(num_cases):
         # Sample constrained variables from their ranges
@@ -74,9 +88,32 @@ def generate_balanced_loadset(
             A, sampled_values, constrained_indices, free_indices, n_interfaces
         )
 
+        # Verify equilibrium and print residuals
+        eq_result = _verify_equilibrium(A, all_values, tolerance)
+        case_num = case_idx + 1
+
+        status = "✓" if eq_result["is_balanced"] else "✗"
+        print(f"Case {case_num:3d} [{status}] Residuals: "
+              f"ΣFx={eq_result['sum_Fx']:+.2e}  "
+              f"ΣFy={eq_result['sum_Fy']:+.2e}  "
+              f"ΣFz={eq_result['sum_Fz']:+.2e}  "
+              f"ΣMx={eq_result['sum_Mx']:+.2e}  "
+              f"ΣMy={eq_result['sum_My']:+.2e}  "
+              f"ΣMz={eq_result['sum_Mz']:+.2e}")
+
+        if not eq_result["is_balanced"]:
+            failed_cases.append(case_num)
+
         # Build LoadCase
-        load_case = _build_load_case(case_idx + 1, interface_names, all_values)
+        load_case = _build_load_case(case_num, interface_names, all_values)
         load_cases.append(load_case)
+
+    # Print summary
+    print(f"\n{'='*80}")
+    print(f"Summary: {num_cases - len(failed_cases)}/{num_cases} cases passed equilibrium check")
+    if failed_cases:
+        print(f"Failed cases: {failed_cases}")
+    print(f"{'='*80}\n")
 
     return LoadSet(
         name=name or "Balanced LoadSet",
@@ -138,7 +175,7 @@ def _build_equilibrium_matrix(
 
 def _identify_constrained_variables(
     interface_names: list[str],
-    load_ranges: dict[str, dict[str, tuple[float, float]]],
+    load_ranges: dict[str, dict[str, LoadSpec]],
 ) -> tuple[NDArray[np.bool_], list[int], list[int]]:
     """
     Identify which variables are constrained (have specified ranges).
@@ -165,14 +202,17 @@ def _identify_constrained_variables(
 
 def _sample_constrained_values(
     interface_names: list[str],
-    load_ranges: dict[str, dict[str, tuple[float, float]]],
+    load_ranges: dict[str, dict[str, LoadSpec]],
     constrained_indices: list[int],
 ) -> NDArray[np.float64]:
     """
-    Sample random values for constrained variables within their ranges.
+    Sample values for constrained variables.
+
+    For tuple specs (min, max): samples uniformly within the range.
+    For float specs: uses the fixed value directly.
 
     Returns:
-        Array of sampled values for constrained variables only
+        Array of sampled/fixed values for constrained variables only
     """
     sampled = np.zeros(len(constrained_indices))
 
@@ -183,8 +223,11 @@ def _sample_constrained_values(
         name = interface_names[interface_idx]
         comp = COMPONENTS[comp_idx]
 
-        min_val, max_val = load_ranges[name][comp]
-        sampled[idx] = np.random.uniform(min_val, max_val)
+        spec = load_ranges[name][comp]
+        if isinstance(spec, tuple):
+            sampled[idx] = np.random.uniform(spec[0], spec[1])
+        else:
+            sampled[idx] = spec  # Fixed value
 
     return sampled
 
@@ -300,10 +343,27 @@ DEFAULT_INTERFACES = {
 
 
 if __name__ == "__main__":
-    # Example usage
-    load_ranges = {
-        "Engine Mount (Port)": {"Fy": (3000.0, 7000.0), "Fz": (3000.0, 7000.0)},
-        "Engine Mount (Starboard)": {"Fy": (3000.0, 7000.0), "Fz": (3000.0, 7000.0)},
+    # Example usage: Engine mounts cannot take Fx (fixed at 0), but have Fy/Fz ranges
+    # Fail Safe mount is completely inactive (all DOFs = 0)
+    load_ranges: dict[str, dict[str, LoadSpec]] = {
+        "Engine Mount (Port)": {
+            "Fx": 0.0,  # Fixed constraint
+            "Fy": (3000.0, 7000.0),  # Range
+            "Fz": (3000.0, 7000.0),
+        },
+        "Engine Mount (Fail Safe)": {
+            "Fx": 0.0,
+            "Fy": 0.0,
+            "Fz": 0.0,
+            "Mx": 0.0,
+            "My": 0.0,
+            "Mz": 0.0,
+        },
+        "Engine Mount (Starboard)": {
+            "Fx": 0.0,
+            "Fy": (3000.0, 7000.0),
+            "Fz": (3000.0, 7000.0),
+        },
         "Forward Outer Flange": {"My": (500000.0, 600000.0)},
     }
 
@@ -317,3 +377,4 @@ if __name__ == "__main__":
 
     # Pretty print the generated loadset
     loadset.print_table()
+    loadset.to_ansys()
